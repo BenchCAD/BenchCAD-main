@@ -1,0 +1,74 @@
+[project]
+name = "benchcad"
+version = "0.1.0"
+description = "BenchCAD: CodeEdit / CodeGen / CodeQA benchmarks for CAD code understanding"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    # LLM SDKs (used by all 3 tasks)
+    "openai>=2.15.0",
+    "anthropic>=0.40.0",
+    "google-genai>=0.3.0",
+
+    # CAD execution + scoring
+    "cadquery==2.3.0",
+    "cadquery-ocp==7.9.3.0",
+    "trimesh>=4.11.3",
+    # Cadquery 2.3.0 imports these but doesn't declare them in its PyPI metadata:
+    "multimethod>=2.0.2",
+    "typish>=1.9.3",
+    "nptyping>=2.5.0",
+    "ezdxf>=1.4.3",
+    "nlopt>=2.9",
+    "casadi>=3.7.2",
+
+    # Numeric / data
+    "numpy==1.26.4",
+    "scipy>=1.17.0",
+    "pandas>=2.3.3",
+    "datasets>=4.8.3",
+    "pyyaml>=6.0.2",
+    "huggingface-hub>=0.27.0",
+
+    # Rendering (STEP -> PNG via VTK + PIL)
+    "vtk>=9.3.1",
+    "pillow>=11.3.0",
+    "scikit-image>=0.26.0",
+
+    # Plots / analysis
+    "matplotlib>=3.9.0",
+    "seaborn>=0.13.2",
+
+    # Env / utilities
+    "python-dotenv>=1.2.2",
+]
+
+[dependency-groups]
+dev = [
+    "black>=26.1.0",
+    "ruff>=0.4.0",
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.24",
+    "ipykernel>=7.1.0",
+]
+
+[tool.uv]
+package = false
+# nlopt 2.9+ declares numpy>=2 in its metadata but actually works fine with
+# numpy 1.26 at runtime. Cadquery 2.3.0 needs numpy<2, so override.
+override-dependencies = ["numpy>=1.26"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["CodeGen/tests", "CodeQA/tests"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "B", "C4", "UP"]
+ignore = [
+    "E501",  # line length (black handles)
+    "B008",  # function calls in arg defaults (common with cadquery patterns)
+]

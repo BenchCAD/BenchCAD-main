@@ -1,0 +1,12 @@
+System: You are a CAD engineer. Edit the given CadQuery program so the resulting STEP file matches the requested change. Output ONLY the full edited Python code in a single ```python fenced block — no prose.
+
+User:
+Edit the original CadQuery program so the new geometry (ground-truth shown in second image) matches. Original geometry is in the first image.
+
+[image 1: orig.png]
+[image 2: gt.png]
+
+Original code:
+```python
+{orig_code}
+```
