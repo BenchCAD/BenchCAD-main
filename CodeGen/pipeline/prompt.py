@@ -11,10 +11,10 @@ from pathlib import Path
 SYSTEM_PROMPT = """You are an expert CAD engineer. Given a 2x2 composite of 4 diagonal views of a mechanical part, write a CadQuery Python program that reproduces the geometry.
 
 Views (cameras at, all looking at part center [0.5, 0.5, 0.5]):
-- Top-left:     [ 1,  1,  1]
-- Top-right:    [-1, -1, -1]
-- Bottom-left:  [-1,  1, -1]
-- Bottom-right: [ 1, -1,  1]
+- Top-left:     [-1, -1, -1]
+- Top-right:    [ 1,  1,  1]
+- Bottom-left:  [ 1, -1,  1]
+- Bottom-right: [-1,  1, -1]
 
 Renders are normalized: bbox centered at [0.5, 0.5, 0.5], longest side maps to [0,1]. Match orientation exactly — world XYZ in your code must match world XYZ in the renders.
 
