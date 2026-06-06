@@ -53,7 +53,10 @@ def _patch_export(code: str, out_step: Path) -> str:
         code,
     )
     if ".exportStep" not in patched:
-        patched += f'\nresult.val().exportStep("{out_lit}")\n'
+        # The prompt asks for "the final solid in `result`", not for a Workplane:
+        # raw Shapes (Solid/Compound/...) have .exportStep directly, only
+        # Workplane needs .val() first.
+        patched += f'\n(result.val() if hasattr(result, "val") else result).exportStep("{out_lit}")\n'
     return _OCP_HASHCODE_FIX + "\n" + patched
 
 
