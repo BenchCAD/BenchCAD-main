@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+
+# venv / uv
+.venv/
+venv/
+
+# Secrets — never commit API keys
+.env
+*.env
+!.env.example
+
+# Benchmark data pulled from HuggingFace (test_data/ IS committed, data/ is not)
+data/
+*/data/
+
+# Run outputs
+results/
+*/results/
+*/results_*/
+*.step
+*.STEP
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/

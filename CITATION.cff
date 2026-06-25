@@ -1,0 +1,45 @@
+cff-version: 1.2.0
+title: "BenchCAD: Benchmarks for Evaluating LLMs on CAD Code Understanding"
+message: "If you use BenchCAD, please cite it using these metadata."
+type: dataset
+authors:
+  - given-names: Haozhe
+    family-names: Zhang
+  - given-names: Lei
+    family-names: Li
+  - given-names: Cheng
+    family-names: Peng
+  - given-names: Hanjie
+    family-names: Chen
+repository-code: "https://github.com/BenchCAD/BenchCAD-main"
+url: "https://huggingface.co/datasets/BenchCAD/BenchCAD"
+abstract: >-
+  BenchCAD is a suite of three benchmarks (CodeGen, CodeEdit, CodeQA) that
+  evaluate large language and multimodal models on procedural 3D CAD code
+  understanding and generation. Tasks are graded by execution-grounded,
+  objective metrics (voxel IoU between STEP solids; symmetric ratio accuracy on
+  numeric answers) with no LLM judge in the loop.
+keywords:
+  - benchmark
+  - CAD
+  - CadQuery
+  - code generation
+  - multimodal
+  - large language models
+license: MIT
+version: 0.1.0
+date-released: "2026-06-24"
+preferred-citation:
+  type: article
+  title: "BenchCAD: Benchmarks for Evaluating LLMs on CAD Code Understanding"
+  authors:
+    - given-names: Haozhe
+      family-names: Zhang
+    - given-names: Lei
+      family-names: Li
+    - given-names: Cheng
+      family-names: Peng
+    - given-names: Hanjie
+      family-names: Chen
+  year: 2026
+  # TODO: fill in arXiv id / venue once the paper / tech report is posted.
