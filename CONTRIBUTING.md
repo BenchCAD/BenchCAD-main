@@ -9,32 +9,51 @@ with its own intake and quality gate. Pick the one that matches what you have.
 
 ---
 
-## A. Contribute a new part / QA item (data)
+## A. Contribute a new part family (data)
 
-You submit **raw source on GitHub** — you do **not** push to the HuggingFace
-dataset. HF is the published artifact; maintainers regenerate it from accepted
-contributions (see *How data gets accepted* below).
+BenchCAD is organized by **part family** (a mechanical archetype — `hex_bolt`,
+`washer`, `bevel_gear`, …), not by single parts. The live dataset has 106
+families, each contributing parts to three benchmarks; a new family must follow
+the same conventions so it slots in alongside the existing ones.
 
-Open a PR adding one directory under `contributions/`:
+You submit **raw source on GitHub** — you never push to the HuggingFace dataset.
+HF is the published artifact; maintainers regenerate it from accepted families
+(see *How data gets accepted* below).
+
+### Per-family requirements (matched to the live dataset)
+
+| What | Requirement | Why (live-dataset reference) |
+|---|---|---|
+| **CodeGen parts** | a parametric generator that yields parts across **all three difficulties** `easy / medium / hard`, **≥ ~50 per difficulty** | every family covers all 3; median ≈ 55–58 parts per difficulty (~169 total) |
+| `meta` per part | `family`, `variant` (default `"standard"`), `difficulty`, `base_plane` ∈ `{XY,XZ,YZ}`, `standard` (ISO/DIN/ASME or `null`) | exact code_gen schema |
+| **CodeQA** | QA on **≥ 2 representative parts**, **exactly 12 questions each**; mix the types ~ `integer` (incl. count/yes-no) **≈70%**, `dim` **≈15%**, `ratio` **≈15%**; spread difficulty `level` across **L1–L6** (weight L3–L4) | 200 annotated parts × 12 QA; types 73/14/13%; levels L1–L6 |
+| answer types | numeric only — `integer` / `count` / `dim` / `ratio` / `boolean` | — |
+| **CodeEdit** | **2–3 edits per difficulty** (`easy / medium / hard`, ≈6–9 total); each edit changes the geometry (resulting IoU < 1) and carries an `instruction` + `edit_type` | 748 edits, ~6–7 per family, all non-trivial (median IoU 0.765) |
+
+### Layout
 
 ```
-contributions/<your_part_name>/
-├── part.py        # a CadQuery program that binds the final solid to `result`
-├── meta.json      # {"family": "...", "standard": "ISO/DIN/ASME ... or null",
-│                  #  "difficulty": "easy|medium|hard", "source": "...", "contributor": "..."}
-└── qa.json        # [{"question": "...", "answer": 12, "type": "integer|count|dim|ratio|boolean"}]
-                   #   (omit for a pure CodeGen/CodeEdit part)
+contributions/<family>/
+├── family.json          # {"family","standard","base_plane","description","source","contributor"}
+├── generator.py         # parametric: `build(difficulty, seed) -> result` (CadQuery solid)
+├── qa/<stem>.json        # ≥2 files, 12 questions each: [{"question","answer","type","level"}]
+└── edits/<name>.json     # ≥2-3 per difficulty: {"difficulty","edit_type","instruction",
+                          #                        "orig_code","gt_code"}
 ```
 
-**Automated gate** (CI runs `tools/validate_task.py`, no API keys needed):
-1. `part.py` must execute and export a valid STEP solid.
-2. It must render to the 4-view composite without error.
-3. Every numeric `answer` is **re-derived from the geometry** and must match what
-   you wrote (dimensions/counts/ratios are computed from the B-rep, not trusted).
-4. The geometry hash must not duplicate an existing part.
+(A single self-contained part — like `contributions/example_plate/` — is also
+accepted for smoke-testing the gate, but a *family* must meet the table above.)
 
-**Human gate:** a maintainer reviews that the `family` / `standard` labels are
-engineering-correct (machines can't judge this).
+**Automated gate** (CI runs `tools/validate_task.py` per generated part; no API keys):
+1. each part executes and exports a valid STEP solid;
+2. it renders to the 4-view composite without error;
+3. `meta` is well-formed (required keys, valid `difficulty` / `base_plane` / `type`);
+4. its geometry hash does not duplicate an existing part;
+5. family-level coverage (difficulty counts, ≥2 QA×12, 2–3 edits/difficulty) is met.
+
+**Human gate:** a maintainer reviews that `family` / `standard` labels are
+engineering-correct, and that questions are unambiguous and answerable from the
+part (machines can't judge this).
 
 ### How data gets accepted (maintainer flow)
 1. PR merges into `contributions/` after both gates pass.

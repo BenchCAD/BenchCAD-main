@@ -30,8 +30,10 @@ from pathlib import Path
 
 import _taskmods
 
-_REQUIRED_META = ("family", "standard", "difficulty", "source", "contributor")
+_REQUIRED_META = ("family", "variant", "difficulty", "base_plane", "standard",
+                  "source", "contributor")
 _DIFFICULTY = {"easy", "medium", "hard"}
+_BASE_PLANE = {"XY", "XZ", "YZ"}
 _QA_TYPES = {"integer", "count", "dim", "ratio", "boolean", "bool"}
 
 
@@ -57,6 +59,9 @@ def _check_metadata(part_dir: Path, results: list) -> bool:
         return False
     if meta.get("difficulty") not in _DIFFICULTY:
         results.append(("metadata", False, f"difficulty must be one of {_DIFFICULTY}"))
+        return False
+    if meta.get("base_plane") not in _BASE_PLANE:
+        results.append(("metadata", False, f"base_plane must be one of {_BASE_PLANE}"))
         return False
 
     qa_path = part_dir / "qa.json"
