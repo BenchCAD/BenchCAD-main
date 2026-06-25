@@ -24,21 +24,24 @@ HF is the published artifact; maintainers regenerate it from accepted families
 
 | What | Requirement | Why (live-dataset reference) |
 |---|---|---|
-| **CodeGen parts** | a parametric generator that yields parts across **all three difficulties** `easy / medium / hard`, **≥ ~50 per difficulty** | every family covers all 3; median ≈ 55–58 parts per difficulty (~169 total) |
+| **CodeGen parts** | a parametric generator `build(difficulty, seed) -> CadQuery code` that yields parts across **all three difficulties** `easy / medium / hard`, **≥ ~50 per difficulty** | every family covers all 3; median ≈ 55–58 parts per difficulty (~169 total) |
 | `meta` per part | `family`, `variant` (default `"standard"`), `difficulty`, `base_plane` ∈ `{XY,XZ,YZ}`, `standard` (ISO/DIN/ASME or `null`) | exact code_gen schema |
 | **CodeQA** | QA on **≥ 2 representative parts**, **exactly 12 questions each**; mix the types ~ `integer` (incl. count/yes-no) **≈70%**, `dim` **≈15%**, `ratio` **≈15%**; spread difficulty `level` across **L1–L6** (weight L3–L4) | 200 annotated parts × 12 QA; types 73/14/13%; levels L1–L6 |
 | answer types | numeric only — `integer` / `count` / `dim` / `ratio` / `boolean` | — |
-| **CodeEdit** | **2–3 edits per difficulty** (`easy / medium / hard`, ≈6–9 total); each edit changes the geometry (resulting IoU < 1) and carries an `instruction` + `edit_type` | 748 edits, ~6–7 per family, all non-trivial (median IoU 0.765) |
+| **CodeEdit** | each edit takes a **prototype part** (a generated CodeGen part, which carries its `easy/medium/hard` difficulty) and changes it. Cover **all three prototype difficulties, ≈2–3 edits each** (≈6–9 total). Every edit must change the geometry (resulting IoU < 1). | 748 edits, ~6–7 per family, all non-trivial (median IoU 0.765) |
+| edit `category` | tag each edit with its **edit type** `T1`–`T5`: `T1` literal_replace · `T2` chain_transform · `T3` relative_compute · `T4` feature_edit · `T5` geometry_rebuild (this is the *kind* of edit, independent of the prototype difficulty) | edit-bench category taxonomy |
 
 ### Layout
 
 ```
 contributions/<family>/
 ├── family.json          # {"family","standard","base_plane","description","source","contributor"}
-├── generator.py         # parametric: `build(difficulty, seed) -> result` (CadQuery solid)
+├── generator.py         # defines build(difficulty, seed) -> str  (a CadQuery program)
 ├── qa/<stem>.json        # ≥2 files, 12 questions each: [{"question","answer","type","level"}]
-└── edits/<name>.json     # ≥2-3 per difficulty: {"difficulty","edit_type","instruction",
-                          #                        "orig_code","gt_code"}
+└── edits/<name>.json     # cover all 3 prototype difficulties, ~2-3 each:
+                          #   {"prototype_difficulty":"easy|medium|hard",
+                          #    "category":"T1..T5", "edit_type":"dim|add_hole|rotate|...",
+                          #    "instruction":"...", "orig_code":"...", "gt_code":"..."}
 ```
 
 (A single self-contained part — like `contributions/example_plate/` — is also
