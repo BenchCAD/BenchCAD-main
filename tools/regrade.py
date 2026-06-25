@@ -27,22 +27,12 @@ codegen/codeedit re-execute model code in a subprocess and need the CAD deps
 from __future__ import annotations
 
 import argparse
-import importlib.util
 import json
 import sys
 import tempfile
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
-
-
-def _load(name: str, rel: str):
-    """Import a task's scoring module by path (avoids the shared `scoring`
-    package-name collision between CodeQA/ and CodeGen/)."""
-    spec = importlib.util.spec_from_file_location(name, ROOT / rel)
-    mod = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(mod)
-    return mod
+import _taskmods
 
 
 def _read_jsonl(path: Path) -> list[dict]:
@@ -55,7 +45,7 @@ def _index(records: list[dict]) -> dict:
 
 
 def regrade_codeqa(gt: list[dict], pred: list[dict]) -> dict:
-    qa = _load("benchcad_qa_score", "CodeQA/scoring/qa_score.py")
+    qa = _taskmods.qa_score()
     gt_by_id = _index(gt)
     pred_by_id = _index(pred)
 
@@ -78,8 +68,8 @@ def regrade_codeqa(gt: list[dict], pred: list[dict]) -> dict:
 
 
 def regrade_codegen(gt: list[dict], pred: list[dict]) -> dict:
-    exec_cq = _load("benchcad_exec_cq", "CodeGen/scoring/exec_cq.py")
-    iou_mod = _load("benchcad_iou", "CodeGen/scoring/iou.py")
+    exec_cq = _taskmods.exec_cq()
+    iou_mod = _taskmods.iou()
     gt_by_id = _index(gt)
     pred_by_id = _index(pred)
 
