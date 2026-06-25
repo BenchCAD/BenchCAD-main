@@ -2,6 +2,11 @@
 
 Three benchmarks for evaluating LLMs on CAD code understanding. All three share one Python environment but each task has its own scripts, data, and result store.
 
+**Scoring is execution-grounded and objective — there is no LLM judge in the loop.**
+CodeGen and CodeEdit grade by *voxel IoU* between the model's executed STEP solid
+and the ground-truth STEP; CodeQA grades by *symmetric ratio accuracy* on numeric
+answers. Scores are deterministic and reproducible, not model-judged.
+
 ## Setup
 
 ```bash
@@ -59,3 +64,33 @@ BenchCAD/
 Each task subdir is independently runnable (`cd <Task> && uv run python main.py`)
 and has the same shape: `main.py`, `configs/{test,prod}.yaml`, `pipeline/`,
 `scoring/`, `models/`, `test_data/`, `tools/download_*.py`, `README.md`.
+
+## Leaderboard (frontier baselines)
+
+Full `prod` results on the public split. Numbers are re-graded from submitted
+predictions, never accepted as self-reported — see
+[.github/ISSUE_TEMPLATE/model_result.md](.github/ISSUE_TEMPLATE/model_result.md)
+to submit.
+
+| Model | CodeGen (IoU) | CodeEdit (norm IoU) | CodeQA (ratio acc) |
+|---|---|---|---|
+| _Claude Opus 4.x_ | _TODO_ | _TODO_ | _TODO_ |
+| _GPT-5.x_ | _TODO_ | _TODO_ | _TODO_ |
+| _Gemini 2.x_ | _TODO_ | _TODO_ | _TODO_ |
+
+> Baselines are being populated. To reproduce: `uv run python run_all.py --config prod`.
+
+## License & citation
+
+- **Code** (this repo) — [MIT](LICENSE).
+- **Data** ([BenchCAD on HuggingFace](https://huggingface.co/datasets/BenchCAD/BenchCAD)) — CC-BY-4.0.
+
+If you use BenchCAD, please cite it (see [CITATION.cff](CITATION.cff)):
+
+```bibtex
+@article{zhang2026benchcad,
+  title  = {BenchCAD: Benchmarks for Evaluating LLMs on CAD Code Understanding},
+  author = {Zhang, Haozhe and Li, Lei and Peng, Cheng and Chen, Hanjie},
+  year   = {2026}
+}
+```
