@@ -1,96 +1,135 @@
+<div align="center">
+
 # BenchCAD
 
-Three benchmarks for evaluating LLMs on CAD code understanding. All three share one Python environment but each task has its own scripts, data, and result store.
+**A benchmark for evaluating LLMs and multimodal models on programmatic CAD.**
 
-**Scoring is execution-grounded and objective — there is no LLM judge in the loop.**
-CodeGen and CodeEdit grade by *voxel IoU* between the model's executed STEP solid
-and the ground-truth STEP; CodeQA grades by *symmetric ratio accuracy* on numeric
-answers. Scores are deterministic and reproducible, not model-judged.
+[![Paper](https://img.shields.io/badge/arXiv-2605.10865-b31b1b.svg)](https://arxiv.org/abs/2605.10865)
+[![Dataset](https://img.shields.io/badge/🤗%20HuggingFace-BenchCAD-yellow.svg)](https://huggingface.co/datasets/BenchCAD/BenchCAD)
+[![Code License: MIT](https://img.shields.io/badge/Code-MIT-blue.svg)](LICENSE)
+[![Data License: CC BY 4.0](https://img.shields.io/badge/Data-CC--BY--4.0-blue.svg)](https://creativecommons.org/licenses/by/4.0/)
+[![Python 3.11](https://img.shields.io/badge/python-3.11-blue.svg)](https://www.python.org/)
 
-## Setup
+[Paper](https://arxiv.org/abs/2605.10865) · [Dataset](https://huggingface.co/datasets/BenchCAD/BenchCAD) · [Contributing](CONTRIBUTING.md)
 
-```bash
-# Python 3.11, managed by uv
-uv sync
+</div>
 
-# Secrets (LLM API keys only — benchmark data is public)
-cp .env.example .env
-# Edit .env: paste OPENAI / ANTHROPIC / GEMINI / OPENROUTER keys
-```
+---
 
-Real benchmark data is hosted on HuggingFace under [`BenchCAD/BenchCAD`](https://huggingface.co/datasets/BenchCAD/BenchCAD) and pulled into the gitignored `data/` folder. Each task also ships a tiny `test_data/` (≈4 records) committed to the repo for smoke tests without any HF pull.
+BenchCAD evaluates whether a model can *understand and write parametric CAD code*
+— the [CadQuery](https://github.com/CadQuery/cadquery) programs that generate real
+mechanical parts. It is built on **17,900 execution-verified CadQuery programs**
+across **106 industrial part families** (bevel gears, compression springs, twist
+drills, threaded adapters, …) drawn from **49 engineering standards** (ISO / DIN /
+ASME). The benchmark decomposes model ability into three tasks spanning
+perception, parametric abstraction, and executable synthesis.
 
-## One-click reproduction
-
-Smoke run all three benchmarks end-to-end (4 records each, gpt-4o):
-
-```bash
-uv sync                              # one-time: install deps
-cp .env.example .env && $EDITOR .env # paste your OPENAI_API_KEY
-uv run python run_all.py             # → CodeEdit + CodeGen + CodeQA
-```
-
-Pick one task instead, or switch to the full bench:
-
-```bash
-uv run python run_all.py --task codegen           # just CodeGen, smoke
-uv run python run_all.py --config prod            # all three, full HF bench
-uv run python run_all.py --task codeqa --plot     # plot existing results
-```
-
-`--config <name>` looks up `<Task>/configs/<name>.yaml` per task. `prod`
-requires a one-time HF download per task (see each task's README).
+> **Scoring is execution-grounded and deterministic — there is no LLM judge.**
+> Generation tasks grade by *voxel IoU* between the model's executed STEP solid and
+> the ground-truth STEP; the QA task grades by *symmetric ratio accuracy* on numeric
+> answers. Every score is reproducible by re-running the scorer, never model-judged.
 
 ## Tasks
 
-| Folder | What it tests | Docs |
+| Task | Input → Output | Metric |
 |---|---|---|
-| `CodeEdit/` | Text instruction → modify an existing CadQuery program | [CodeEdit/README.md](CodeEdit/README.md) |
-| `CodeGen/` | Generate CadQuery code from a spec or image | [CodeGen/README.md](CodeGen/README.md) |
-| `CodeQA/` | Answer questions about a given CadQuery program | [CodeQA/README.md](CodeQA/README.md) |
+| **CodeGen** (`CodeGen/`) | rendered views of a part → a CadQuery program | voxel IoU vs ground-truth STEP |
+| **CodeEdit** (`CodeEdit/`) | instruction (+ part) → edit an existing CadQuery program | normalized IoU (improvement over baseline) |
+| **CodeQA** (`CodeQA/`) | part as code / image / both → numeric answers | symmetric ratio accuracy |
 
-## Repo layout
+## Why BenchCAD
+
+- **Objective, execution-grounded labels.** Ground truth is real geometry; scores
+  come from a CAD kernel, not an LLM judge or human vote — they can't be gamed by
+  fluent-but-wrong outputs.
+- **Multimodal.** Tasks probe code-only, vision-only, and combined reasoning.
+- **Industry-standard parts.** Real mechanical families and standards, not toy primitives.
+- **Reproducible.** Pinned environment, one-command runs, deterministic scoring.
+
+## Installation
+
+```bash
+# Python 3.11, managed by uv (https://docs.astral.sh/uv/)
+uv sync
+
+# LLM API keys only — benchmark data is public
+cp .env.example .env   # then paste OPENAI / ANTHROPIC / GEMINI / OPENROUTER keys
+```
+
+## Quick start
+
+```bash
+# Smoke-run all three tasks end-to-end (4 records each, gpt-4o)
+uv run python run_all.py
+
+# A single task
+uv run python run_all.py --task codegen
+
+# The full benchmark (one-time HuggingFace download per task)
+uv run python run_all.py --config prod
+```
+
+`--config <name>` resolves to `<Task>/configs/<name>.yaml`. Each task is also
+runnable on its own (`cd CodeGen && uv run python main.py`); see the per-task
+READMEs for options.
+
+## Dataset
+
+Hosted on HuggingFace at [`BenchCAD/BenchCAD`](https://huggingface.co/datasets/BenchCAD/BenchCAD)
+and pulled into the gitignored `data/` folder on first `prod` run. Three configs:
+
+| Config | Size | Contents |
+|---|---|---|
+| `code_gen` | 17,900 | GT CadQuery code + 4 rendered views per part (106 families) |
+| `QA` | 2,400 | numeric questions over 200 parts (dimensions, counts, ratios) |
+| `edit-bench` | held-out | instruction-guided edit benchmark |
+
+A tiny `test_data/` (≈4 records) is committed per task for smoke tests without any
+download. Dataset schema and column details are documented on the dataset card.
+
+## Scoring
+
+| Task | How a prediction is graded |
+|---|---|
+| CodeGen / CodeEdit | the model's code is executed to a STEP solid, voxelized on a normalized 64³ grid, and compared to the ground-truth solid by IoU (`|A∩B| / |A∪B|`) |
+| CodeQA | each numeric answer is scored by `min(pred, gt) / max(pred, gt)`; exact match for counts / integers / yes-no |
+
+No external judge model is involved, so any submission can be re-graded to the
+same number — see [`tools/regrade.py`](tools/regrade.py).
+
+## Repository layout
 
 ```
 BenchCAD/
-├── pyproject.toml          shared deps (covers all 3 tasks)
-├── .env.example            template for secrets
-├── run_all.py              one-click runner across all 3 tasks
-├── CodeEdit/               text-edit benchmark
-├── CodeGen/                code-generation benchmark (image → CadQuery code)
-└── CodeQA/                 code-QA benchmark (CadQuery code → numeric answers)
+├── run_all.py              one-click runner across all three tasks
+├── pyproject.toml          shared, pinned environment
+├── CodeGen/  CodeEdit/  CodeQA/    the three tasks (main.py · configs/ · pipeline/ · scoring/)
+├── tools/                  regrade / validate_task / ingest_to_hf
+└── contributions/          community-submitted parts (see CONTRIBUTING.md)
 ```
 
-Each task subdir is independently runnable (`cd <Task> && uv run python main.py`)
-and has the same shape: `main.py`, `configs/{test,prod}.yaml`, `pipeline/`,
-`scoring/`, `models/`, `test_data/`, `tools/download_*.py`, `README.md`.
+Each task subdir shares the same shape: `main.py`, `configs/{test,prod}.yaml`,
+`pipeline/`, `scoring/`, `models/`, `test_data/`, `tools/download_*.py`, `README.md`.
 
-## Leaderboard (frontier baselines)
+## Contributing
 
-Full `prod` results on the public split. Numbers are re-graded from submitted
-predictions, never accepted as self-reported — see
-[.github/ISSUE_TEMPLATE/model_result.md](.github/ISSUE_TEMPLATE/model_result.md)
-to submit.
+See [CONTRIBUTING.md](CONTRIBUTING.md). You can contribute a new part/QA item, a
+model's results (we re-grade raw predictions — numbers are never self-reported), or
+code / errata fixes.
 
-| Model | CodeGen (IoU) | CodeEdit (norm IoU) | CodeQA (ratio acc) |
-|---|---|---|---|
-| _Claude Opus 4.x_ | _TODO_ | _TODO_ | _TODO_ |
-| _GPT-5.x_ | _TODO_ | _TODO_ | _TODO_ |
-| _Gemini 2.x_ | _TODO_ | _TODO_ | _TODO_ |
-
-> Baselines are being populated. To reproduce: `uv run python run_all.py --config prod`.
-
-## License & citation
-
-- **Code** (this repo) — [MIT](LICENSE).
-- **Data** ([BenchCAD on HuggingFace](https://huggingface.co/datasets/BenchCAD/BenchCAD)) — CC-BY-4.0.
-
-If you use BenchCAD, please cite it (see [CITATION.cff](CITATION.cff)):
+## Citation
 
 ```bibtex
 @article{zhang2026benchcad,
-  title  = {BenchCAD: Benchmarks for Evaluating LLMs on CAD Code Understanding},
+  title  = {BenchCAD: A Comprehensive, Industry-Standard Benchmark for Programmatic CAD},
   author = {Zhang, Haozhe and Li, Lei and Peng, Cheng and Chen, Hanjie},
-  year   = {2026}
+  year   = {2026},
+  eprint = {2605.10865},
+  archivePrefix = {arXiv}
 }
 ```
+
+## License
+
+Code is released under the [MIT License](LICENSE); the dataset is released under
+[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
