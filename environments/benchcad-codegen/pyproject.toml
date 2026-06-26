@@ -1,0 +1,28 @@
+[project]
+name = "benchcad-codegen"
+description = "BenchCAD CodeGen — image of a mechanical part -> CadQuery program, scored by voxel IoU on the executed STEP solid (no judge)."
+tags = ["eval", "vision", "code", "cad", "multimodal"]
+version = "0.1.0"
+requires-python = ">=3.11,<3.14"
+dependencies = [
+    "verifiers>=0.1.6",
+    "datasets>=4.0.0",
+    "pillow>=10.0.0",
+    # CadQuery execution + voxel IoU (vendored from BenchCAD/BenchCAD-main CodeGen/scoring)
+    "cadquery==2.3.0",
+    "cadquery-ocp==7.9.3.0",
+    "trimesh>=4.0.0",
+    "numpy<2",
+    "scipy>=1.10",
+    # cadquery 2.3.0 imports these at runtime but doesn't declare them
+    "multimethod>=2.0",
+    "typish>=1.9",
+    "nptyping>=2.5",
+    "ezdxf>=1.1",
+    "nlopt>=2.9",
+    "casadi>=3.6",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
