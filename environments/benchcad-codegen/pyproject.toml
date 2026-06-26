@@ -8,21 +8,31 @@ dependencies = [
     "verifiers>=0.1.6",
     "datasets>=4.0.0",
     "pillow>=10.0.0",
-    # CadQuery execution + voxel IoU (vendored from BenchCAD/BenchCAD-main CodeGen/scoring)
+    # CadQuery execution + voxel IoU. These are pinned to the exact, known-good
+    # set resolved by BenchCAD/BenchCAD-main — the CAD stack (cadquery 2.3 needs
+    # numpy<2; nlopt/scipy lean toward numpy 2) only resolves at specific versions,
+    # so loose ranges silently break (e.g. a newer scipy needs np.long, gone in
+    # numpy 1.26). Do not loosen without re-resolving against numpy 1.26.4.
     "cadquery==2.3.0",
     "cadquery-ocp==7.9.3.0",
-    "trimesh>=4.0.0",
-    "numpy<2",
-    "scipy>=1.10",
+    "trimesh==4.12.2",
+    "numpy==1.26.4",
+    "scipy==1.17.1",
     # cadquery 2.3.0 imports these at runtime but doesn't declare them
-    "multimethod>=2.0",
-    "typish>=1.9",
-    "nptyping>=2.5",
-    "ezdxf>=1.1",
-    "nlopt>=2.9",
-    "casadi>=3.6",
+    "multimethod==2.0.2",
+    "typish==1.9.3",
+    "nptyping==2.5.0",
+    "ezdxf==1.4.3",
+    "nlopt==2.10.0",
+    "casadi==3.7.2",
 ]
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[tool.uv]
+# cadquery 2.3.0 needs numpy<2 (it imports nptyping, which uses np.bool8 — removed
+# in numpy 2). nlopt>=2.9 declares numpy>=2 but runs fine on 1.26. Pin numpy to
+# 1.26.4 for everyone so both resolve (mirrors BenchCAD/BenchCAD-main).
+override-dependencies = ["numpy==1.26.4"]
