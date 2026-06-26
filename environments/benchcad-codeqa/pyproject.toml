@@ -1,0 +1,15 @@
+[project]
+name = "benchcad-codeqa"
+description = "BenchCAD CodeQA — rendered views of a mechanical part -> a numeric answer, scored by symmetric ratio accuracy (no judge, no CAD execution)."
+tags = ["eval", "vision", "cad", "multimodal", "vqa"]
+version = "0.1.0"
+requires-python = ">=3.10"
+dependencies = [
+    "verifiers>=0.1.6",
+    "datasets>=4.0.0",
+    "pillow>=10.0.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
