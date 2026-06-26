@@ -196,24 +196,29 @@ def load_environment(num_examples: int | None = None, **kwargs) -> vf.Environmen
     Args:
         num_examples: if set, evaluate on the first N parts (handy for quick runs).
     """
-    ds = load_dataset("BenchCAD/BenchCAD", "code_gen", split="code_gen")
+    from datasets import Dataset
+
+    raw = load_dataset("BenchCAD/BenchCAD", "code_gen", split="code_gen")
     if num_examples is not None:
-        ds = ds.select(range(min(num_examples, len(ds))))
+        raw = raw.select(range(min(num_examples, len(raw))))
 
-    def _to_row(r):
-        return {
-            "prompt": [{
-                "role": "user",
-                "content": [
-                    {"type": "image_url", "image_url": {"url": _img_to_data_url(r["composite_png"])}},
-                    {"type": "text", "text": "Reproduce this part as a CadQuery program (bind `result`)."},
-                ],
-            }],
-            "answer": r["code"],
-            "info": {"gt_code": r["code"], "stem": r["stem"], "family": r["family"]},
-        }
-
-    ds = ds.map(_to_row, remove_columns=ds.column_names)
+    # One user message whose `content` is a list (text + image). We do NOT pass
+    # system_prompt to the env: verifiers would prepend a system message with
+    # *string* content, and mixing string- and list-typed `content` in the same
+    # column breaks Arrow serialization. Instead the instruction is the text
+    # block, so every message's content is a list (uniform Arrow schema).
+    items = [{
+        "prompt": [{
+            "role": "user",
+            "content": [
+                {"type": "text", "text": SYSTEM_PROMPT},
+                {"type": "image_url", "image_url": {"url": _img_to_data_url(r["composite_png"])}},
+            ],
+        }],
+        "answer": r["code"],
+        "info": {"gt_code": r["code"], "stem": r["stem"], "family": r["family"]},
+    } for r in raw]
+    ds = Dataset.from_list(items)
 
     async def iou_reward(completion, info, **_) -> float:
         code = extract_code(_completion_text(completion))
@@ -229,4 +234,4 @@ def load_environment(num_examples: int | None = None, **kwargs) -> vf.Environmen
             return iou_step_vs_step(model_step, gt_step)
 
     rubric = vf.Rubric(funcs=[iou_reward])
-    return vf.SingleTurnEnv(dataset=ds, rubric=rubric, system_prompt=SYSTEM_PROMPT, **kwargs)
+    return vf.SingleTurnEnv(dataset=ds, rubric=rubric, **kwargs)
