@@ -16,7 +16,7 @@ What to run lives in YAML — one per setup. Two ship out of the box:
 | Config | Purpose |
 |---|---|
 | `configs/test.yaml` | 4-record smoke (`test_data/`), 1 model. Default. |
-| `configs/prod.yaml` | Full bench (`BenchCAD/BenchCAD/code-gen-bench` on HF), 7+ models. |
+| `configs/prod.yaml` | Full bench (`BenchCAD/BenchCAD` config `code_gen` on HF), 7+ models. |
 
 Each config sets:
 ```yaml

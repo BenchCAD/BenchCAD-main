@@ -47,12 +47,17 @@ contributions/<family>/
 (A single self-contained part — like `contributions/example_plate/` — is also
 accepted for smoke-testing the gate, but a *family* must meet the table above.)
 
-**Automated gate** (CI runs `tools/validate_task.py` per generated part; no API keys):
+**Validation gate** — run `tools/validate_task.py` per part and
+`tools/validate_family.py` for the whole family before opening the PR (no API
+keys needed). They check:
 1. each part executes and exports a valid STEP solid;
 2. it renders to the 4-view composite without error;
 3. `meta` is well-formed (required keys, valid `difficulty` / `base_plane` / `type`);
 4. its geometry hash does not duplicate an existing part;
 5. family-level coverage (difficulty counts, ≥2 QA×12, 2–3 edits/difficulty) is met.
+
+(CI on every PR runs `ruff` + the offline scoring tests; the validation gate
+above is run by you and re-checked by a maintainer on review.)
 
 **Human gate:** a maintainer reviews that `family` / `standard` labels are
 engineering-correct, and that questions are unambiguous and answerable from the

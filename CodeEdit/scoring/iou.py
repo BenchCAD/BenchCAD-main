@@ -12,8 +12,17 @@ from pathlib import Path
 
 def _ocp_hashcode_fix():
     """cadquery 2.3 ↔ cadquery-ocp 7.9 compat shim. Idempotent."""
-    from OCP.TopoDS import (TopoDS_Shape, TopoDS_Face, TopoDS_Edge, TopoDS_Vertex,
-        TopoDS_Wire, TopoDS_Shell, TopoDS_Solid, TopoDS_Compound, TopoDS_CompSolid)
+    from OCP.TopoDS import (
+        TopoDS_Compound,
+        TopoDS_CompSolid,
+        TopoDS_Edge,
+        TopoDS_Face,
+        TopoDS_Shape,
+        TopoDS_Shell,
+        TopoDS_Solid,
+        TopoDS_Vertex,
+        TopoDS_Wire,
+    )
     for _cls in (TopoDS_Shape, TopoDS_Face, TopoDS_Edge, TopoDS_Vertex,
                  TopoDS_Wire, TopoDS_Shell, TopoDS_Solid, TopoDS_Compound, TopoDS_CompSolid):
         if not hasattr(_cls, "HashCode"):

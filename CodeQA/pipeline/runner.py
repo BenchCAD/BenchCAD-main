@@ -13,8 +13,9 @@ import json
 import time
 from pathlib import Path
 
-from pipeline.prompt import build as build_prompt
 from scoring.qa_score import parse_json_numbers, qa_score, qa_score_single
+
+from pipeline.prompt import build as build_prompt
 
 
 def _safe_model(m: str) -> str:

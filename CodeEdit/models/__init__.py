@@ -18,7 +18,6 @@ Special model-id suffixes (all routed inside the relevant adapter):
 
 from __future__ import annotations
 
-import os
 from pathlib import Path
 
 # Lazy-load .env once on import.

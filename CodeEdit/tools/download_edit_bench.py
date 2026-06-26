@@ -36,6 +36,8 @@ def main():
                     help=f"Extract dir (default: {DEFAULT_OUT.relative_to(ROOT)}/)")
     ap.add_argument("--cache-dir", type=Path, default=None,
                     help="HF download cache (default: $HF_HOME)")
+    ap.add_argument("--limit", type=int, default=None,
+                    help="only write the first N records (for small smoke sets)")
     args = ap.parse_args()
 
     print(f"snapshot_download {REPO} :: {SUBDIR}/* ...")
@@ -50,6 +52,9 @@ def main():
         sys.exit(f"no .parquet files under {snap / SUBDIR}")
     df = pd.concat([pd.read_parquet(p) for p in parquet_files], ignore_index=True)
     print(f"  loaded {len(df)} rows from {len(parquet_files)} parquet shard(s)")
+    if args.limit is not None:
+        df = df.head(args.limit)
+        print(f"  --limit {args.limit}: writing first {len(df)} rows")
 
     out: Path = args.out
     (out / "codes").mkdir(parents=True, exist_ok=True)

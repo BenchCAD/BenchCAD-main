@@ -1,7 +1,8 @@
-"""Download BenchCAD/BenchCAD code-qa-bench parquets → data/.
+"""Download the BenchCAD/BenchCAD QA benchmark → data/.
 
 Run from CodeQA/:
     uv run python tools/download_qa_bench.py
+    uv run python tools/download_qa_bench.py --out test_data --limit 4
 
 Layout matches test_data/, so configs/prod.yaml works unchanged:
 
@@ -9,91 +10,77 @@ Layout matches test_data/, so configs/prod.yaml works unchanged:
     ├── records.jsonl     {record_id, family, code_path, qa_pairs[]}
     └── codes/<rid>.py
 
-Source: https://huggingface.co/datasets/BenchCAD/BenchCAD/tree/main/code-qa-bench
-
-Expected parquet columns: record_id, family, gt_code (str), qa_pairs (str /
-list of dicts with question / answer / type).
+Source: https://huggingface.co/datasets/BenchCAD/BenchCAD (config `QA`,
+`QA/qa_2400.parquet`). The parquet has one row per question
+(columns: stem, family, gt_code, qa [JSON: question/answer/type/level], ...);
+rows are grouped by `stem` into one record with its list of `qa_pairs`.
 """
 
 from __future__ import annotations
 
 import argparse
 import json
-import sys
 from pathlib import Path
 
 import pandas as pd
-from huggingface_hub import snapshot_download
+from huggingface_hub import hf_hub_download
 
 REPO = "BenchCAD/BenchCAD"
-SUBDIR = "code-qa-bench"
+PARQUET = "QA/qa_2400.parquet"
 ROOT = Path(__file__).resolve().parents[1]  # CodeQA/
 DEFAULT_OUT = ROOT / "data"
 
 
-def _coerce_qa(val) -> list[dict]:
-    """qa_pairs may arrive as JSON-string, list-of-dicts, or list-of-JSON-strings."""
-    if isinstance(val, list):
-        out = []
-        for x in val:
-            if isinstance(x, dict):
-                out.append(x)
-            elif isinstance(x, str):
-                try:
-                    out.append(json.loads(x))
-                except Exception:
-                    pass
-        return out
-    if isinstance(val, str) and val.strip():
-        try:
-            parsed = json.loads(val)
-            return parsed if isinstance(parsed, list) else []
-        except Exception:
-            return []
-    return []
+def _qa_from_row(qa_val) -> dict | None:
+    """One QA dict from the `qa` column (a JSON string)."""
+    try:
+        d = qa_val if isinstance(qa_val, dict) else json.loads(qa_val)
+    except Exception:
+        return None
+    if "question" not in d or "answer" not in d:
+        return None
+    return {"question": d["question"], "answer": d["answer"], "type": d.get("type", "dim")}
 
 
 def main():
-    ap = argparse.ArgumentParser(description="Download BenchCAD code-qa-bench → data/")
+    ap = argparse.ArgumentParser(description="Download BenchCAD QA bench → data/")
     ap.add_argument("--out", type=Path, default=DEFAULT_OUT,
                     help=f"Extract dir (default: {DEFAULT_OUT.relative_to(ROOT)}/)")
     ap.add_argument("--cache-dir", type=Path, default=None,
                     help="HF download cache (default: $HF_HOME)")
+    ap.add_argument("--limit", type=int, default=None,
+                    help="only write the first N records/parts (for small smoke sets)")
     args = ap.parse_args()
 
-    print(f"snapshot_download {REPO} :: {SUBDIR}/* ...")
-    snap = Path(snapshot_download(
-        repo_id=REPO,
-        repo_type="dataset",
-        allow_patterns=f"{SUBDIR}/*",
-        cache_dir=args.cache_dir,
-    ))
-    parquet_files = sorted((snap / SUBDIR).rglob("*.parquet"))
-    if not parquet_files:
-        sys.exit(f"no .parquet files under {snap / SUBDIR}")
-    df = pd.concat([pd.read_parquet(p) for p in parquet_files], ignore_index=True)
-    print(f"  loaded {len(df)} rows from {len(parquet_files)} parquet shard(s)")
+    print(f"hf_hub_download {REPO} :: {PARQUET} ...")
+    df = pd.read_parquet(hf_hub_download(
+        REPO, PARQUET, repo_type="dataset", cache_dir=args.cache_dir))
+    print(f"  loaded {len(df)} QA rows over {df['stem'].nunique()} parts")
 
     out: Path = args.out
     (out / "codes").mkdir(parents=True, exist_ok=True)
 
     rows = []
-    for r in df.itertuples(index=False):
-        rid = r.record_id
-        code_path = f"codes/{rid}.py"
-        (out / code_path).write_text(r.gt_code)
+    for stem, group in df.groupby("stem", sort=False):
+        if args.limit is not None and len(rows) >= args.limit:
+            break
+        qa_pairs = [qa for qa in (_qa_from_row(v) for v in group["qa"]) if qa]
+        if not qa_pairs:
+            continue
+        code_path = f"codes/{stem}.py"
+        (out / code_path).write_text(group.iloc[0]["gt_code"])
         rows.append({
-            "record_id": rid,
-            "family":    getattr(r, "family", "") or "",
+            "record_id": stem,
+            "family": group.iloc[0].get("family", "") or "",
             "code_path": code_path,
-            "qa_pairs":  _coerce_qa(getattr(r, "qa_pairs", None)),
+            "qa_pairs": qa_pairs,
         })
 
     records_jsonl = out / "records.jsonl"
     with records_jsonl.open("w") as f:
         for row in rows:
             f.write(json.dumps(row, ensure_ascii=False) + "\n")
-    print(f"wrote {len(rows)} records → {records_jsonl}")
+    print(f"wrote {len(rows)} records ({sum(len(r['qa_pairs']) for r in rows)} QA) → {records_jsonl}")
     print(f"        codes/ → {out}/codes/")
 
 
