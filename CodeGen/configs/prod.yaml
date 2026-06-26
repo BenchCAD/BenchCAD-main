@@ -13,3 +13,8 @@ models:
 #  - claude-opus-4-7
 #  - claude-opus-4-7:reasoning=high
 #  - gemini-3-pro-preview
+
+# Optional: let the model render its own candidate and verify it before submitting
+# (the "with Python tools" setting). Omit or set rounds<=1 for plain single-shot.
+# render_verify:
+#   rounds: 3
