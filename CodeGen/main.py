@@ -37,6 +37,7 @@ ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT))
 
 from pipeline.runner import run_record  # noqa: E402
+from pipeline.render_verify import run_record_with_tools  # noqa: E402
 
 DEFAULT_CONFIG = ROOT / "configs" / "test.yaml"
 REQUIRED_FIELDS = ("data_dir", "out_dir", "models")
@@ -104,6 +105,7 @@ def do_run(cfg: dict, args) -> None:
     data_dir = Path(cfg["data_dir"])
     out_dir  = Path(cfg["out_dir"])
     models   = list(cfg["models"])
+    rv_rounds = int((cfg.get("render_verify") or {}).get("rounds", 0))  # 0/1 = single-shot
 
     out_dir.mkdir(parents=True, exist_ok=True)
     records = load_records(data_dir)
@@ -113,14 +115,20 @@ def do_run(cfg: dict, args) -> None:
     if args.limit:
         records = records[: args.limit]
 
+    mode = f"render-verify ({rv_rounds} rounds)" if rv_rounds >= 2 else "single-shot"
     print(f"config: {args.config}")
     print(f"data:   {data_dir}")
     print(f"out:    {out_dir}")
+    print(f"mode:   {mode}")
     print(f"runs:   {len(records)} record(s) × {len(models)} model(s)")
     for model in models:
         for i, rec in enumerate(records, 1):
             print(f"  [{model}] {i}/{len(records)} {rec['record_id']}", end=" ... ", flush=True)
-            row = run_record(record=rec, data_dir=data_dir, results_root=out_dir, model=model)
+            if rv_rounds >= 2:
+                row = run_record_with_tools(record=rec, data_dir=data_dir, results_root=out_dir,
+                                            model=model, rounds=rv_rounds)
+            else:
+                row = run_record(record=rec, data_dir=data_dir, results_root=out_dir, model=model)
             print(f"{row['status']:10s} iou={row['iou']:.3f}  ({row['lat_s']:.1f}s)")
     _print_results_summary(out_dir)
 

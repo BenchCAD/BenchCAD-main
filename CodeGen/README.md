@@ -68,6 +68,24 @@ Output (per config's `out_dir`, relative to `CodeGen/`):
 `results.jsonl` is **overwrite-keyed** by `(model, record_id)` —
 re-running a tuple replaces the old row, never duplicates.
 
+## Render-and-verify (tool-assisted runs)
+
+By default each record is **single-shot** — the model writes CadQuery once from the target views.
+To reproduce the *with Python tools* setting (the model renders its own candidate and visually
+verifies it before submitting, which lifts Vision2Code scores substantially), add `render_verify`
+to a config:
+
+```yaml
+render_verify:
+  rounds: 3        # total attempts incl. the first single-shot (1 = plain single-shot)
+```
+
+Round 1 is the normal single-shot. In each later round the current candidate is rendered in the
+**same 4 views** (the same `scoring/views` renderer used everywhere) and shown to the model next to
+the target; the model returns a corrected program, kept only if it still executes to a valid STEP.
+Scoring (voxel IoU vs GT) is unchanged, so the number stays directly comparable to a single-shot
+run. Each `results.jsonl` row gains a `rounds` field (attempts actually used).
+
 ## Score: voxel IoU
 
 For each `(model, record)`:
