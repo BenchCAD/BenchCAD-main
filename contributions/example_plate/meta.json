@@ -1,0 +1,9 @@
+{
+  "family": "plate",
+  "variant": "standard",
+  "difficulty": "easy",
+  "base_plane": "XY",
+  "standard": null,
+  "source": "example template",
+  "contributor": "BenchCAD"
+}
