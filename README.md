@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="assets/benchcad-icon.png" alt="BenchCAD" width="90" />
+
 # BenchCAD
 
 **A benchmark for evaluating LLMs and multimodal models on programmatic CAD.**
@@ -58,16 +60,25 @@ cp .env.example .env   # then paste OPENAI / ANTHROPIC / GEMINI / OPENROUTER key
 
 ## Quick start
 
+After `uv sync` and pasting a key into `.env`, one command runs everything:
+
 ```bash
-# Smoke-run all three tasks end-to-end (4 records each, gpt-4o)
+# Smoke-run all three tasks (default `test` config, ~4 records each)
 uv run python run_all.py
 
-# A single task
-uv run python run_all.py --task codegen
-
-# The full benchmark (one-time HuggingFace download per task)
+# The full benchmark — all three tasks, full split (one-time HF download per task)
 uv run python run_all.py --config prod
+
+# A reproducible random subset: 100 records per task, seed 42
+uv run python run_all.py --config prod --limit 100 --seed 42
+
+# A single task (one of: vision2code / codeedit / qa)
+uv run python run_all.py --task vision2code --config prod
 ```
+
+Flags: `--config` is the config *name* (`test` smoke / `prod` full), **not** a
+number; `--limit N` caps to N records (first N, or a random N with `--seed S`);
+`--seed S` makes the `--limit` sample reproducible.
 
 `--config <name>` resolves to `<Task>/configs/<name>.yaml`. Each task is also
 runnable on its own (`cd Vision2Code && uv run python main.py`); see the per-task
@@ -76,13 +87,13 @@ READMEs for options.
 ## Dataset
 
 Hosted on HuggingFace at [`BenchCAD/BenchCAD`](https://huggingface.co/datasets/BenchCAD/BenchCAD)
-and pulled into the gitignored `data/` folder on first `prod` run. Three configs:
+and pulled into the gitignored `data/` folder on first `prod` run. One config per task:
 
-| Config | Size | Contents |
-|---|---|---|
-| `code_gen` | 17,900 | GT CadQuery code + 4 rendered views per part (106 families) |
-| `QA` | 2,400 | numeric questions over 200 parts (dimensions, counts, ratios) |
-| `edit-bench` | held-out | instruction-guided edit benchmark |
+| Task | Config | Size | Contents |
+|---|---|---|---|
+| Vision2Code | `code_gen` | 17,900 | GT CadQuery code + 4 rendered views per part (106 families) |
+| CodeEdit | `edit-bench` | 748 | instruction-guided edit benchmark (held-out) |
+| QA | `QA` | 2,400 | numeric questions over 200 parts (dimensions, counts, ratios) |
 
 A tiny `test_data/` (≈4 records) is committed per task for smoke tests without any
 download. Dataset schema and column details are documented on the dataset card.
@@ -91,7 +102,8 @@ download. Dataset schema and column details are documented on the dataset card.
 
 | Task | How a prediction is graded |
 |---|---|
-| Vision2Code / CodeEdit | the model's code is executed to a STEP solid, voxelized on a normalized 64³ grid, and compared to the ground-truth solid by IoU (`|A∩B| / |A∪B|`) |
+| Vision2Code | the model's code is executed to a STEP solid, voxelized on a normalized 64³ grid, and compared to the ground-truth solid by voxel IoU (`|A∩B| / |A∪B|`) |
+| CodeEdit | the same voxel IoU, **normalized** as the model's improvement over the unedited program toward the target: `(IoU_model − IoU_orig) / (1 − IoU_orig)`, clipped to `[0, 1]` |
 | QA | each numeric answer is scored by `min(pred, gt) / max(pred, gt)`; exact match for counts / integers / yes-no |
 
 No external judge model is involved, so any submission can be re-graded to the
@@ -104,7 +116,7 @@ BenchCAD/
 ├── run_all.py              one-click runner across all three tasks
 ├── pyproject.toml          shared, pinned environment
 ├── Vision2Code/  CodeEdit/  QA/    the three tasks (main.py · configs/ · pipeline/ · scoring/)
-├── tools/                  regrade / validate_task / ingest_to_hf
+├── tools/                  regrade / validate_task / validate_family / ingest_to_hf
 └── contributions/          community-submitted parts (see CONTRIBUTING.md)
 ```
 

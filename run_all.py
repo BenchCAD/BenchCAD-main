@@ -13,8 +13,8 @@ Usage
     uv run python run_all.py --config prod
 
     # Just one:
-    uv run python run_all.py --task codegen
-    uv run python run_all.py --task codeqa --config prod
+    uv run python run_all.py --task vision2code
+    uv run python run_all.py --task qa --config prod
 
     # Plot results for all three (or one):
     uv run python run_all.py --plot
@@ -37,9 +37,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 
 TASKS = {
-    "codeedit": "CodeEdit",
-    "codegen":  "Vision2Code",
-    "codeqa":   "QA",
+    "vision2code": "Vision2Code",
+    "codeedit":    "CodeEdit",
+    "qa":          "QA",
 }
 
 
