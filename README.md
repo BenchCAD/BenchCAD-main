@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="assets/benchcad-icon.png" alt="BenchCAD" width="90" />
+
 # BenchCAD
 
 **A benchmark for evaluating LLMs and multimodal models on programmatic CAD.**
