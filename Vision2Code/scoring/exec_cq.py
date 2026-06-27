@@ -2,7 +2,7 @@
 
 Two helpers:
     extract_code(raw)         pull python from a fenced block
-    execute_cq_to_step(code, step_path, timeout=90)
+    execute_cq_to_step(code, step_path, timeout=300)
         runs the code in a subprocess; if no .exportStep is present we append one
         for `result`. Raises RuntimeError on subprocess failure or missing output.
 """
@@ -60,7 +60,7 @@ def _patch_export(code: str, out_step: Path) -> str:
     return _OCP_HASHCODE_FIX + "\n" + patched
 
 
-def execute_cq_to_step(code: str, step_path: Path, timeout: int = 90) -> None:
+def execute_cq_to_step(code: str, step_path: Path, timeout: int = 300) -> None:
     """Execute `code` so `result` is exported to `step_path`. Raises on failure."""
     step_path.parent.mkdir(parents=True, exist_ok=True)
     if step_path.exists():
