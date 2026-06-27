@@ -8,7 +8,7 @@ labels: bug
 **Task**: Vision2Code / CodeEdit / QA / shared
 
 **What happened**
-<!-- Include the exact command, e.g. `uv run python run_all.py --task vision2code`. -->
+<!-- Include the exact command, e.g. `uv run python benchcad.py --task vision2code`. -->
 
 **Expected**
 

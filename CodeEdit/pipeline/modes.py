@@ -45,7 +45,7 @@ def _instruction_only(record: dict, data_dir: Path) -> tuple[str, str, list[Path
 
 
 def _image_only(record: dict, data_dir: Path) -> tuple[str, str, list[Path]]:
-    from scoring.views import composite_for_step
+    from benchcad_core.scoring.views import composite_for_step
     orig_code = _read(data_dir / record["orig_code_path"])
     orig_png = composite_for_step(data_dir / record["orig_step_path"])
     gt_png   = composite_for_step(data_dir / record["gt_step_path"])
@@ -59,7 +59,7 @@ def _image_only(record: dict, data_dir: Path) -> tuple[str, str, list[Path]]:
 
 
 def _ablation(record: dict, data_dir: Path) -> tuple[str, str, list[Path]]:
-    from scoring.views import composite_for_step
+    from benchcad_core.scoring.views import composite_for_step
     orig_code = _read(data_dir / record["orig_code_path"])
     orig_png = composite_for_step(data_dir / record["orig_step_path"])
     gt_png   = composite_for_step(data_dir / record["gt_step_path"])

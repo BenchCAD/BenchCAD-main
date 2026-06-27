@@ -60,29 +60,34 @@ cp .env.example .env   # then paste OPENAI / ANTHROPIC / GEMINI / OPENROUTER key
 
 ## Quick start
 
-After `uv sync` and pasting a key into `.env`, one command runs everything:
+After `uv sync` and pasting a key into `.env`, one command runs everything —
+data is pulled from HuggingFace on demand, nothing to download by hand:
 
 ```bash
-# Smoke-run all three tasks (default `test` config, ~4 records each)
-uv run python run_all.py
+# Quick smoke: all three tasks, 5 records each
+uv run python benchcad.py --model gpt-4o
 
-# The full benchmark — all three tasks, full split (one-time HF download per task)
-uv run python run_all.py --config prod
+# The full benchmark: all three tasks, full split
+uv run python benchcad.py --task all --num all --model gpt-4o
 
-# A reproducible random subset: 100 records per task, seed 42
-uv run python run_all.py --config prod --limit 100 --seed 42
+# One task, 100 records, reproducible random sample
+uv run python benchcad.py --task vision2code --num 100 --model claude-opus-4-7 --seed 42
 
-# A single task (one of: vision2code / codeedit / qa)
-uv run python run_all.py --task vision2code --config prod
+# Several models at once; composite (fused) scoring for Vision2Code
+uv run python benchcad.py --num all --model gpt-4o gemini-3-pro-preview --score composite
 ```
 
-Flags: `--config` is the config *name* (`test` smoke / `prod` full), **not** a
-number; `--limit N` caps to N records (first N, or a random N with `--seed S`);
-`--seed S` makes the `--limit` sample reproducible.
+| Flag | Meaning |
+|---|---|
+| `--task` | `all` (default) / `vision2code` / `codeedit` / `qa` |
+| `--num` | `all`, or a number of records per task (default `5`, a smoke) |
+| `--model` | one or more model names (**required**) |
+| `--seed` | reproducible random `--num N` sample |
+| `--score` | Vision2Code scoring: `iou` (default) or `composite` |
 
-`--config <name>` resolves to `<Task>/configs/<name>.yaml`. Each task is also
-runnable on its own (`cd Vision2Code && uv run python main.py`); see the per-task
-READMEs for options.
+Each task is also runnable on its own with finer control
+(`cd Vision2Code && uv run python main.py --config configs/prod.yaml --model gpt-4o`);
+see the per-task READMEs.
 
 ## Dataset
 
@@ -113,7 +118,7 @@ same number — see [`tools/regrade.py`](tools/regrade.py).
 
 ```
 BenchCAD/
-├── run_all.py              one-click runner across all three tasks
+├── benchcad.py             one-click runner (--task / --num / --model)
 ├── pyproject.toml          shared, pinned environment
 ├── Vision2Code/  CodeEdit/  QA/    the three tasks (main.py · configs/ · pipeline/ · scoring/)
 ├── tools/                  regrade / validate_task / validate_family / ingest_to_hf

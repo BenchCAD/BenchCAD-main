@@ -30,7 +30,7 @@ USER_PROMPT = (
 
 
 def build(record: dict, data_dir: Path) -> tuple[str, str, list[Path]]:
-    from scoring.views import composite_for_step
+    from benchcad_core.scoring.views import composite_for_step
     step = data_dir / record["step_path"]
     png = composite_for_step(step)
     return SYSTEM_PROMPT, USER_PROMPT, [png]

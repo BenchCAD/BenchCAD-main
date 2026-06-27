@@ -72,7 +72,7 @@ def run_record(*, record: dict, data_dir: Path, results_root: Path,
     system, user_text, image_paths = build_prompt(record, data_dir, mode=mode)
 
     # 2. Call model (text-only)
-    from models import call_model
+    from benchcad_core.models import call_model
     t0 = time.time()
     try:
         raw = call_model(model=model, system=system, user_text=user_text,
