@@ -1,7 +1,7 @@
 [project]
 name = "benchcad"
 version = "0.1.0"
-description = "BenchCAD: CodeEdit / CodeGen / CodeQA benchmarks for CAD code understanding"
+description = "BenchCAD: CodeEdit / Vision2Code / QA benchmarks for CAD code understanding"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
@@ -60,15 +60,22 @@ override-dependencies = ["numpy>=1.26"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
-testpaths = ["CodeGen/tests", "CodeQA/tests"]
+testpaths = ["Vision2Code/tests", "QA/tests"]
 
 [tool.ruff]
 line-length = 88
 target-version = "py311"
+# test_data/ and contributions/ hold CadQuery *programs* (benchmark data), not
+# source — they use editor builtins like show_object and aren't linted.
+extend-exclude = ["**/test_data", "contributions"]
 
 [tool.ruff.lint]
 select = ["E", "W", "F", "I", "B", "C4", "UP"]
 ignore = [
     "E501",  # line length (black handles)
     "B008",  # function calls in arg defaults (common with cadquery patterns)
+    "E702",  # multiple statements on a line (intentional compact style in views/iou)
+    "E741",  # ambiguous var names (l/I/O occur in the geometry code)
+    "B905",  # zip() without strict= (lengths are known-equal here)
+    "C408",  # dict() call vs literal (stylistic)
 ]

@@ -1,4 +1,4 @@
-"""BenchCAD CodeGen — Prime Intellect Environments Hub.
+"""BenchCAD Vision2Code — Prime Intellect Environments Hub.
 
 Given rendered views of a mechanical part, the model writes a CadQuery program.
 Reward = voxel IoU between the model's executed STEP solid and the ground-truth
@@ -8,7 +8,7 @@ Benchmark: https://github.com/BenchCAD/BenchCAD-main  ·  paper: arXiv:2605.1086
 Data:      https://huggingface.co/datasets/BenchCAD/BenchCAD  (config `code_gen`)
 
 The execution + voxel-IoU helpers below are vendored verbatim from the canonical
-scorer (`BenchCAD/BenchCAD-main`, `CodeGen/scoring/{exec_cq,iou}.py`) so this
+scorer (`BenchCAD/BenchCAD-main`, `Vision2Code/scoring/{exec_cq,iou}.py`) so this
 environment is a self-contained, publishable package. That repo remains the
 source of truth; keep these in sync with it.
 """
@@ -35,7 +35,7 @@ SYSTEM_PROMPT = (
 )
 
 # ============================================================================
-# Vendored from BenchCAD/BenchCAD-main CodeGen/scoring/exec_cq.py
+# Vendored from BenchCAD/BenchCAD-main Vision2Code/scoring/exec_cq.py
 # ============================================================================
 _FENCE = re.compile(r"```(?:python|py|cadquery)?\s*\n(.*?)```", re.DOTALL)
 
@@ -97,7 +97,7 @@ def execute_cq_to_step(code: str, step_path: Path, timeout: int = 90) -> None:
 
 
 # ============================================================================
-# Vendored from BenchCAD/BenchCAD-main CodeGen/scoring/iou.py
+# Vendored from BenchCAD/BenchCAD-main Vision2Code/scoring/iou.py
 # ============================================================================
 def _ocp_hashcode_fix():
     from OCP.TopoDS import (
@@ -191,7 +191,7 @@ def _completion_text(completion) -> str:
 
 
 def load_environment(num_examples: int | None = None, **kwargs) -> vf.Environment:
-    """Load the BenchCAD CodeGen environment.
+    """Load the BenchCAD Vision2Code environment.
 
     Args:
         num_examples: if set, evaluate on the first N parts (handy for quick runs).

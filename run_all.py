@@ -1,4 +1,4 @@
-"""One-click runner for all three benchmarks (CodeEdit / CodeGen / CodeQA).
+"""One-click runner for all three benchmarks (CodeEdit / Vision2Code / QA).
 
 Each task is also independently runnable via its own `main.py`. This wrapper
 just dispatches to one or all of them with a shared config name (`test` or
@@ -38,8 +38,8 @@ ROOT = Path(__file__).resolve().parent
 
 TASKS = {
     "codeedit": "CodeEdit",
-    "codegen":  "CodeGen",
-    "codeqa":   "CodeQA",
+    "codegen":  "Vision2Code",
+    "codeqa":   "QA",
 }
 
 
@@ -54,7 +54,7 @@ def _run_task(task_dir: Path, config_name: str, extras: list[str]) -> int:
 
 
 def main() -> None:
-    ap = argparse.ArgumentParser(description="One-click runner: CodeEdit / CodeGen / CodeQA")
+    ap = argparse.ArgumentParser(description="One-click runner: CodeEdit / Vision2Code / QA")
     ap.add_argument("--task", choices=[*TASKS, "all"], default="all",
                     help="Which task to run (default: all)")
     ap.add_argument("--config", default="test",
@@ -64,7 +64,9 @@ def main() -> None:
     ap.add_argument("--records", nargs="*", default=None,
                     help="Debug override: only run these record_ids.")
     ap.add_argument("--limit", type=int, default=None,
-                    help="Debug override: cap to first N records.")
+                    help="Cap each task to N records (first N, or a random N with --seed).")
+    ap.add_argument("--seed", type=int, default=None,
+                    help="Random-sample --limit records with this seed (reproducible).")
     args = ap.parse_args()
 
     extras: list[str] = []
@@ -74,6 +76,8 @@ def main() -> None:
         extras += ["--records", *args.records]
     if args.limit is not None:
         extras += ["--limit", str(args.limit)]
+    if args.seed is not None:
+        extras += ["--seed", str(args.seed)]
 
     targets = list(TASKS) if args.task == "all" else [args.task]
     rcs: dict[str, int] = {}
@@ -83,7 +87,7 @@ def main() -> None:
     print("\n=== summary ===")
     for key in targets:
         rc = rcs[key]
-        print(f"  {TASKS[key]:<10}{'OK' if rc == 0 else f'FAIL rc={rc}'}")
+        print(f"  {TASKS[key]:<13}{'OK' if rc == 0 else f'FAIL rc={rc}'}")
     sys.exit(0 if all(rc == 0 for rc in rcs.values()) else 1)
 
 

@@ -1,0 +1,13 @@
+# Full image-based bench: 200 stems × 12 QAs (qa_2400).
+# Populate first:
+#   uv run python tools/download_qa_img.py
+# Paths are relative to QA/.
+
+mode:     img
+data_dir: data_qa_img
+out_dir:  results_prod_img
+
+models:
+  - gpt-4o
+  - claude-opus-4-7
+  - gemini-2.5-pro

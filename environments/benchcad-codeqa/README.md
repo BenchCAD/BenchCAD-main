@@ -24,6 +24,6 @@ N questions; omit for the full set.
 ## Notes
 
 The numeric scoring is vendored from the canonical scorer
-(`BenchCAD/BenchCAD-main`, `CodeQA/scoring/qa_score.py`); that repo is the source
+(`BenchCAD/BenchCAD-main`, `QA/scoring/qa_score.py`); that repo is the source
 of truth. See also the heavier execution-based [`benchcad-codegen`](../benchcad-codegen)
 (image → CadQuery program, scored by voxel IoU).

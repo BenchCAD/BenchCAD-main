@@ -14,9 +14,10 @@ import json
 import time
 from pathlib import Path
 
-from pipeline.modes import build as build_prompt
 from scoring.exec_cq import execute_cq_to_step, extract_code
 from scoring.iou import iou_step_vs_step, norm_iou
+
+from pipeline.modes import build as build_prompt
 
 
 def _safe_model(m: str) -> str:

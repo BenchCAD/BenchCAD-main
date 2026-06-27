@@ -24,11 +24,11 @@ HF is the published artifact; maintainers regenerate it from accepted families
 
 | What | Requirement | Why (live-dataset reference) |
 |---|---|---|
-| **CodeGen parts** | a parametric generator `build(difficulty, seed) -> CadQuery code` that yields parts across **all three difficulties** `easy / medium / hard`, **≥ ~50 per difficulty** | every family covers all 3; median ≈ 55–58 parts per difficulty (~169 total) |
+| **Vision2Code parts** | a parametric generator `build(difficulty, seed) -> CadQuery code` that yields parts across **all three difficulties** `easy / medium / hard`, **≥ ~50 per difficulty** | every family covers all 3; median ≈ 55–58 parts per difficulty (~169 total) |
 | `meta` per part | `family`, `variant` (default `"standard"`), `difficulty`, `base_plane` ∈ `{XY,XZ,YZ}`, `standard` (ISO/DIN/ASME or `null`) | exact code_gen schema |
-| **CodeQA** | QA on **≥ 2 representative parts**, **exactly 12 questions each**; mix the types ~ `integer` (incl. count/yes-no) **≈70%**, `dim` **≈15%**, `ratio` **≈15%**; spread difficulty `level` across **L1–L6** (weight L3–L4) | 200 annotated parts × 12 QA; types 73/14/13%; levels L1–L6 |
+| **QA** | QA on **≥ 2 representative parts**, **exactly 12 questions each**; mix the types ~ `integer` (incl. count/yes-no) **≈70%**, `dim` **≈15%**, `ratio` **≈15%**; spread difficulty `level` across **L1–L6** (weight L3–L4) | 200 annotated parts × 12 QA; types 73/14/13%; levels L1–L6 |
 | answer types | numeric only — `integer` / `count` / `dim` / `ratio` / `boolean` | — |
-| **CodeEdit** | each edit takes a **prototype part** (a generated CodeGen part, which carries its `easy/medium/hard` difficulty) and changes it. Cover **all three prototype difficulties, ≈2–3 edits each** (≈6–9 total). Every edit must change the geometry (resulting IoU < 1). | 748 edits, ~6–7 per family, all non-trivial (median IoU 0.765) |
+| **CodeEdit** | each edit takes a **prototype part** (a generated Vision2Code part, which carries its `easy/medium/hard` difficulty) and changes it. Cover **all three prototype difficulties, ≈2–3 edits each** (≈6–9 total). Every edit must change the geometry (resulting IoU < 1). | 748 edits, ~6–7 per family, all non-trivial (median IoU 0.765) |
 | edit `category` | tag each edit with its **edit type** `T1`–`T5`: `T1` literal_replace · `T2` chain_transform · `T3` relative_compute · `T4` feature_edit · `T5` geometry_rebuild (this is the *kind* of edit, independent of the prototype difficulty) | edit-bench category taxonomy |
 
 ### Layout
@@ -47,12 +47,17 @@ contributions/<family>/
 (A single self-contained part — like `contributions/example_plate/` — is also
 accepted for smoke-testing the gate, but a *family* must meet the table above.)
 
-**Automated gate** (CI runs `tools/validate_task.py` per generated part; no API keys):
+**Validation gate** — run `tools/validate_task.py` per part and
+`tools/validate_family.py` for the whole family before opening the PR (no API
+keys needed). They check:
 1. each part executes and exports a valid STEP solid;
 2. it renders to the 4-view composite without error;
 3. `meta` is well-formed (required keys, valid `difficulty` / `base_plane` / `type`);
 4. its geometry hash does not duplicate an existing part;
 5. family-level coverage (difficulty counts, ≥2 QA×12, 2–3 edits/difficulty) is met.
+
+(CI on every PR runs `ruff` + the offline scoring tests; the validation gate
+above is run by you and re-checked by a maintainer on review.)
 
 **Human gate:** a maintainer reviews that `family` / `standard` labels are
 engineering-correct, and that questions are unambiguous and answerable from the
@@ -98,7 +103,7 @@ Normal GitHub flow:
 
 - One PR = one purpose; keep the diff minimal and match the surrounding style.
 - Every behavior change ships a test that fails before and passes after
-  (see `CodeQA/tests/`, `CodeGen/tests/`).
+  (see `QA/tests/`, `Vision2Code/tests/`).
 - Run the checks locally:
   ```bash
   uv run ruff check .

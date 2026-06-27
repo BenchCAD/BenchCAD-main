@@ -53,9 +53,9 @@ def make_bar(results_jsonl: Path, out_png: Path) -> Path:
 
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
-    from matplotlib.patches import Patch
     import numpy as np
     import seaborn as sns
+    from matplotlib.patches import Patch
 
     rows = _load(results_jsonl)
     agg = _aggregate(rows)

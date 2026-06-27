@@ -1,8 +1,8 @@
 """Shared loaders for the per-task scoring / rendering modules.
 
 The three contributor tools (regrade, validate_task, ingest_to_hf) all need the
-official scoring and rendering code that lives under `CodeQA/scoring/` and
-`CodeGen/scoring/`. Those two dirs both ship a package literally named `scoring`,
+official scoring and rendering code that lives under `QA/scoring/` and
+`Vision2Code/scoring/`. Those two dirs both ship a package literally named `scoring`,
 so a plain `import scoring.*` collides. Load each module once, by path, here —
 so no tool re-implements scoring/rendering and none duplicate this loader.
 """
@@ -23,20 +23,20 @@ def _load(name: str, rel: str):
 
 
 def qa_score():
-    """CodeQA numeric scoring (parse_json_numbers, qa_score, qa_score_single)."""
-    return _load("benchcad_qa_score", "CodeQA/scoring/qa_score.py")
+    """QA numeric scoring (parse_json_numbers, qa_score, qa_score_single)."""
+    return _load("benchcad_qa_score", "QA/scoring/qa_score.py")
 
 
 def exec_cq():
-    """CodeGen CadQuery execution (extract_code, execute_cq_to_step)."""
-    return _load("benchcad_exec_cq", "CodeGen/scoring/exec_cq.py")
+    """Vision2Code CadQuery execution (extract_code, execute_cq_to_step)."""
+    return _load("benchcad_exec_cq", "Vision2Code/scoring/exec_cq.py")
 
 
 def iou():
-    """CodeGen voxel IoU (iou_step_vs_step, norm_iou)."""
-    return _load("benchcad_iou", "CodeGen/scoring/iou.py")
+    """Vision2Code voxel IoU (iou_step_vs_step, norm_iou)."""
+    return _load("benchcad_iou", "Vision2Code/scoring/iou.py")
 
 
 def views():
-    """CodeGen STEP rendering (composite_for_step, _step_to_normalized_mesh)."""
-    return _load("benchcad_views", "CodeGen/scoring/views.py")
+    """Vision2Code STEP rendering (composite_for_step, _step_to_normalized_mesh)."""
+    return _load("benchcad_views", "Vision2Code/scoring/views.py")

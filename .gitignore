@@ -18,12 +18,10 @@ venv/
 data/
 */data/
 
-# Run outputs
+# Run outputs (STEP/PNG artifacts live under these; committed test_data/ is not ignored)
 results/
 */results/
 */results_*/
-*.step
-*.STEP
 
 # OS / editor
 .DS_Store

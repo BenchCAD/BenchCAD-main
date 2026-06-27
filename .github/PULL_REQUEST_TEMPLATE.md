@@ -2,7 +2,7 @@
 
 ## What this changes
 
-<!-- One or two sentences. Which task (CodeGen / CodeEdit / CodeQA) or shared infra? -->
+<!-- One or two sentences. Which task (Vision2Code / CodeEdit / QA) or shared infra? -->
 
 ## Type
 

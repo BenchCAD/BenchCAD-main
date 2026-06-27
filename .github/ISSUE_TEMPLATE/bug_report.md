@@ -5,7 +5,7 @@ title: "[bug] "
 labels: bug
 ---
 
-**Task**: CodeGen / CodeEdit / CodeQA / shared
+**Task**: Vision2Code / CodeEdit / QA / shared
 
 **What happened**
 <!-- Include the exact command, e.g. `uv run python run_all.py --task codegen`. -->
