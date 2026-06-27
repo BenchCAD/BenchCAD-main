@@ -3,7 +3,7 @@ name = "benchcad"
 version = "0.1.0"
 description = "BenchCAD: CodeEdit / Vision2Code / QA benchmarks for CAD code understanding"
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.11,<3.14"
 dependencies = [
     # LLM SDKs (used by all 3 tasks)
     "openai>=2.15.0",
