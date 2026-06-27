@@ -64,8 +64,8 @@ cp .env.example .env   # then paste OPENAI / ANTHROPIC / GEMINI / OPENROUTER key
 # Smoke-run all three tasks end-to-end (4 records each, gpt-4o)
 uv run python run_all.py
 
-# A single task
-uv run python run_all.py --task codegen
+# A single task (one of: vision2code / codeedit / qa)
+uv run python run_all.py --task vision2code
 
 # The full benchmark (one-time HuggingFace download per task)
 uv run python run_all.py --config prod
