@@ -25,6 +25,13 @@ def generate(*, model: str, system: str, user_text: str,
         real_model, level = model.split(":reasoning=", 1)
         if level in ("high", "medium"):
             thinking = {"type": "enabled", "budget_tokens": 8000 if level == "high" else 4000}
+            # Extended thinking is drawn from max_tokens; floor it so the thinking
+            # budget doesn't starve the final code block. Anthropic requires
+            # max_tokens > budget_tokens, with room left over for the output.
+            max_tokens = max(max_tokens, 16000)
+            # Extended thinking can take ~2 min; floor the request timeout so a
+            # slow thinking response isn't cut off (call_model default is 120s).
+            timeout = max(timeout, 600)
 
     content: list = [{"type": "text", "text": user_text}]
     for p in image_paths:
