@@ -23,8 +23,9 @@ BenchCAD evaluates whether a model can *understand and write parametric CAD code
 mechanical parts. It is built on **17,900 execution-verified CadQuery programs**
 across **106 industrial part families** (bevel gears, compression springs, twist
 drills, threaded adapters, …) drawn from **49 engineering standards** (ISO / DIN /
-ASME). The benchmark decomposes model ability into three tasks spanning
-perception, parametric abstraction, and executable synthesis.
+ASME). The benchmark decomposes model ability into four tasks (across three task
+dirs — QA splits into a vision and a code variant) spanning perception,
+parametric abstraction, and executable synthesis.
 
 > **Scoring is execution-grounded and deterministic — there is no LLM judge.**
 > Generation tasks grade by *voxel IoU* between the model's executed STEP solid and
@@ -37,7 +38,8 @@ perception, parametric abstraction, and executable synthesis.
 |---|---|---|
 | **Vision2Code** (`Vision2Code/`) | rendered views of a part → a CadQuery program | voxel IoU vs ground-truth STEP |
 | **CodeEdit** (`CodeEdit/`) | instruction (+ part) → edit an existing CadQuery program | normalized IoU (improvement over baseline) |
-| **QA** (`QA/`) | part as code / image / both → numeric answers | symmetric ratio accuracy |
+| **Vision-QA** (`QA/`, `mode: img`) | rendered views + a numeric question → a number | symmetric ratio accuracy |
+| **Code-QA** (`QA/`, `mode: code`) | CadQuery code + a numeric question → a number | symmetric ratio accuracy |
 
 ## Why BenchCAD
 
@@ -93,7 +95,7 @@ and pulled into the gitignored `data/` folder on first `prod` run. One config pe
 |---|---|---|---|
 | Vision2Code | `code_gen` | 17,900 | GT CadQuery code + 4 rendered views per part (106 families) |
 | CodeEdit | `edit-bench` | 748 | instruction-guided edit benchmark (held-out) |
-| QA | `QA` | 2,400 | numeric questions over 200 parts (dimensions, counts, ratios) |
+| Vision-QA / Code-QA | `QA` | 2,400 | numeric questions over 200 parts (dimensions, counts, ratios); asked from the rendered image (`mode: img`) or the CadQuery code (`mode: code`) |
 
 A tiny `test_data/` (≈4 records) is committed per task for smoke tests without any
 download. Dataset schema and column details are documented on the dataset card.
@@ -104,7 +106,7 @@ download. Dataset schema and column details are documented on the dataset card.
 |---|---|
 | Vision2Code | the model's code is executed to a STEP solid, voxelized on a normalized 64³ grid, and compared to the ground-truth solid by voxel IoU (`|A∩B| / |A∪B|`) |
 | CodeEdit | the same voxel IoU, **normalized** as the model's improvement over the unedited program toward the target: `(IoU_model − IoU_orig) / (1 − IoU_orig)`, clipped to `[0, 1]` |
-| QA | each numeric answer is scored by `min(pred, gt) / max(pred, gt)`; exact match for counts / integers / yes-no |
+| Vision-QA & Code-QA | each numeric answer is scored by `min(pred, gt) / max(pred, gt)`; exact match for counts / integers / yes-no (same metric for both the image and code variant) |
 
 No external judge model is involved, so any submission can be re-graded to the
 same number — see [`tools/regrade.py`](tools/regrade.py).
@@ -115,7 +117,7 @@ same number — see [`tools/regrade.py`](tools/regrade.py).
 BenchCAD/
 ├── run_all.py              one-click runner across all three tasks
 ├── pyproject.toml          shared, pinned environment
-├── Vision2Code/  CodeEdit/  QA/    the three tasks (main.py · configs/ · pipeline/ · scoring/)
+├── Vision2Code/  CodeEdit/  QA/    three task dirs — QA serves Vision-QA + Code-QA (mode: img / code)
 ├── tools/                  regrade / validate_task / validate_family / ingest_to_hf
 └── contributions/          community-submitted parts (see CONTRIBUTING.md)
 ```
