@@ -23,6 +23,10 @@ results/
 */results/
 */results_*/
 
+# Prime Intellect env push state (per-machine, regenerated on push)
+.prime/
+**/dist/
+
 # OS / editor
 .DS_Store
 .idea/

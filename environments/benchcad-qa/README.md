@@ -1,4 +1,4 @@
-# benchcad-codeqa
+# benchcad-qa
 
 Rendered views of a mechanical part + one numeric question → a single number. The
 model is shown a 2×2 composite of four diagonal views of an industry-standard
@@ -15,7 +15,7 @@ judge model and no CAD execution** (so this environment is lightweight: just
 ## Usage
 
 ```bash
-uv run vf-eval benchcad-codeqa -n 20
+uv run vf-eval benchcad-qa -n 20
 ```
 
 `load_environment(num_examples=None)` — set `num_examples` to evaluate the first
@@ -25,5 +25,5 @@ N questions; omit for the full set.
 
 The numeric scoring is vendored from the canonical scorer
 (`BenchCAD/BenchCAD-main`, `QA/scoring/qa_score.py`); that repo is the source
-of truth. See also the heavier execution-based [`benchcad-codegen`](../benchcad-codegen)
+of truth. See also the heavier execution-based [`benchcad-vision2code`](../benchcad-vision2code)
 (image → CadQuery program, scored by voxel IoU).
