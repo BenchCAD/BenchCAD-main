@@ -54,6 +54,9 @@ def parse_args():
                    help="Cap to N records (first N, or a random N with --seed).")
     p.add_argument("--seed", type=int, default=None,
                    help="Random-sample --limit records with this seed (reproducible).")
+    p.add_argument("--score", choices=["iou", "composite"], default="iou",
+                   help="iou = raw voxel IoU (default, Anthropic's method); "
+                        "composite = fused BenchCAD total (IoU+essential+F1+CD+HD).")
     return p.parse_args()
 
 
@@ -93,13 +96,14 @@ def _print_results_summary(out_dir: Path) -> None:
         return
     bucket: dict[str, list[float]] = {}
     for r in rows:
-        bucket.setdefault(r["model"], []).append(float(r["iou"]))
+        bucket.setdefault(r["model"], []).append(float(r.get("score", r["iou"])))
+    stype = rows[-1].get("score_type", "iou")
     print(f"\nresults  → {jsonl}  ({len(rows)} rows)")
-    print("summary  → mean IoU per model:")
+    print(f"summary  → mean {stype} per model:")
     width = max(len(m) for m in bucket) + 2
     for model in sorted(bucket):
         vals = bucket[model]
-        print(f"    {model:<{width}}n={len(vals):<3} mean_iou={sum(vals)/len(vals):.3f}")
+        print(f"    {model:<{width}}n={len(vals):<3} mean_{stype}={sum(vals)/len(vals):.3f}")
 
 
 def do_run(cfg: dict, args) -> None:
@@ -126,8 +130,9 @@ def do_run(cfg: dict, args) -> None:
     for model in models:
         for i, rec in enumerate(records, 1):
             print(f"  [{model}] {i}/{len(records)} {rec['record_id']}", end=" ... ", flush=True)
-            row = run_record(record=rec, data_dir=data_dir, results_root=out_dir, model=model)
-            print(f"{row['status']:10s} iou={row['iou']:.3f}  ({row['lat_s']:.1f}s)")
+            row = run_record(record=rec, data_dir=data_dir, results_root=out_dir,
+                             model=model, score=args.score)
+            print(f"{row['status']:10s} {row['score_type']}={row['score']:.3f}  ({row['lat_s']:.1f}s)")
     _print_results_summary(out_dir)
 
 

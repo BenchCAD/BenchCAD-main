@@ -1,0 +1,148 @@
+# BenchCAD per-family essential ops — edit this file to tweak the metric.
+#
+# Format: family_name: [<element>, <element>, ...]
+#   • outer list = AND (every element must be satisfied)
+#   • element = string (single op required)  OR  list (OR-tuple of alternatives)
+#
+# Recognized op names (must match keys in canonical_ops.OP_PATTERNS):
+#   structural  : sweep+helix, sweep, revolve, loft, shell, taper=,
+#                 polarArray, rarray, twistExtrude, makeTorus, sphere, cut
+#   profile     : polyline, spline, threePointArc, Sketch, polygon, lineTo
+#   feature     : chamfer, fillet, hole
+# All classes are allowed in essentials. feature_f1 is computed independently
+# over {chamfer, fillet, hole} regardless of whether they appear here.
+#
+# Convention: families with irregular 2-D profile (gears, cams, stars, cross,
+# ratchet, etc.) require ANY of the profile ops as one essential element.
+# Often combined as multi-AND with a structural op (e.g. helical_gear needs
+# both `loft|twistExtrude` AND `polyline|spline|...`).
+#
+# A family NOT listed here is automatically N/A — no essential check, only
+# soft feature_f1 applies.
+#
+# Alternatives policy (when adding new entries):
+#   revolve(360°) ↔ sweep along closed circle
+#   revolve(180°) ↔ sweep along U / J path
+#   torus         ↔ revolve | sweep | makeTorus
+#   sweep+helix   ↔ sweep along spline (for non-perfect helices)
+#   twistExtrude  ↔ loft of N rotated cross-sections
+#   taper=        ↔ loft between two scaled circles
+
+# ── axisymmetric ──────────────────────────────────────────────────────────
+ball_knob:         [[revolve, sphere]]
+bellows:           [[revolve, sweep]]
+bucket:            [[revolve, sweep]]
+cotter_pin:        [[revolve, sweep]]
+dome_cap:          [[revolve, sweep]]
+grease_nipple:     [[revolve, sweep]]
+grommet:           [[revolve, sweep]]
+lathe_turned_part: [[revolve, sweep]]
+nozzle:            [[revolve, sweep]]
+piston:            [[revolve, sweep]]
+pulley:            [[revolve, sweep]]
+rivet:             [[revolve, sweep]]
+taper_pin:         [[revolve, sweep, loft]]
+venturi_tube:      [[revolve, sweep]]
+
+# ── ring / torus shapes ───────────────────────────────────────────────────
+torus_link:        [[revolve, sweep, makeTorus]]
+eyebolt:           [[makeTorus, revolve, sweep]]
+
+# ── partial-rotational (U / J) ────────────────────────────────────────────
+u_bolt:            [[sweep, revolve]]
+j_hook:            [[sweep, revolve]]
+
+# ── helical (springs / threads) ───────────────────────────────────────────
+torsion_spring:    [[sweep+helix, sweep]]
+worm_screw:        [[sweep+helix, sweep]]
+coil_spring:       [[sweep+helix, sweep]]
+
+# ── twisted along axis ────────────────────────────────────────────────────
+twisted_drill:     [[twistExtrude, loft]]
+twisted_bracket:   [[loft, twistExtrude]]
+helical_gear:      [[loft, twistExtrude], [polyline, spline, threePointArc, Sketch]]
+
+# ── loft (cross-section interpolation) ────────────────────────────────────
+bevel_gear:        [loft, [polyline, spline, threePointArc, Sketch]]
+propeller:         [loft]                                              # GT 中 1/7 用 circle 截面 loft, 没 polyline → drop profile AND
+tapered_boss:      [[loft, taper=]]
+wing_nut:          [[loft, taper=]]
+
+# ── tapered profile ───────────────────────────────────────────────────────
+knob:              [[taper=, loft]]
+
+# ── shell / hollow ────────────────────────────────────────────────────────
+enclosure:         [shell]
+sheet_metal_tray:  [shell]
+
+# ── polar (rotational) arrays ─────────────────────────────────────────────
+motor_end_cap:     [polarArray]
+
+# ── linear / rectangular arrays ───────────────────────────────────────────
+cable_routing_panel: [rarray]
+heat_sink:         [rarray]
+mesh_panel:        [rarray]
+rib_plate:         [rarray]
+slotted_plate:     [rarray]
+vented_panel:      [rarray]
+waffle_plate:      [rarray]
+
+# ── general curved sweep (non-helical) ────────────────────────────────────
+duct_elbow:        [sweep]
+pipe_elbow:        [sweep]
+
+# ── defined-by-cuts (cut OR hole equivalent — both subtract material) ─────
+battery_holder:    [[cut]]         # N cylindrical cell slots
+gridfinity_bin:    [[cut, hole]]   # rectangular bin grid
+hex_key_organizer: [[cut, hole, circle]]   # hex key slots
+keyhole_plate:     [[cut, hole]]   # keyhole slot
+lobed_knob:        [[cut, hole, circle]]   # lobe cuts
+
+# ── irregular profile (gears / cams / stars / cross / etc.) ───────────────
+# all need a custom 2-D profile op. some also combine with cut / loft etc.
+spur_gear:               [[polyline, spline, threePointArc, Sketch]]
+sprocket:                [[polyline, spline, threePointArc, Sketch]]
+double_simplex_sprocket: [[polyline, spline, threePointArc, Sketch]]
+cam:                     [[polyline, spline, threePointArc, Sketch]]
+impeller:                [[polyline, spline, threePointArc, Sketch]]
+star_blank:              [[polyline, spline, threePointArc, Sketch]]
+cruciform:               [[polyline, spline, threePointArc, Sketch]]
+ratchet_sector:          [[polyline, spline, threePointArc, Sketch]]
+circlip:                 [[polyline, spline, threePointArc, Sketch]]
+dog_bone:                [[polyline, spline, threePointArc, Sketch]]
+snap_clip:               [[polyline, spline, threePointArc, Sketch]]
+handwheel:               [[cut, hole, circle], [polyline, spline, threePointArc, Sketch]]   # cut spokes/holes + ring profile
+spline_hub:              [[cut], [polyline, spline, threePointArc, Sketch]]   # keyway + spline profile
+
+# ── rounded ends (sphere) ─────────────────────────────────────────────────
+capsule:           [sphere]                        # cylinder + 2 hemispheres
+
+# ── hex / polygon profile (bolts, nuts, hex standoffs) ────────────────────
+bolt:                  [polygon]
+hex_nut:               [[polygon, lineTo], [cut, hole, circle]]   # hex profile via polygon() OR manual lineTo path
+hex_standoff:          [[polygon, lineTo], [cut, hole, circle]]
+threaded_adapter:      [[polygon, lineTo], [cut, hole, circle]]
+
+# ── dovetail (custom polyline profile) ────────────────────────────────────
+dovetail_slide:        [[polyline, spline, threePointArc, Sketch]]
+
+# ── parts whose geometry is defined by material removal (cut OR hole) ─────
+# (any subtraction op is acceptable — they produce equivalent geometry)
+bearing_retainer_cap:  [[cut, hole, circle]]
+connecting_rod:        [[cut, hole, circle]]
+hinge:                 [[cut, hole, circle]]
+locator_block:         [[cut, hole]]
+pillow_block:          [[cut, hole]]
+turnbuckle:            [[cut, hole, circle]]
+pan_head_screw:        [[cut]]
+fan_shroud:            [[cut, hole, circle]]
+manifold_block:        [[cut, hole]]
+mounting_plate:        [[cut, hole]]
+pcb_standoff_plate:    [[cut, hole]]
+pipe_flange:           [[cut, hole, circle]]
+shaft_collar:          [[cut, hole]]
+spacer_ring:           [[cut, hole, circle]]
+standoff:              [[cut, hole]]
+washer:                [[cut, hole, circle]]
+z_bracket:             [[cut, hole, circle]]
+connector_faceplate:   [[cut, hole, circle]]
