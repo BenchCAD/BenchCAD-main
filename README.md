@@ -76,13 +76,13 @@ READMEs for options.
 ## Dataset
 
 Hosted on HuggingFace at [`BenchCAD/BenchCAD`](https://huggingface.co/datasets/BenchCAD/BenchCAD)
-and pulled into the gitignored `data/` folder on first `prod` run. Three configs:
+and pulled into the gitignored `data/` folder on first `prod` run. One config per task:
 
-| Config | Size | Contents |
-|---|---|---|
-| `code_gen` | 17,900 | GT CadQuery code + 4 rendered views per part (106 families) |
-| `QA` | 2,400 | numeric questions over 200 parts (dimensions, counts, ratios) |
-| `edit-bench` | 748 | instruction-guided edit benchmark (held-out) |
+| Task | Config | Size | Contents |
+|---|---|---|---|
+| Vision2Code | `code_gen` | 17,900 | GT CadQuery code + 4 rendered views per part (106 families) |
+| CodeEdit | `edit-bench` | 748 | instruction-guided edit benchmark (held-out) |
+| QA | `QA` | 2,400 | numeric questions over 200 parts (dimensions, counts, ratios) |
 
 A tiny `test_data/` (≈4 records) is committed per task for smoke tests without any
 download. Dataset schema and column details are documented on the dataset card.
