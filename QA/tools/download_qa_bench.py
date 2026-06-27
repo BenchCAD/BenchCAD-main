@@ -1,6 +1,6 @@
 """Download the BenchCAD/BenchCAD QA benchmark → data/.
 
-Run from CodeQA/:
+Run from QA/:
     uv run python tools/download_qa_bench.py
     uv run python tools/download_qa_bench.py --out test_data --limit 4
 
@@ -27,7 +27,7 @@ from huggingface_hub import hf_hub_download
 
 REPO = "BenchCAD/BenchCAD"
 PARQUET = "QA/qa_2400.parquet"
-ROOT = Path(__file__).resolve().parents[1]  # CodeQA/
+ROOT = Path(__file__).resolve().parents[1]  # QA/
 DEFAULT_OUT = ROOT / "data"
 
 

@@ -1,4 +1,4 @@
-# CodeGen
+# Vision2Code
 
 Image → CadQuery code. The model is shown a 2x2 composite of 4 diagonal views
 of a mechanical part and must write a CadQuery program that reproduces the
@@ -7,7 +7,7 @@ ground-truth STEP (no edit baseline — generation from scratch).
 
 ← Back to [main README](../README.md)
 
-> **All commands below assume `cd CodeGen` first.**
+> **All commands below assume `cd Vision2Code` first.**
 
 ## Configs
 
@@ -25,20 +25,20 @@ out_dir:  results_test
 models: [gpt-4o, claude-opus-4-7, ...]
 ```
 
-Paths are **relative to `CodeGen/`**. Copy either one to make your own
+Paths are **relative to `Vision2Code/`**. Copy either one to make your own
 (`configs/myrun.yaml`) and pass `--config`.
 
 ## Download full-bench data (one-time, for prod)
 
 ```bash
-cd CodeGen
+cd Vision2Code
 uv run python tools/download_codegen_bench.py     # → data/
 ```
 
 ## Quick smoke run
 
 ```bash
-cd CodeGen
+cd Vision2Code
 
 # Run with default config (configs/test.yaml):
 uv run python main.py
@@ -50,14 +50,14 @@ uv run python main.py --plot
 ## Custom run
 
 ```bash
-cd CodeGen
+cd Vision2Code
 uv run python main.py --config configs/prod.yaml
 uv run python main.py --config configs/myrun.yaml --plot
 ```
 
 Debug overrides (don't change config): `--records r1 r2` for a subset, `--limit N` to cap.
 
-Output (per config's `out_dir`, relative to `CodeGen/`):
+Output (per config's `out_dir`, relative to `Vision2Code/`):
 ```
 <out_dir>/
 ├── results.jsonl                 (model, record_id) → iou + paths
@@ -83,7 +83,7 @@ exec or geometry is degenerate. `iou = 1` when the voxelized solids match.
 ## Folder structure
 
 ```
-CodeGen/
+Vision2Code/
 ├── main.py                      CLI: --config, --plot, --records, --limit
 ├── configs/                     YAML configs (test.yaml, prod.yaml, ...)
 ├── tools/

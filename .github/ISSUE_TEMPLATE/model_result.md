@@ -11,9 +11,9 @@ labels: leaderboard
 
 | Task | Metric | Score |
 |---|---|---|
-| CodeGen | voxel IoU | |
+| Vision2Code | voxel IoU | |
 | CodeEdit | normalized IoU | |
-| CodeQA | ratio accuracy | |
+| QA | ratio accuracy | |
 
 **Reproducibility**
 - Config / commit SHA:

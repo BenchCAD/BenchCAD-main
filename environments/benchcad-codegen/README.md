@@ -36,6 +36,6 @@ first N parts (handy for quick runs); omit for the full set.
 ## Notes
 
 The CadQuery execution and voxel-IoU scoring are vendored verbatim from the
-canonical scorer (`BenchCAD/BenchCAD-main`, `CodeGen/scoring/`) so this
+canonical scorer (`BenchCAD/BenchCAD-main`, `Vision2Code/scoring/`) so this
 environment is a self-contained package; that repository remains the source of
 truth. Requires the CadQuery / OCP stack (declared in `pyproject.toml`).

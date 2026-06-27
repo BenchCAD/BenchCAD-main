@@ -2,7 +2,7 @@
 # Populate test_data_img/ first:
 #   uv run python tools/download_qa_img.py --out test_data_img --limit 12
 # Same fixture as test_img.yaml, but mode=code → side-by-side code-vs-img comparison.
-# Paths are relative to CodeQA/.
+# Paths are relative to QA/.
 
 mode:     code
 data_dir: test_data_img

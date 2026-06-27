@@ -1,4 +1,4 @@
-# CodeQA
+# QA
 
 CadQuery part → numeric answers. The model sees the part (as **code**, as a
 **rendered image**, or **both**) plus a list of numeric questions about it
@@ -12,7 +12,7 @@ Three input modes, set via `mode:` in the config:
 
 ← Back to [main README](../README.md)
 
-> **All commands below assume `cd CodeQA` first.**
+> **All commands below assume `cd QA` first.**
 
 ## Configs
 
@@ -33,13 +33,13 @@ out_dir:  results_test
 models: [gpt-4o, claude-opus-4-7, ...]
 ```
 
-Paths are **relative to `CodeQA/`**. Copy either one to make your own
+Paths are **relative to `QA/`**. Copy either one to make your own
 (`configs/myrun.yaml`) and pass `--config`.
 
 ## Download full-bench data (one-time, for prod)
 
 ```bash
-cd CodeQA
+cd QA
 
 # code bench (text-only):
 uv run python tools/download_qa_bench.py             # → data/
@@ -53,7 +53,7 @@ uv run python tools/download_qa_img.py --limit 2 \
 ## Quick smoke run
 
 ```bash
-cd CodeQA
+cd QA
 
 # Run with default config (configs/test.yaml):
 uv run python main.py
@@ -65,14 +65,14 @@ uv run python main.py --plot
 ## Custom run
 
 ```bash
-cd CodeQA
+cd QA
 uv run python main.py --config configs/prod.yaml
 uv run python main.py --config configs/myrun.yaml --plot
 ```
 
 Debug overrides (don't change config): `--records r1 r2` for a subset, `--limit N` to cap.
 
-Output (per config's `out_dir`, relative to `CodeQA/`):
+Output (per config's `out_dir`, relative to `QA/`):
 ```
 <out_dir>/
 ├── results.jsonl                 (model, record_id) → qa_score + per_qa breakdown
@@ -100,7 +100,7 @@ numbers. `qa_score = 1` when every answer matches exactly.
 ## Folder structure
 
 ```
-CodeQA/
+QA/
 ├── main.py                      CLI: --config, --plot, --records, --limit
 ├── configs/                     YAML configs (test.yaml, prod.yaml, ...)
 ├── tools/

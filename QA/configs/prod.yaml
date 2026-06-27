@@ -1,4 +1,4 @@
-# Full-bench config. Run from CodeQA/. Download data first:
+# Full-bench config. Run from QA/. Download data first:
 #   uv run python tools/download_qa_bench.py
 # That writes records.jsonl + codes/ to data_dir below.
 

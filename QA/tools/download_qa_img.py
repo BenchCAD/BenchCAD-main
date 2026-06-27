@@ -1,6 +1,6 @@
 """Download BenchCAD/BenchCAD QA/qa_2400.parquet → data_qa_img/.
 
-Run from CodeQA/:
+Run from QA/:
     uv run python tools/download_qa_img.py
     uv run python tools/download_qa_img.py --out test_data_img --limit 2
 
@@ -30,7 +30,7 @@ from huggingface_hub import hf_hub_download
 
 REPO = "BenchCAD/BenchCAD"
 PARQUET = "QA/qa_2400.parquet"
-ROOT = Path(__file__).resolve().parents[1]  # CodeQA/
+ROOT = Path(__file__).resolve().parents[1]  # QA/
 DEFAULT_OUT = ROOT / "data_qa_img"
 
 

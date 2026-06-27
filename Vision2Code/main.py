@@ -1,4 +1,4 @@
-"""CodeGen runner — config-driven (image → CadQuery code).
+"""Vision2Code runner — config-driven (image → CadQuery code).
 
 Two independent operations:
 
@@ -8,7 +8,7 @@ Two independent operations:
 
   (2) PLOT: read <out_dir>/results.jsonl → husl bar plot (mean IoU per model).
 
-Examples (run from CodeGen/)
+Examples (run from Vision2Code/)
 ----------------------------
     # Smoke run (default config: configs/test.yaml):
     uv run python main.py
@@ -43,7 +43,7 @@ REQUIRED_FIELDS = ("data_dir", "out_dir", "models")
 
 
 def parse_args():
-    p = argparse.ArgumentParser(description="CodeGen runner (config-driven)")
+    p = argparse.ArgumentParser(description="Vision2Code runner (config-driven)")
     p.add_argument("--config", type=Path, default=DEFAULT_CONFIG,
                    help=f"YAML config (default: {DEFAULT_CONFIG.relative_to(ROOT)})")
     p.add_argument("--plot", action="store_true",
@@ -51,7 +51,9 @@ def parse_args():
     p.add_argument("--records", nargs="*", default=None,
                    help="Debug override: only run these record_ids.")
     p.add_argument("--limit", type=int, default=None,
-                   help="Debug override: cap to first N records.")
+                   help="Cap to N records (first N, or a random N with --seed).")
+    p.add_argument("--seed", type=int, default=None,
+                   help="Random-sample --limit records with this seed (reproducible).")
     return p.parse_args()
 
 
@@ -111,7 +113,11 @@ def do_run(cfg: dict, args) -> None:
         wanted = set(args.records)
         records = [r for r in records if r["record_id"] in wanted]
     if args.limit:
-        records = records[: args.limit]
+        if args.seed is not None:
+            import random
+            records = random.Random(args.seed).sample(records, min(args.limit, len(records)))
+        else:
+            records = records[: args.limit]
 
     print(f"config: {args.config}")
     print(f"data:   {data_dir}")

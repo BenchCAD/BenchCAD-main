@@ -1,6 +1,6 @@
 """Download BenchCAD/BenchCAD code-gen-bench parquets → data/.
 
-Run from CodeGen/:
+Run from Vision2Code/:
     uv run python tools/download_codegen_bench.py
 
 Layout matches test_data/, so configs/prod.yaml works unchanged:
@@ -34,7 +34,7 @@ from scoring.exec_cq import execute_cq_to_step  # noqa: E402
 
 REPO = "BenchCAD/BenchCAD"
 SUBDIR = "code_gen/data"
-ROOT = Path(__file__).resolve().parents[1]  # CodeGen/
+ROOT = Path(__file__).resolve().parents[1]  # Vision2Code/
 DEFAULT_OUT = ROOT / "data"
 
 

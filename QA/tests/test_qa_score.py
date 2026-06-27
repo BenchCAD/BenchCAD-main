@@ -1,10 +1,10 @@
-"""Offline unit tests for CodeQA numeric scoring. No API keys, no network."""
+"""Offline unit tests for QA numeric scoring. No API keys, no network."""
 
 import importlib.util
 import pathlib
 
-# Load CodeQA/scoring/qa_score.py by path under a unique name so it doesn't
-# collide with CodeGen's same-named `scoring` package during a shared pytest run.
+# Load QA/scoring/qa_score.py by path under a unique name so it doesn't
+# collide with Vision2Code's same-named `scoring` package during a shared pytest run.
 _path = pathlib.Path(__file__).resolve().parents[1] / "scoring" / "qa_score.py"
 _spec = importlib.util.spec_from_file_location("codeqa_qa_score", _path)
 _mod = importlib.util.module_from_spec(_spec)

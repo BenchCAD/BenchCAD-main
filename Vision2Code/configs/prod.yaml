@@ -1,4 +1,4 @@
-# Full-bench config. Run from CodeGen/. Download data first:
+# Full-bench config. Run from Vision2Code/. Download data first:
 #   uv run python tools/download_codegen_bench.py
 # That writes records.jsonl + codes/ + steps/ to data_dir below.
 

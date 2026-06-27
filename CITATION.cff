@@ -14,7 +14,7 @@ authors:
 repository-code: "https://github.com/BenchCAD/BenchCAD-main"
 url: "https://huggingface.co/datasets/BenchCAD/BenchCAD"
 abstract: >-
-  BenchCAD is a suite of three benchmarks (CodeGen, CodeEdit, CodeQA) that
+  BenchCAD is a suite of three benchmarks (Vision2Code, CodeEdit, QA) that
   evaluate large language and multimodal models on procedural 3D CAD code
   understanding and generation. Tasks are graded by execution-grounded,
   objective metrics (voxel IoU between STEP solids; symmetric ratio accuracy on

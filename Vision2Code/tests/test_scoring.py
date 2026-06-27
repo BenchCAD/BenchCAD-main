@@ -1,11 +1,11 @@
-"""Offline unit tests for CodeGen scoring helpers. No API keys, no network,
+"""Offline unit tests for Vision2Code scoring helpers. No API keys, no network,
 no CAD execution (those paths are exercised by the full prod run)."""
 
 import importlib.util
 import pathlib
 
-# Load CodeGen/scoring/*.py by path under unique names so they don't collide
-# with CodeQA's same-named `scoring` package during a shared pytest run.
+# Load Vision2Code/scoring/*.py by path under unique names so they don't collide
+# with QA's same-named `scoring` package during a shared pytest run.
 _scoring = pathlib.Path(__file__).resolve().parents[1] / "scoring"
 
 

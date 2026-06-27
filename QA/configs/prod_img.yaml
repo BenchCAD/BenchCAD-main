@@ -1,7 +1,7 @@
 # Full image-based bench: 200 stems × 12 QAs (qa_2400).
 # Populate first:
 #   uv run python tools/download_qa_img.py
-# Paths are relative to CodeQA/.
+# Paths are relative to QA/.
 
 mode:     img
 data_dir: data_qa_img

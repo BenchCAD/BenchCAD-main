@@ -1,7 +1,7 @@
 # Smoke config: image-based QA, 2 stems × 1 model.
 # Populate test_data_img/ first:
 #   uv run python tools/download_qa_img.py --out test_data_img --limit 2
-# Paths are relative to CodeQA/.
+# Paths are relative to QA/.
 
 mode:     img
 data_dir: test_data_img

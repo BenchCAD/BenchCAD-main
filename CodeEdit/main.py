@@ -53,7 +53,9 @@ def parse_args():
     p.add_argument("--records", nargs="*", default=None,
                    help="Debug override: only run these record_ids.")
     p.add_argument("--limit", type=int, default=None,
-                   help="Debug override: cap to first N records.")
+                   help="Cap to N records (first N, or a random N with --seed).")
+    p.add_argument("--seed", type=int, default=None,
+                   help="Random-sample --limit records with this seed (reproducible).")
     return p.parse_args()
 
 
@@ -117,7 +119,11 @@ def do_run(cfg: dict, args) -> None:
         wanted = set(args.records)
         records = [r for r in records if r["record_id"] in wanted]
     if args.limit:
-        records = records[: args.limit]
+        if args.seed is not None:
+            import random
+            records = random.Random(args.seed).sample(records, min(args.limit, len(records)))
+        else:
+            records = records[: args.limit]
 
     print(f"config: {args.config}")
     print(f"data:   {data_dir}")

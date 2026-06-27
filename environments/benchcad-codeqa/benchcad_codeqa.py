@@ -1,4 +1,4 @@
-"""BenchCAD CodeQA — Prime Intellect Environments Hub.
+"""BenchCAD QA — Prime Intellect Environments Hub.
 
 Given rendered views of a mechanical part and one numeric question (a dimension,
 count, or ratio), the model answers with a single number. Reward = symmetric
@@ -8,7 +8,7 @@ for counts/integers/yes-no. Deterministic — no judge model, no CAD execution.
 Benchmark: https://github.com/BenchCAD/BenchCAD-main  ·  paper: arXiv:2605.10865
 Data:      https://huggingface.co/datasets/BenchCAD/BenchCAD  (config `QA`)
 
-The scoring below mirrors the canonical scorer (`CodeQA/scoring/qa_score.py`); it
+The scoring below mirrors the canonical scorer (`QA/scoring/qa_score.py`); it
 is vendored so this environment is a self-contained, publishable package.
 """
 
@@ -30,7 +30,7 @@ RULES = (
     "ratios output a decimal. For dimensions answer in millimetres."
 )
 
-# Vendored from BenchCAD/BenchCAD-main CodeQA/scoring/qa_score.py
+# Vendored from BenchCAD/BenchCAD-main QA/scoring/qa_score.py
 _EXACT_TYPES = {"integer", "count", "boolean", "bool"}
 
 
@@ -66,7 +66,7 @@ def _completion_text(completion) -> str:
 
 
 def load_environment(num_examples: int | None = None, **kwargs) -> vf.Environment:
-    """Load the BenchCAD CodeQA (vision) environment.
+    """Load the BenchCAD QA (vision) environment.
 
     Args:
         num_examples: if set, evaluate on the first N questions (quick runs).

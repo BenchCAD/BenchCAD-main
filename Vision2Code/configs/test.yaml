@@ -1,5 +1,5 @@
 # Smoke config: 4 records × 1 model.
-# Paths are relative to CodeQA/ (where you invoke `uv run`).
+# Paths are relative to Vision2Code/ (where you invoke `uv run`).
 
 data_dir: test_data
 out_dir:  results_test

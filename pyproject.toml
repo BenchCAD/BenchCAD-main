@@ -1,7 +1,7 @@
 [project]
 name = "benchcad"
 version = "0.1.0"
-description = "BenchCAD: CodeEdit / CodeGen / CodeQA benchmarks for CAD code understanding"
+description = "BenchCAD: CodeEdit / Vision2Code / QA benchmarks for CAD code understanding"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
@@ -60,7 +60,7 @@ override-dependencies = ["numpy>=1.26"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
-testpaths = ["CodeGen/tests", "CodeQA/tests"]
+testpaths = ["Vision2Code/tests", "QA/tests"]
 
 [tool.ruff]
 line-length = 88
