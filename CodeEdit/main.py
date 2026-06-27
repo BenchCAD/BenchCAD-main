@@ -56,6 +56,8 @@ def parse_args():
                    help="Cap to N records (first N, or a random N with --seed).")
     p.add_argument("--seed", type=int, default=None,
                    help="Random-sample --limit records with this seed (reproducible).")
+    p.add_argument("--model", nargs="*", default=None,
+                   help="Override the config's model list (one or more model names).")
     return p.parse_args()
 
 
@@ -110,7 +112,7 @@ def _print_results_summary(out_dir: Path) -> None:
 def do_run(cfg: dict, args) -> None:
     data_dir = Path(cfg["data_dir"])
     out_dir  = Path(cfg["out_dir"])
-    models   = list(cfg["models"])
+    models   = args.model if args.model else list(cfg["models"])
     modes    = list(cfg["modes"])
 
     out_dir.mkdir(parents=True, exist_ok=True)
