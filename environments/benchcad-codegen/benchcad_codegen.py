@@ -70,7 +70,7 @@ def _patch_export(code: str, out_step: Path) -> str:
     return _OCP_HASHCODE_FIX + "\n" + patched
 
 
-def execute_cq_to_step(code: str, step_path: Path, timeout: int = 90) -> None:
+def execute_cq_to_step(code: str, step_path: Path, timeout: int = 300) -> None:
     """Execute `code` so `result` is exported to `step_path`. Raises on failure."""
     step_path.parent.mkdir(parents=True, exist_ok=True)
     if step_path.exists():
