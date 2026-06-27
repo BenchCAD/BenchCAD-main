@@ -67,6 +67,9 @@ def main() -> None:
                     help="Cap each task to N records (first N, or a random N with --seed).")
     ap.add_argument("--seed", type=int, default=None,
                     help="Random-sample --limit records with this seed (reproducible).")
+    ap.add_argument("--score", choices=["iou", "composite"], default="iou",
+                    help="Vision2Code scoring: iou (default, Anthropic's method) or "
+                         "composite (fused BenchCAD total). Ignored by other tasks.")
     args = ap.parse_args()
 
     extras: list[str] = []
@@ -82,7 +85,10 @@ def main() -> None:
     targets = list(TASKS) if args.task == "all" else [args.task]
     rcs: dict[str, int] = {}
     for key in targets:
-        rcs[key] = _run_task(ROOT / TASKS[key], args.config, extras)
+        # --score only applies to Vision2Code; other tasks don't accept the flag.
+        # Match on the task dir, not the key, so this is robust to key renames.
+        task_extras = extras + (["--score", args.score] if TASKS[key] == "Vision2Code" else [])
+        rcs[key] = _run_task(ROOT / TASKS[key], args.config, task_extras)
 
     print("\n=== summary ===")
     for key in targets:

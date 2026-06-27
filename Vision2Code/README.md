@@ -80,6 +80,29 @@ Both STEPs are tessellated, normalized (bbox center → [0.5,0.5,0.5], longest
 axis → [0,1]), voxelized at pitch 1/64. `iou = 0` when the model's code didn't
 exec or geometry is degenerate. `iou = 1` when the voxelized solids match.
 
+This raw voxel IoU is the default and matches the metric Anthropic reports.
+
+## Score: composite (`--score composite`)
+
+`--score composite` reports the fused **BenchCAD total** instead of raw IoU:
+
+```
+score = 0.60·IoU + 0.20·essential-op + 0.10·Feature-F1
+      + 0.05·Chamfer-score + 0.05·Hausdorff-score
+```
+
+- **IoU** — the raw voxel IoU above (so `--score iou` is exactly the 0.60 term).
+- **essential-op** — per-family hand-curated essential operations must all be
+  present in the generated code (`scoring/canonical_ops.yaml`). Families with no
+  spec drop this term and the remaining 0.80 is rescaled to `[0,1]`.
+- **Feature-F1** — F1 over hole/fillet/chamfer features (B-rep for holes).
+- **Chamfer / Hausdorff** — surface-distance terms, each mapped to a bounded
+  `[0,1]` score.
+
+The composite scorer (`scoring/composite.py`, `composite_metrics.py`,
+`canonical_ops.{py,yaml}`) is vendored from the BenchCAD generation repo, which
+is the source of truth for the weights and the essential-op spec.
+
 ## Folder structure
 
 ```

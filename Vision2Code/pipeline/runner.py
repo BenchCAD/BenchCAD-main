@@ -53,8 +53,13 @@ def _write_results(jsonl: Path, rows: dict) -> None:
 
 
 def run_record(*, record: dict, data_dir: Path, results_root: Path,
-               model: str) -> dict:
-    """Run one (model, record) → write the result row to results.jsonl."""
+               model: str, score: str = "iou") -> dict:
+    """Run one (model, record) → write the result row to results.jsonl.
+
+    score: "iou" (raw voxel IoU, default — the metric Anthropic reports) or
+    "composite" (the fused BenchCAD total: 0.60 IoU + 0.20 essential-op +
+    0.10 Feature-F1 + 0.05 Chamfer + 0.05 Hausdorff).
+    """
     rid = record["record_id"]
     paths = _outputs_paths(results_root, model, rid)
 
@@ -98,6 +103,20 @@ def run_record(*, record: dict, data_dir: Path, results_root: Path,
     else:
         iou = 0.0
 
+    # 4b. Primary score: raw IoU (default) or the fused composite (--score composite)
+    if score == "composite":
+        from scoring.composite import composite_score
+        gt_code = ""
+        if record.get("code_path") and (data_dir / record["code_path"]).exists():
+            gt_code = (data_dir / record["code_path"]).read_text(errors="ignore")
+        primary = composite_score(
+            gt_step=data_dir / record["step_path"],
+            gen_step=paths["step"] if paths["step"].exists() else None,
+            gen_code=code, gt_code=gt_code, family=record.get("family", ""),
+        )
+    else:
+        primary = float(iou)
+
     # 5. Render gen STEP → composite PNG (Tiffany blue) for inspection
     if status == "ok" and paths["step"].exists():
         try:
@@ -112,6 +131,8 @@ def run_record(*, record: dict, data_dir: Path, results_root: Path,
         "model": model,
         "status": status,
         "iou": round(float(iou), 4),
+        "score": round(float(primary), 4),
+        "score_type": score,
         "lat_s": round(lat, 2),
         "err": err_msg,
         "code_path": str(paths["code"].relative_to(results_root)) if paths["code"].exists() else None,
