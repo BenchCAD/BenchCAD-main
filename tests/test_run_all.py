@@ -1,6 +1,6 @@
-"""Integrity tests for the one-click runner (run_all.py). No model calls — just
+"""Integrity tests for the one-click runner (benchcad.py). No model calls — just
 verifies the task map points at real, runnable task dirs so a directory rename or
-a missing config can't silently break `run_all.py`.
+a missing config can't silently break `benchcad.py`.
 """
 
 import importlib.util
@@ -10,7 +10,7 @@ _ROOT = pathlib.Path(__file__).resolve().parents[1]
 
 
 def _run_all():
-    spec = importlib.util.spec_from_file_location("benchcad_run_all", _ROOT / "run_all.py")
+    spec = importlib.util.spec_from_file_location("benchcad_run_all", _ROOT / "benchcad.py")
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     return mod
