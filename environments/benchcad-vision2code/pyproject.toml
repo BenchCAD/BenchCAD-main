@@ -1,5 +1,5 @@
 [project]
-name = "benchcad-codegen"
+name = "benchcad-vision2code"
 description = "BenchCAD Vision2Code — image of a mechanical part -> CadQuery program, scored by voxel IoU on the executed STEP solid (no judge)."
 tags = ["eval", "vision", "code", "cad", "multimodal"]
 version = "0.1.0"
