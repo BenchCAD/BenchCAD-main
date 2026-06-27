@@ -87,7 +87,7 @@ def main() -> None:
     print("\n=== summary ===")
     for key in targets:
         rc = rcs[key]
-        print(f"  {TASKS[key]:<10}{'OK' if rc == 0 else f'FAIL rc={rc}'}")
+        print(f"  {TASKS[key]:<13}{'OK' if rc == 0 else f'FAIL rc={rc}'}")
     sys.exit(0 if all(rc == 0 for rc in rcs.values()) else 1)
 
 
