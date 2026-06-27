@@ -60,16 +60,25 @@ cp .env.example .env   # then paste OPENAI / ANTHROPIC / GEMINI / OPENROUTER key
 
 ## Quick start
 
+After `uv sync` and pasting a key into `.env`, one command runs everything:
+
 ```bash
-# Smoke-run all three tasks end-to-end (4 records each, gpt-4o)
+# Smoke-run all three tasks (default `test` config, ~4 records each)
 uv run python run_all.py
 
-# A single task (one of: vision2code / codeedit / qa)
-uv run python run_all.py --task vision2code
-
-# The full benchmark (one-time HuggingFace download per task)
+# The full benchmark — all three tasks, full split (one-time HF download per task)
 uv run python run_all.py --config prod
+
+# A reproducible random subset: 100 records per task, seed 42
+uv run python run_all.py --config prod --limit 100 --seed 42
+
+# A single task (one of: vision2code / codeedit / qa)
+uv run python run_all.py --task vision2code --config prod
 ```
+
+Flags: `--config` is the config *name* (`test` smoke / `prod` full), **not** a
+number; `--limit N` caps to N records (first N, or a random N with `--seed S`);
+`--seed S` makes the `--limit` sample reproducible.
 
 `--config <name>` resolves to `<Task>/configs/<name>.yaml`. Each task is also
 runnable on its own (`cd Vision2Code && uv run python main.py`); see the per-task
