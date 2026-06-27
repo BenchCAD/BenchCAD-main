@@ -60,7 +60,7 @@ override-dependencies = ["numpy>=1.26"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
-testpaths = ["Vision2Code/tests", "QA/tests"]
+testpaths = ["Vision2Code/tests", "CodeEdit/tests", "QA/tests", "tests"]
 
 [tool.ruff]
 line-length = 88
