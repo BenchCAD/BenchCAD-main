@@ -1,4 +1,4 @@
-# benchcad-codegen
+# benchcad-vision2code
 
 Image of a mechanical part → a **CadQuery** program. The model is shown a 2×2
 composite of four diagonal rendered views of an industry-standard mechanical part
@@ -23,11 +23,11 @@ model**. Non-executable outputs score 0.
 
 ```bash
 # install + quick eval on a few parts
-uv run vf-eval benchcad-codegen -n 5
+uv run vf-eval benchcad-vision2code -n 5
 
 # in code
 import verifiers as vf
-env = vf.load_environment("benchcad-codegen", num_examples=100)
+env = vf.load_environment("benchcad-vision2code", num_examples=100)
 ```
 
 `load_environment(num_examples=None)` — set `num_examples` to evaluate on the

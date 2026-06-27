@@ -1,5 +1,5 @@
 [project]
-name = "benchcad-codeqa"
+name = "benchcad-qa"
 description = "BenchCAD QA — rendered views of a mechanical part -> a numeric answer, scored by symmetric ratio accuracy (no judge, no CAD execution)."
 tags = ["eval", "vision", "cad", "multimodal", "vqa"]
 version = "0.1.0"
