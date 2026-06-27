@@ -30,7 +30,8 @@ import pandas as pd
 from huggingface_hub import snapshot_download
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from scoring.exec_cq import execute_cq_to_step  # noqa: E402
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))  # repo root, for benchcad_core
+from benchcad_core.scoring.exec_cq import execute_cq_to_step  # noqa: E402
 
 REPO = "BenchCAD/BenchCAD"
 SUBDIR = "code_gen/data"

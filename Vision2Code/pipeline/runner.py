@@ -13,9 +13,8 @@ import json
 import time
 from pathlib import Path
 
-from scoring.exec_cq import execute_cq_to_step, extract_code
-from scoring.iou import iou_step_vs_step
-
+from benchcad_core.scoring.exec_cq import execute_cq_to_step, extract_code
+from benchcad_core.scoring.iou import iou_step_vs_step
 from pipeline.prompt import build as build_prompt
 
 
@@ -67,7 +66,7 @@ def run_record(*, record: dict, data_dir: Path, results_root: Path,
     system, user_text, image_paths = build_prompt(record, data_dir)
 
     # 2. Call model
-    from models import call_model
+    from benchcad_core.models import call_model
     t0 = time.time()
     try:
         raw = call_model(model=model, system=system, user_text=user_text,
@@ -120,7 +119,7 @@ def run_record(*, record: dict, data_dir: Path, results_root: Path,
     # 5. Render gen STEP → composite PNG (Tiffany blue) for inspection
     if status == "ok" and paths["step"].exists():
         try:
-            from scoring.views import composite_for_step
+            from benchcad_core.scoring.views import composite_for_step
             composite_for_step(paths["step"], paths["png"])
         except Exception:
             pass  # render is non-critical for scoring

@@ -35,6 +35,7 @@ import yaml
 
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(ROOT.parent))  # repo root, for benchcad_core
 
 from pipeline.runner import run_record  # noqa: E402
 

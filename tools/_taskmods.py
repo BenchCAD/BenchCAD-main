@@ -29,14 +29,14 @@ def qa_score():
 
 def exec_cq():
     """Vision2Code CadQuery execution (extract_code, execute_cq_to_step)."""
-    return _load("benchcad_exec_cq", "Vision2Code/scoring/exec_cq.py")
+    return _load("benchcad_exec_cq", "benchcad_core/scoring/exec_cq.py")
 
 
 def iou():
     """Vision2Code voxel IoU (iou_step_vs_step, norm_iou)."""
-    return _load("benchcad_iou", "Vision2Code/scoring/iou.py")
+    return _load("benchcad_iou", "benchcad_core/scoring/iou.py")
 
 
 def views():
     """Vision2Code STEP rendering (composite_for_step, _step_to_normalized_mesh)."""
-    return _load("benchcad_views", "Vision2Code/scoring/views.py")
+    return _load("benchcad_views", "benchcad_core/scoring/views.py")

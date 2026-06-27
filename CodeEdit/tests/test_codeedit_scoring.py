@@ -11,7 +11,7 @@ import pathlib
 
 # Load CodeEdit/scoring/*.py by path under unique names so they don't collide
 # with the other tasks' same-named `scoring` package during a shared pytest run.
-_scoring = pathlib.Path(__file__).resolve().parents[1] / "scoring"
+_scoring = pathlib.Path(__file__).resolve().parents[2] / "benchcad_core" / "scoring"
 
 
 def _load(name, filename):
