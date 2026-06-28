@@ -14,11 +14,19 @@ from __future__ import annotations
 
 from pathlib import Path
 
-SYSTEM_PROMPT = (
-    "You are a CAD engineer. Edit the given CadQuery program so the resulting "
-    "STEP file matches the requested change. Output ONLY the full edited "
-    "Python code in a single ```python fenced block — no prose."
-)
+SYSTEM_PROMPT = """You are an expert CAD engineer. You will be given:
+1. A CadQuery Python script that builds a parametric mechanical part.
+2. A natural-language edit instruction describing a change to one specific feature.
+
+Your task: return the script with the MINIMAL edit that achieves the requested feature change. Only the feature(s) the instruction explicitly mentions should change; every other feature, dimension, and detail must stay exactly as in the original.
+
+Rules:
+- Output ONLY executable Python code, no explanation, no markdown fences.
+- Make the smallest set of changes that realize the instruction. Do NOT touch unrelated literals, operations, or structure.
+- Do NOT refactor, rename variables, reorder operations, or add/remove imports.
+- If the instruction adds a new feature: append the operation in the most natural place; keep the rest of the chain intact.
+- If the instruction removes a feature: delete just that operation block; do not rewrite surrounding code.
+- If the instruction modifies a dimension/parameter: update only the literal(s) that depend on it (and, if present, the matching parameter comment)."""
 
 
 def build(record: dict, data_dir: Path, mode: str) -> tuple[str, str, list[Path]]:
