@@ -42,7 +42,7 @@ from pipeline.runner import run_record  # noqa: E402
 
 DEFAULT_CONFIG = ROOT / "configs" / "test.yaml"
 REQUIRED_FIELDS = ("data_dir", "out_dir", "models", "modes")
-VALID_MODES = {"instruction", "image", "ablation"}
+VALID_MODES = {"instruction"}
 
 
 def parse_args():

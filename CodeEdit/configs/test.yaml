@@ -1,4 +1,4 @@
-# Smoke config: 4 records × 1 model × 3 modes.
+# Smoke config: 4 records × 1 model.
 # Paths are relative to CodeEdit/ (where you invoke `uv run`).
 
 data_dir: test_data
@@ -7,8 +7,5 @@ out_dir:  results_test
 models:
   - gpt-4o
 
-# 3 modes: instruction, image, ablation
 modes:
   - instruction
-  - image
-  - ablation
