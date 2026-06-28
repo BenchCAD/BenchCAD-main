@@ -203,6 +203,42 @@
           "date": "—",
           "tested": "2026-06",
           "iou_score": 0.0698
+        },
+        {
+          "model": "Claude Mythos 5",
+          "think": "thinking",
+          "org": "Anthropic",
+          "class": "proprietary",
+          "date": "—",
+          "tested": "—",
+          "exec": null,
+          "iou_score": 0.384,
+          "total": null,
+          "self_reported": true
+        },
+        {
+          "model": "Claude Mythos Preview",
+          "think": "thinking",
+          "org": "Anthropic",
+          "class": "proprietary",
+          "date": "—",
+          "tested": "—",
+          "exec": null,
+          "iou_score": 0.355,
+          "total": null,
+          "self_reported": true
+        },
+        {
+          "model": "Claude Opus 4.8",
+          "think": "thinking",
+          "org": "Anthropic",
+          "class": "proprietary",
+          "date": "2026-05",
+          "tested": "2026-06",
+          "exec": null,
+          "iou_score": 0.273,
+          "total": null,
+          "self_reported": true
         }
       ]
     },

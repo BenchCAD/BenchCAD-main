@@ -30,6 +30,9 @@ Image → CadQuery. Four canonical orthographic views in, a CadQuery program out
 | Moonshot v1-128k | Moonshot | 2025-02 | 2026-06 | 12.5% | 0.0160 | 0.0609 |
 | Moonshot v1-8k | Moonshot | 2025-02 | 2026-06 | 10.0% | 0.0127 | 0.0595 |
 | Qwen3-VL-2B (baseline) | Qwen | 2025-09 | 2026-06 | 14.6% | 0.0005 | 0.0084 |
+| Claude Mythos 5 † | Anthropic | — | — | — | 0.3840 | — |
+| Claude Mythos Preview † | Anthropic | — | — | — | 0.3550 | — |
+| Claude Opus 4.8 † | Anthropic | 2026-05 | 2026-06 | — | 0.2730 | — |
 
 ## Vision QA
 
@@ -90,5 +93,7 @@ Given a CadQuery program and a natural-language edit instruction, output a minim
 
 ---
 
-⭐ BenchCAD's own model · 🔧 CAD specialist · re-graded, never self-reported.
+⭐ BenchCAD's own model · 🔧 CAD specialist.
+**† self-reported by the provider, not re-graded by us** — preview/unreleased models for which only the provider-published IoU-score is shown (no exec% / total). Every other row is re-graded by us from raw outputs.
+
 Generated from `leaderboard.json` — `uv run python tools/build_leaderboard.py`.
