@@ -91,9 +91,14 @@ the official scorer.
    re-execute the predicted CadQuery and score by voxel IoU; `codeqa` scores by
    symmetric ratio accuracy. No judge model is involved.
 3. Open an issue using the **Model result submission** template and attach
-   `submission.jsonl` + your run config. We re-grade and update the board. For the
-   private held-out split, you submit predictions and we grade against the hidden
-   answers.
+   `submission.jsonl` + your run config. We re-grade, add a row to
+   [`leaderboard.json`](leaderboard.json), and run
+   `uv run python tools/build_leaderboard.py` to refresh
+   [`LEADERBOARD.md`](LEADERBOARD.md). For the private held-out split, you submit
+   predictions and we grade against the hidden answers.
+
+`leaderboard.json` is the single source of truth for the board (same schema the
+website renders); every number on it is one we reproduced, never self-reported.
 
 ---
 
