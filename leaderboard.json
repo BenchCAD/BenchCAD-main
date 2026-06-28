@@ -1,0 +1,776 @@
+{
+  "meta": {
+    "name": "BenchCAD",
+    "tagline": "A comprehensive, industry-standard benchmark for programmatic CAD.",
+    "scoring": "Execution-grounded and deterministic. Vision2Code/CodeEdit grade by voxel IoU between executed STEP solids; QA grades by symmetric ratio accuracy.",
+    "run_command": "uv run python benchcad.py --task all --num all --model <model>",
+    "classes": {
+      "specialist": "CAD specialist",
+      "proprietary": "Frontier (proprietary)",
+      "open": "Open weights",
+      "ours": "Ours · Qwen3-VL-2B + BenchCAD",
+      "control": "Control / baseline"
+    }
+  },
+  "tasks": {
+    "vision2code": {
+      "label": "Vision2Code",
+      "code": "img2cq",
+      "blurb": "Image → CadQuery. Four canonical orthographic views in, a CadQuery program out. Re-executed and scored against ground-truth STEP. IoU↑ @ 64³ voxels · exec% runs cleanly · total↑ composite.",
+      "command": "uv run python benchcad.py --task vision2code --num all --model <model>",
+      "primary": "total",
+      "columns": [
+        {
+          "key": "model",
+          "label": "Model"
+        },
+        {
+          "key": "org",
+          "label": "Org",
+          "kind": "org"
+        },
+        {
+          "key": "date",
+          "label": "Released",
+          "kind": "date"
+        },
+        {
+          "key": "tested",
+          "label": "Tested",
+          "kind": "date"
+        },
+        {
+          "key": "iou",
+          "label": "IoU",
+          "better": "high",
+          "fmt": "f4"
+        },
+        {
+          "key": "exec",
+          "label": "exec",
+          "better": "high",
+          "fmt": "pct1"
+        },
+        {
+          "key": "total",
+          "label": "total",
+          "better": "high",
+          "fmt": "f4"
+        }
+      ],
+      "rows": [
+        {
+          "model": "GPT-4o",
+          "org": "OpenAI",
+          "class": "proprietary",
+          "iou": 0.2003,
+          "exec": 91.0,
+          "total": 0.2393,
+          "date": "2024-05",
+          "tested": "2026-06"
+        },
+        {
+          "model": "GPT-5.3",
+          "org": "OpenAI",
+          "class": "proprietary",
+          "iou": 0.2298,
+          "exec": 81.5,
+          "total": 0.2465,
+          "date": "2026-04",
+          "tested": "2026-06"
+        },
+        {
+          "model": "GPT-5.3",
+          "think": "thinking",
+          "org": "OpenAI",
+          "class": "proprietary",
+          "iou": 0.2187,
+          "exec": 82.0,
+          "total": 0.2497,
+          "date": "2026-04",
+          "tested": "2026-06"
+        },
+        {
+          "model": "Claude Sonnet 4.6",
+          "org": "Anthropic",
+          "class": "proprietary",
+          "iou": 0.2415,
+          "exec": 79.5,
+          "total": 0.2599,
+          "date": "2026-01",
+          "tested": "2026-06"
+        },
+        {
+          "model": "Claude Sonnet 4.6",
+          "think": "thinking-high",
+          "org": "Anthropic",
+          "class": "proprietary",
+          "iou": 0.2567,
+          "exec": 86.5,
+          "total": 0.2979,
+          "date": "2026-01",
+          "tested": "2026-06"
+        },
+        {
+          "model": "Claude Opus 4.7",
+          "org": "Anthropic",
+          "class": "proprietary",
+          "iou": 0.274,
+          "exec": 95.5,
+          "total": 0.3075,
+          "date": "2026-03",
+          "tested": "2026-06"
+        },
+        {
+          "model": "Claude Opus 4.7",
+          "think": "thinking",
+          "org": "Anthropic",
+          "class": "proprietary",
+          "iou": 0.279,
+          "exec": 96.5,
+          "total": 0.3238,
+          "date": "2026-03",
+          "tested": "2026-06"
+        },
+        {
+          "model": "Gemini 3.1 Pro",
+          "org": "Google",
+          "class": "proprietary",
+          "iou": 0.314,
+          "exec": 88.5,
+          "total": 0.3315,
+          "date": "2026-05",
+          "tested": "2026-06"
+        },
+        {
+          "model": "Gemini 3.1 Pro",
+          "think": "thinking",
+          "org": "Google",
+          "class": "proprietary",
+          "iou": 0.3546,
+          "exec": 81.5,
+          "total": 0.3457,
+          "date": "2026-05",
+          "tested": "2026-06"
+        },
+        {
+          "model": "OpenAI o3",
+          "org": "OpenAI",
+          "class": "proprietary",
+          "iou": 0.2256,
+          "exec": 54.0,
+          "total": 0.1978,
+          "date": "2025-04",
+          "tested": "2026-06"
+        },
+        {
+          "model": "Moonshot v1-128k",
+          "org": "Moonshot",
+          "class": "open",
+          "iou": 0.1281,
+          "exec": 12.5,
+          "total": 0.0609,
+          "date": "2025-02",
+          "tested": "2026-06"
+        },
+        {
+          "model": "Moonshot v1-8k",
+          "org": "Moonshot",
+          "class": "open",
+          "iou": 0.127,
+          "exec": 10.0,
+          "total": 0.0595,
+          "date": "2025-02",
+          "tested": "2026-06"
+        },
+        {
+          "model": "Qwen3-VL-2B (baseline)",
+          "org": "Qwen",
+          "class": "open",
+          "iou": 0.0032,
+          "exec": 14.6,
+          "total": 0.0084,
+          "date": "2025-09",
+          "tested": "2026-06"
+        },
+        {
+          "model": "GPT-4o",
+          "think": "blank img",
+          "org": "OpenAI",
+          "class": "control",
+          "iou": 0.0802,
+          "exec": 87.0,
+          "total": 0.1102,
+          "date": "—",
+          "tested": "2026-06"
+        }
+      ]
+    },
+    "visionqa": {
+      "label": "Vision QA",
+      "code": "qa_img",
+      "blurb": "Numeric geometric reasoning from multi-view renders, broken out along the four-level capability hierarchy. ±5% tolerance for ratios, exact match for integers. Same 2,400 questions as Code QA — the matched-pair gap isolates visual recognition from reasoning.",
+      "command": "uv run python benchcad.py --task qa --num all --model <model>",
+      "primary": "total",
+      "columns": [
+        {
+          "key": "model",
+          "label": "Model"
+        },
+        {
+          "key": "org",
+          "label": "Org",
+          "kind": "org"
+        },
+        {
+          "key": "date",
+          "label": "Released",
+          "kind": "date"
+        },
+        {
+          "key": "tested",
+          "label": "Tested",
+          "kind": "date"
+        },
+        {
+          "key": "l1",
+          "label": "Holistic Visual Recognition",
+          "better": "high",
+          "fmt": "f3"
+        },
+        {
+          "key": "l2",
+          "label": "CAD Operation Understanding",
+          "better": "high",
+          "fmt": "f3"
+        },
+        {
+          "key": "l3",
+          "label": "Industrial Parametric Abstraction",
+          "better": "high",
+          "fmt": "f3"
+        },
+        {
+          "key": "l4",
+          "label": "Spatial Reasoning",
+          "better": "high",
+          "fmt": "f3"
+        },
+        {
+          "key": "total",
+          "label": "Total",
+          "better": "high",
+          "fmt": "f3"
+        }
+      ],
+      "rows": [
+        {
+          "model": "Gemini 3.1 Pro",
+          "org": "Google",
+          "class": "proprietary",
+          "l1": 0.75,
+          "l2": 0.462,
+          "l3": 0.536,
+          "l4": 0.688,
+          "total": 0.587,
+          "date": "2026-05",
+          "tested": "2026-05"
+        },
+        {
+          "model": "Gemini 3.1 Pro",
+          "think": "thinking",
+          "org": "Google",
+          "class": "proprietary",
+          "l1": 0.722,
+          "l2": 0.426,
+          "l3": 0.551,
+          "l4": 0.669,
+          "total": 0.576,
+          "date": "2026-05",
+          "tested": "2026-05"
+        },
+        {
+          "model": "Claude Opus 4.7",
+          "think": "thinking",
+          "org": "Anthropic",
+          "class": "proprietary",
+          "l1": 0.715,
+          "l2": 0.485,
+          "l3": 0.421,
+          "l4": 0.614,
+          "total": 0.53,
+          "date": "2026-03",
+          "tested": "2026-05"
+        },
+        {
+          "model": "Claude Opus 4.7",
+          "org": "Anthropic",
+          "class": "proprietary",
+          "l1": 0.699,
+          "l2": 0.464,
+          "l3": 0.426,
+          "l4": 0.668,
+          "total": 0.526,
+          "date": "2026-03",
+          "tested": "2026-05"
+        },
+        {
+          "model": "GPT-5.3",
+          "think": "thinking",
+          "org": "OpenAI",
+          "class": "proprietary",
+          "l1": 0.65,
+          "l2": 0.429,
+          "l3": 0.482,
+          "l4": 0.534,
+          "total": 0.514,
+          "date": "2026-04",
+          "tested": "2026-05"
+        },
+        {
+          "model": "GPT-5.3",
+          "org": "OpenAI",
+          "class": "proprietary",
+          "l1": 0.636,
+          "l2": 0.423,
+          "l3": 0.488,
+          "l4": 0.548,
+          "total": 0.513,
+          "date": "2026-04",
+          "tested": "2026-05"
+        },
+        {
+          "model": "GPT-4o",
+          "org": "OpenAI",
+          "class": "proprietary",
+          "l1": 0.599,
+          "l2": 0.408,
+          "l3": 0.431,
+          "l4": 0.396,
+          "total": 0.464,
+          "date": "2024-05",
+          "tested": "2026-05"
+        },
+        {
+          "model": "Moonshot v1-8k",
+          "org": "Moonshot",
+          "class": "open",
+          "l1": 0.6,
+          "l2": 0.246,
+          "l3": 0.465,
+          "l4": 0.181,
+          "total": 0.447,
+          "date": "2025-02",
+          "tested": "2026-05"
+        },
+        {
+          "model": "Moonshot v1-128k",
+          "org": "Moonshot",
+          "class": "open",
+          "l1": 0.556,
+          "l2": 0.387,
+          "l3": 0.427,
+          "l4": 0.334,
+          "total": 0.442,
+          "date": "2025-02",
+          "tested": "2026-05"
+        },
+        {
+          "model": "OpenAI o3",
+          "org": "OpenAI",
+          "class": "proprietary",
+          "l1": 0.328,
+          "l2": 0.188,
+          "l3": 0.398,
+          "l4": 0.56,
+          "total": 0.327,
+          "date": "2025-04",
+          "tested": "2026-05"
+        },
+        {
+          "model": "blank-image baseline",
+          "org": "—",
+          "class": "control",
+          "l1": 0.376,
+          "l2": 0.325,
+          "l3": 0.418,
+          "l4": 0.296,
+          "total": 0.375,
+          "date": "—",
+          "tested": "2026-05"
+        }
+      ]
+    },
+    "codeqa": {
+      "label": "Code QA",
+      "code": "qa_code",
+      "blurb": "The same 2,400 numeric questions as Vision QA, but conditioned on CadQuery source instead of renders. Best Code QA reaches 0.838 while best Vision QA caps at 0.587 — a ~25 pt modality gap on identical questions (the Holistic Spatial & Detailing Deficit).",
+      "command": "uv run python benchcad.py --task qa --num all --model <model>",
+      "primary": "total",
+      "columns": [
+        {
+          "key": "model",
+          "label": "Model"
+        },
+        {
+          "key": "org",
+          "label": "Org",
+          "kind": "org"
+        },
+        {
+          "key": "date",
+          "label": "Released",
+          "kind": "date"
+        },
+        {
+          "key": "tested",
+          "label": "Tested",
+          "kind": "date"
+        },
+        {
+          "key": "l1",
+          "label": "CadQuery Code Recognition",
+          "better": "high",
+          "fmt": "f3"
+        },
+        {
+          "key": "l2",
+          "label": "CAD Operation Understanding",
+          "better": "high",
+          "fmt": "f3"
+        },
+        {
+          "key": "l3",
+          "label": "Industrial Parametric Abstraction",
+          "better": "high",
+          "fmt": "f3"
+        },
+        {
+          "key": "l4",
+          "label": "Spatial Reasoning",
+          "better": "high",
+          "fmt": "f3"
+        },
+        {
+          "key": "total",
+          "label": "Total",
+          "better": "high",
+          "fmt": "f3"
+        }
+      ],
+      "rows": [
+        {
+          "model": "Gemini 3.1 Pro",
+          "think": "thinking",
+          "org": "Google",
+          "class": "proprietary",
+          "l1": 0.907,
+          "l2": 0.783,
+          "l3": 0.876,
+          "l4": 0.537,
+          "total": 0.838,
+          "date": "2026-05",
+          "tested": "2026-05"
+        },
+        {
+          "model": "Gemini 3.1 Pro",
+          "org": "Google",
+          "class": "proprietary",
+          "l1": 0.914,
+          "l2": 0.782,
+          "l3": 0.867,
+          "l4": 0.537,
+          "total": 0.836,
+          "date": "2026-05",
+          "tested": "2026-05"
+        },
+        {
+          "model": "Claude Opus 4.7",
+          "think": "thinking",
+          "org": "Anthropic",
+          "class": "proprietary",
+          "l1": 0.891,
+          "l2": 0.781,
+          "l3": 0.851,
+          "l4": 0.632,
+          "total": 0.829,
+          "date": "2026-03",
+          "tested": "2026-05"
+        },
+        {
+          "model": "GPT-5.3",
+          "org": "OpenAI",
+          "class": "proprietary",
+          "l1": 0.879,
+          "l2": 0.805,
+          "l3": 0.815,
+          "l4": 0.731,
+          "total": 0.823,
+          "date": "2026-04",
+          "tested": "2026-05"
+        },
+        {
+          "model": "GPT-5.3",
+          "think": "thinking",
+          "org": "OpenAI",
+          "class": "proprietary",
+          "l1": 0.885,
+          "l2": 0.802,
+          "l3": 0.811,
+          "l4": 0.73,
+          "total": 0.821,
+          "date": "2026-04",
+          "tested": "2026-05"
+        },
+        {
+          "model": "Claude Opus 4.7",
+          "org": "Anthropic",
+          "class": "proprietary",
+          "l1": 0.868,
+          "l2": 0.8,
+          "l3": 0.793,
+          "l4": 0.595,
+          "total": 0.801,
+          "date": "2026-03",
+          "tested": "2026-05"
+        },
+        {
+          "model": "GPT-4o",
+          "org": "OpenAI",
+          "class": "proprietary",
+          "l1": 0.865,
+          "l2": 0.593,
+          "l3": 0.732,
+          "l4": 0.688,
+          "total": 0.726,
+          "date": "2024-05",
+          "tested": "2026-05"
+        },
+        {
+          "model": "OpenAI o3",
+          "org": "OpenAI",
+          "class": "proprietary",
+          "l1": 0.804,
+          "l2": 0.701,
+          "l3": 0.689,
+          "l4": 0.492,
+          "total": 0.708,
+          "date": "2025-04",
+          "tested": "2026-05"
+        },
+        {
+          "model": "Moonshot v1-128k",
+          "org": "Moonshot",
+          "class": "open",
+          "l1": 0.842,
+          "l2": 0.551,
+          "l3": 0.692,
+          "l4": 0.792,
+          "total": 0.7,
+          "date": "2025-02",
+          "tested": "2026-05"
+        },
+        {
+          "model": "gpt-oss-120b",
+          "org": "OpenAI",
+          "class": "open",
+          "l1": 0.79,
+          "l2": 0.732,
+          "l3": 0.656,
+          "l4": 0.379,
+          "total": 0.689,
+          "date": "2025-08",
+          "tested": "2026-05"
+        },
+        {
+          "model": "Nemotron-3 120B",
+          "org": "NVIDIA",
+          "class": "open",
+          "l1": 0.771,
+          "l2": 0.66,
+          "l3": 0.661,
+          "l4": 0.293,
+          "total": 0.671,
+          "date": "2026-01",
+          "tested": "2026-05"
+        },
+        {
+          "model": "Gemma-4-31B-it",
+          "org": "Google",
+          "class": "open",
+          "l1": 0.791,
+          "l2": 0.674,
+          "l3": 0.606,
+          "l4": 0.528,
+          "total": 0.664,
+          "date": "2026-02",
+          "tested": "2026-05"
+        },
+        {
+          "model": "Moonshot v1-8k",
+          "org": "Moonshot",
+          "class": "open",
+          "l1": 0.772,
+          "l2": 0.603,
+          "l3": 0.555,
+          "l4": 0.536,
+          "total": 0.62,
+          "date": "2025-02",
+          "tested": "2026-05"
+        },
+        {
+          "model": "blank-code baseline",
+          "org": "—",
+          "class": "control",
+          "l1": 0.04,
+          "l2": 0.257,
+          "l3": 0.29,
+          "l4": 0.42,
+          "total": 0.223,
+          "date": "—",
+          "tested": "2026-05"
+        }
+      ]
+    },
+    "codeedit": {
+      "label": "Code Edit",
+      "code": "edit_code",
+      "blurb": "Given a CadQuery program and a natural-language edit instruction, output a minimally modified program matching the target. Accuracy↑ is headroom-normalised improvement: how much of the original→target IoU gap the edit closes. 748 pairs across five edit types T1–T5.",
+      "command": "uv run python benchcad.py --task codeedit --num all --model <model>",
+      "primary": "accuracy",
+      "columns": [
+        {
+          "key": "model",
+          "label": "Model"
+        },
+        {
+          "key": "org",
+          "label": "Org",
+          "kind": "org"
+        },
+        {
+          "key": "date",
+          "label": "Released",
+          "kind": "date"
+        },
+        {
+          "key": "tested",
+          "label": "Tested",
+          "kind": "date"
+        },
+        {
+          "key": "thinking",
+          "label": "Thinking",
+          "kind": "bool"
+        },
+        {
+          "key": "accuracy",
+          "label": "Accuracy",
+          "better": "high",
+          "fmt": "f3"
+        }
+      ],
+      "rows": [
+        {
+          "model": "GPT-5.3",
+          "org": "OpenAI",
+          "class": "proprietary",
+          "thinking": true,
+          "accuracy": 0.865,
+          "date": "2026-04",
+          "tested": "2026-05"
+        },
+        {
+          "model": "Claude Opus 4.7",
+          "org": "Anthropic",
+          "class": "proprietary",
+          "thinking": true,
+          "accuracy": 0.853,
+          "date": "2026-03",
+          "tested": "2026-05"
+        },
+        {
+          "model": "Gemini 3.1 Pro",
+          "org": "Google",
+          "class": "proprietary",
+          "thinking": true,
+          "accuracy": 0.837,
+          "date": "2026-05",
+          "tested": "2026-05"
+        },
+        {
+          "model": "Claude Opus 4.7",
+          "org": "Anthropic",
+          "class": "proprietary",
+          "thinking": false,
+          "accuracy": 0.811,
+          "date": "2026-03",
+          "tested": "2026-05"
+        },
+        {
+          "model": "Gemini 3.1 Pro",
+          "org": "Google",
+          "class": "proprietary",
+          "thinking": false,
+          "accuracy": 0.795,
+          "date": "2026-05",
+          "tested": "2026-05"
+        },
+        {
+          "model": "GPT-5.3",
+          "org": "OpenAI",
+          "class": "proprietary",
+          "thinking": false,
+          "accuracy": 0.74,
+          "date": "2026-04",
+          "tested": "2026-05"
+        },
+        {
+          "model": "OpenAI o3",
+          "org": "OpenAI",
+          "class": "proprietary",
+          "thinking": true,
+          "accuracy": 0.708,
+          "date": "2025-04",
+          "tested": "2026-05"
+        },
+        {
+          "model": "GPT-4o",
+          "org": "OpenAI",
+          "class": "proprietary",
+          "thinking": false,
+          "accuracy": 0.615,
+          "date": "2024-05",
+          "tested": "2026-05"
+        },
+        {
+          "model": "Nemotron-3 120B",
+          "org": "NVIDIA",
+          "class": "open",
+          "thinking": false,
+          "accuracy": 0.608,
+          "date": "2026-01",
+          "tested": "2026-05"
+        },
+        {
+          "model": "gpt-oss-120b",
+          "org": "OpenAI",
+          "class": "open",
+          "thinking": false,
+          "accuracy": 0.561,
+          "date": "2025-08",
+          "tested": "2026-05"
+        },
+        {
+          "model": "no-change baseline",
+          "org": "—",
+          "class": "control",
+          "thinking": false,
+          "accuracy": 0.0,
+          "date": "—",
+          "tested": "2026-05"
+        }
+      ]
+    }
+  }
+}
