@@ -12,24 +12,24 @@ _A comprehensive, industry-standard benchmark for programmatic CAD._
 
 ## Vision2Code
 
-Image → CadQuery. Four canonical orthographic views in, a CadQuery program out. Re-executed and scored against ground-truth STEP. IoU↑ @ 64³ voxels · exec% runs cleanly · total↑ composite.
+Image → CadQuery. Four canonical orthographic views in, a CadQuery program out, re-executed and scored against the ground-truth STEP. IoU-score↑ = 64³ voxel IoU × exec% (non-executing parts count as 0) · exec% runs cleanly · total↑ composite.
 
-| Model | Org | Released | Tested | IoU | exec | total |
+| Model | Org | Released | Tested | exec | IoU-score | total |
 |---|---|---|---|---|---|---|
-| Gemini 3.1 Pro | Google | 2026-05 | 2026-06 | 0.3546 | 81.5% | 0.3457 |
-| Gemini 3.1 Pro | Google | 2026-05 | 2026-06 | 0.3140 | 88.5% | 0.3315 |
-| Claude Opus 4.7 | Anthropic | 2026-03 | 2026-06 | 0.2790 | 96.5% | 0.3238 |
-| Claude Opus 4.7 | Anthropic | 2026-03 | 2026-06 | 0.2740 | 95.5% | 0.3075 |
-| Claude Sonnet 4.6 | Anthropic | 2026-01 | 2026-06 | 0.2567 | 86.5% | 0.2979 |
-| Claude Sonnet 4.6 | Anthropic | 2026-01 | 2026-06 | 0.2415 | 79.5% | 0.2599 |
-| GPT-5.3 | OpenAI | 2026-04 | 2026-06 | 0.2187 | 82.0% | 0.2497 |
-| GPT-5.3 | OpenAI | 2026-04 | 2026-06 | 0.2298 | 81.5% | 0.2465 |
-| GPT-4o | OpenAI | 2024-05 | 2026-06 | 0.2003 | 91.0% | 0.2393 |
-| OpenAI o3 | OpenAI | 2025-04 | 2026-06 | 0.2256 | 54.0% | 0.1978 |
-| GPT-4o · | OpenAI | — | 2026-06 | 0.0802 | 87.0% | 0.1102 |
-| Moonshot v1-128k | Moonshot | 2025-02 | 2026-06 | 0.1281 | 12.5% | 0.0609 |
-| Moonshot v1-8k | Moonshot | 2025-02 | 2026-06 | 0.1270 | 10.0% | 0.0595 |
-| Qwen3-VL-2B (baseline) | Qwen | 2025-09 | 2026-06 | 0.0032 | 14.6% | 0.0084 |
+| Gemini 3.1 Pro | Google | 2026-05 | 2026-06 | 81.5% | 0.2890 | 0.3457 |
+| Gemini 3.1 Pro | Google | 2026-05 | 2026-06 | 88.5% | 0.2779 | 0.3315 |
+| Claude Opus 4.7 | Anthropic | 2026-03 | 2026-06 | 96.5% | 0.2692 | 0.3238 |
+| Claude Opus 4.7 | Anthropic | 2026-03 | 2026-06 | 95.5% | 0.2617 | 0.3075 |
+| Claude Sonnet 4.6 | Anthropic | 2026-01 | 2026-06 | 86.5% | 0.2220 | 0.2979 |
+| Claude Sonnet 4.6 | Anthropic | 2026-01 | 2026-06 | 79.5% | 0.1920 | 0.2599 |
+| GPT-5.3 | OpenAI | 2026-04 | 2026-06 | 82.0% | 0.1793 | 0.2497 |
+| GPT-5.3 | OpenAI | 2026-04 | 2026-06 | 81.5% | 0.1873 | 0.2465 |
+| GPT-4o | OpenAI | 2024-05 | 2026-06 | 91.0% | 0.1823 | 0.2393 |
+| OpenAI o3 | OpenAI | 2025-04 | 2026-06 | 54.0% | 0.1218 | 0.1978 |
+| GPT-4o · | OpenAI | — | 2026-06 | 87.0% | 0.0698 | 0.1102 |
+| Moonshot v1-128k | Moonshot | 2025-02 | 2026-06 | 12.5% | 0.0160 | 0.0609 |
+| Moonshot v1-8k | Moonshot | 2025-02 | 2026-06 | 10.0% | 0.0127 | 0.0595 |
+| Qwen3-VL-2B (baseline) | Qwen | 2025-09 | 2026-06 | 14.6% | 0.0005 | 0.0084 |
 
 ## Vision QA
 
