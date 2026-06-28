@@ -6,14 +6,6 @@ ground-truth STEP.
 
 ← Back to [main README](../README.md)
 
-## Three prompt modes
-
-| Mode | Signal in the prompt |
-|---|---|
-| `instruction` | Text instruction + original code (no image) |
-| `image`       | Original + GT rendered images + original code (no text instruction) |
-| `ablation`    | Both: instruction + images + original code (full-signal baseline) |
-
 > **All commands below assume `cd CodeEdit` first.**
 
 ## Configs
@@ -22,7 +14,7 @@ What to run lives in YAML — one per setup. Two ship out of the box:
 
 | Config | Purpose |
 |---|---|
-| `configs/test.yaml` | 4-record smoke (`test_data/`), 1 model, all 3 modes. Default. |
+| `configs/test.yaml` | 4-record smoke (`test_data/`), 1 model. Default. |
 | `configs/prod.yaml` | Full bench (`BenchCAD/BenchCAD/edit-bench` on HF), 7+ models. |
 
 Each config sets:
@@ -30,7 +22,7 @@ Each config sets:
 data_dir: test_data
 out_dir:  results_test
 models: [gpt-4o, claude-opus-4-7, ...]
-modes:  [instruction, image, ablation]
+modes:  [instruction]
 ```
 
 Paths are **relative to `CodeEdit/`**. Copy either one to make your own

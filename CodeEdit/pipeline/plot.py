@@ -4,11 +4,7 @@ Layout
 ------
     x-axis : models present in results.jsonl
     y-axis : mean norm-IoU (averaged across records for each (model, mode))
-    Each model gets 1 husl colour.
-    Each model has up-to-3 sub-bars (one per mode), differentiated by FILL:
-        instruction → white fill + coloured edge + hatch "////"  (text-only)
-        image       → solid colour                                (image-only)
-        ablation    → solid colour, alpha=0.55, hatch ".."        (text+image)
+    Each model gets 1 husl colour and one bar (mean norm-IoU over records).
 
 Adaptive: only the (model, mode) pairs actually present in results.jsonl are
 drawn — empty cells are skipped (no zero-bar). Number of husl hues = number
@@ -20,16 +16,12 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-MODE_ORDER = ("instruction", "image", "ablation")
+MODE_ORDER = ("instruction",)
 MODE_STYLE = {
     "instruction": dict(facecolor="white", hatch="////", alpha=1.0, edgecolor=None, edgewidth=1.4),
-    "image":       dict(facecolor=None,    hatch=None,   alpha=1.0, edgecolor="white", edgewidth=0.6),
-    "ablation":    dict(facecolor=None,    hatch="..",   alpha=0.55, edgecolor="white", edgewidth=0.6),
 }
 MODE_LABEL = {
     "instruction": "instruction only (text)",
-    "image":       "image only",
-    "ablation":    "instruction + image (ablation)",
 }
 
 
