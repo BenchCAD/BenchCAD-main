@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="assets/benchcad-icon.png" alt="BenchCAD" width="90" />
+<img src="assets/benchcad-icon.svg" alt="BenchCAD" width="90" />
 
 # BenchCAD
 
