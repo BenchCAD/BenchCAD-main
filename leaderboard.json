@@ -16,7 +16,7 @@
     "vision2code": {
       "label": "Vision2Code",
       "code": "img2cq",
-      "blurb": "Image → CadQuery. Four canonical orthographic views in, a CadQuery program out. Re-executed and scored against ground-truth STEP. IoU↑ @ 64³ voxels · exec% runs cleanly · total↑ composite.",
+      "blurb": "Image → CadQuery. Four canonical orthographic views in, a CadQuery program out, re-executed and scored against the ground-truth STEP. IoU-score↑ = 64³ voxel IoU × exec% (non-executing parts count as 0) · exec% runs cleanly · total↑ composite.",
       "command": "uv run python benchcad.py --task vision2code --num all --model <model>",
       "primary": "total",
       "columns": [
@@ -40,16 +40,16 @@
           "kind": "date"
         },
         {
-          "key": "iou",
-          "label": "IoU",
-          "better": "high",
-          "fmt": "f4"
-        },
-        {
           "key": "exec",
           "label": "exec",
           "better": "high",
           "fmt": "pct1"
+        },
+        {
+          "key": "iou_score",
+          "label": "IoU-score",
+          "better": "high",
+          "fmt": "f4"
         },
         {
           "key": "total",
@@ -63,146 +63,182 @@
           "model": "GPT-4o",
           "org": "OpenAI",
           "class": "proprietary",
-          "iou": 0.2003,
           "exec": 91.0,
           "total": 0.2393,
           "date": "2024-05",
-          "tested": "2026-06"
+          "tested": "2026-06",
+          "iou_score": 0.1823
         },
         {
           "model": "GPT-5.3",
           "org": "OpenAI",
           "class": "proprietary",
-          "iou": 0.2298,
           "exec": 81.5,
           "total": 0.2465,
           "date": "2026-04",
-          "tested": "2026-06"
+          "tested": "2026-06",
+          "iou_score": 0.1873
         },
         {
           "model": "GPT-5.3",
           "think": "thinking",
           "org": "OpenAI",
           "class": "proprietary",
-          "iou": 0.2187,
           "exec": 82.0,
           "total": 0.2497,
           "date": "2026-04",
-          "tested": "2026-06"
+          "tested": "2026-06",
+          "iou_score": 0.1793
         },
         {
           "model": "Claude Sonnet 4.6",
           "org": "Anthropic",
           "class": "proprietary",
-          "iou": 0.2415,
           "exec": 79.5,
           "total": 0.2599,
           "date": "2026-01",
-          "tested": "2026-06"
+          "tested": "2026-06",
+          "iou_score": 0.192
         },
         {
           "model": "Claude Sonnet 4.6",
           "think": "thinking-high",
           "org": "Anthropic",
           "class": "proprietary",
-          "iou": 0.2567,
           "exec": 86.5,
           "total": 0.2979,
           "date": "2026-01",
-          "tested": "2026-06"
+          "tested": "2026-06",
+          "iou_score": 0.222
         },
         {
           "model": "Claude Opus 4.7",
           "org": "Anthropic",
           "class": "proprietary",
-          "iou": 0.274,
           "exec": 95.5,
           "total": 0.3075,
           "date": "2026-03",
-          "tested": "2026-06"
+          "tested": "2026-06",
+          "iou_score": 0.2617
         },
         {
           "model": "Claude Opus 4.7",
           "think": "thinking",
           "org": "Anthropic",
           "class": "proprietary",
-          "iou": 0.279,
           "exec": 96.5,
           "total": 0.3238,
           "date": "2026-03",
-          "tested": "2026-06"
+          "tested": "2026-06",
+          "iou_score": 0.2692
         },
         {
           "model": "Gemini 3.1 Pro",
           "org": "Google",
           "class": "proprietary",
-          "iou": 0.314,
           "exec": 88.5,
           "total": 0.3315,
           "date": "2026-05",
-          "tested": "2026-06"
+          "tested": "2026-06",
+          "iou_score": 0.2779
         },
         {
           "model": "Gemini 3.1 Pro",
           "think": "thinking",
           "org": "Google",
           "class": "proprietary",
-          "iou": 0.3546,
           "exec": 81.5,
           "total": 0.3457,
           "date": "2026-05",
-          "tested": "2026-06"
+          "tested": "2026-06",
+          "iou_score": 0.289
         },
         {
           "model": "OpenAI o3",
           "org": "OpenAI",
           "class": "proprietary",
-          "iou": 0.2256,
           "exec": 54.0,
           "total": 0.1978,
           "date": "2025-04",
-          "tested": "2026-06"
+          "tested": "2026-06",
+          "iou_score": 0.1218
         },
         {
           "model": "Moonshot v1-128k",
           "org": "Moonshot",
           "class": "open",
-          "iou": 0.1281,
           "exec": 12.5,
           "total": 0.0609,
           "date": "2025-02",
-          "tested": "2026-06"
+          "tested": "2026-06",
+          "iou_score": 0.016
         },
         {
           "model": "Moonshot v1-8k",
           "org": "Moonshot",
           "class": "open",
-          "iou": 0.127,
           "exec": 10.0,
           "total": 0.0595,
           "date": "2025-02",
-          "tested": "2026-06"
+          "tested": "2026-06",
+          "iou_score": 0.0127
         },
         {
           "model": "Qwen3-VL-2B (baseline)",
           "org": "Qwen",
           "class": "open",
-          "iou": 0.0032,
           "exec": 14.6,
           "total": 0.0084,
           "date": "2025-09",
-          "tested": "2026-06"
+          "tested": "2026-06",
+          "iou_score": 0.0005
         },
         {
           "model": "GPT-4o",
           "think": "blank img",
           "org": "OpenAI",
           "class": "control",
-          "iou": 0.0802,
           "exec": 87.0,
           "total": 0.1102,
           "date": "—",
-          "tested": "2026-06"
+          "tested": "2026-06",
+          "iou_score": 0.0698
+        },
+        {
+          "model": "Claude Mythos 5",
+          "think": "thinking",
+          "org": "Anthropic",
+          "class": "proprietary",
+          "date": "—",
+          "tested": "—",
+          "exec": null,
+          "iou_score": 0.384,
+          "total": null,
+          "self_reported": true
+        },
+        {
+          "model": "Claude Mythos Preview",
+          "think": "thinking",
+          "org": "Anthropic",
+          "class": "proprietary",
+          "date": "—",
+          "tested": "—",
+          "exec": null,
+          "iou_score": 0.355,
+          "total": null,
+          "self_reported": true
+        },
+        {
+          "model": "Claude Opus 4.8",
+          "think": "thinking",
+          "org": "Anthropic",
+          "class": "proprietary",
+          "date": "2026-05",
+          "tested": "2026-06",
+          "exec": null,
+          "iou_score": 0.273,
+          "total": null,
+          "self_reported": true
         }
       ]
     },

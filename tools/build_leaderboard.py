@@ -52,12 +52,18 @@ for t in data["tasks"].values():
         cells = []
         for c in cols:
             if c["key"] == "model":
-                cells.append(str(r.get("model", "")) + MARK.get(r.get("class", ""), ""))
+                cells.append(str(r.get("model", "")) + MARK.get(r.get("class", ""), "")
+                             + (" †" if r.get("self_reported") else ""))
             else:
                 cells.append(fmt(r.get(c["key"]), c))
         out.append("| " + " | ".join(cells) + " |")
     out.append("")
-out += ["---", "", "⭐ BenchCAD's own model · 🔧 CAD specialist · re-graded, never self-reported.",
+out += ["---", "",
+        "⭐ BenchCAD's own model · 🔧 CAD specialist.",
+        "**† self-reported by the provider, not re-graded by us** — preview/unreleased models for "
+        "which only the provider-published IoU-score is shown (no exec% / total). Every other row is "
+        "re-graded by us from raw outputs.",
+        "",
         "Generated from `leaderboard.json` — `uv run python tools/build_leaderboard.py`."]
 (ROOT / "LEADERBOARD.md").write_text("\n".join(out) + "\n")
 print("wrote LEADERBOARD.md")
