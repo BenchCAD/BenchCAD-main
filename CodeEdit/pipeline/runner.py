@@ -67,7 +67,7 @@ def run_record(*, record: dict, data_dir: Path, results_root: Path,
     from benchcad_core.models import call_model
     t0 = time.time()
     try:
-        raw = call_model(model=model, system=system, user_text=user_text, image_paths=image_paths)
+        raw = call_model(model=model, system=system, user_text=user_text, image_paths=image_paths, max_tokens=16000)
         api_err = None
     except Exception as e:
         raw, api_err = "", f"{type(e).__name__}: {e}"
