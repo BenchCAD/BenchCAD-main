@@ -64,7 +64,7 @@ helical_gear:      [[loft, twistExtrude], [polyline, spline, threePointArc, Sket
 
 # ── loft (cross-section interpolation) ────────────────────────────────────
 bevel_gear:        [loft, [polyline, spline, threePointArc, Sketch]]
-propeller:         [loft]                                              # GT 中 1/7 用 circle 截面 loft, 没 polyline → drop profile AND
+propeller:         [loft]                                              # 1/7 of GT uses a circle-section loft, no polyline → drop profile AND
 tapered_boss:      [[loft, taper=]]
 wing_nut:          [[loft, taper=]]
 

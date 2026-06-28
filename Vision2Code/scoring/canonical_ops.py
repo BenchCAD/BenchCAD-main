@@ -130,10 +130,10 @@ def find_ops(code: str) -> set[str]:
     if "sweep" in found and has_helix:
         found.add("sweep+helix")
         found.discard("sweep")
-    # polyline 内部就是 lineTo 链
+    # a polyline is internally a chain of lineTo calls
     if "polyline" in found:
         found.add("lineTo")
-    # 闭合 polyline 几何上等同 polygon 轮廓
+    # a closed polyline is geometrically equivalent to a polygon outline
     if "polyline" in found and re.search(r"\.close\s*\(", code):
         found.add("polygon")
     return found
