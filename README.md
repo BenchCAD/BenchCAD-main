@@ -6,13 +6,14 @@
 
 **A benchmark for evaluating LLMs and multimodal models on programmatic CAD.**
 
+[![Website](https://img.shields.io/badge/🌐%20Website-benchcad.com-2ea44f.svg)](https://benchcad.com)
 [![Paper](https://img.shields.io/badge/arXiv-2605.10865-b31b1b.svg)](https://arxiv.org/abs/2605.10865)
 [![Dataset](https://img.shields.io/badge/🤗%20HuggingFace-BenchCAD-yellow.svg)](https://huggingface.co/datasets/BenchCAD/BenchCAD)
 [![Code License: MIT](https://img.shields.io/badge/Code-MIT-blue.svg)](LICENSE)
 [![Data License: CC BY 4.0](https://img.shields.io/badge/Data-CC--BY--4.0-blue.svg)](https://creativecommons.org/licenses/by/4.0/)
 [![Python 3.11](https://img.shields.io/badge/python-3.11-blue.svg)](https://www.python.org/)
 
-[Paper](https://arxiv.org/abs/2605.10865) · [Dataset](https://huggingface.co/datasets/BenchCAD/BenchCAD) · [Contributing](CONTRIBUTING.md)
+[Website](https://benchcad.com) · [Paper](https://arxiv.org/abs/2605.10865) · [Dataset](https://huggingface.co/datasets/BenchCAD/BenchCAD) · [Contributing](CONTRIBUTING.md)
 
 </div>
 
@@ -104,17 +105,6 @@ and pulled into the gitignored `data/` folder on first `prod` run. One config pe
 
 A tiny `test_data/` (≈4 records) is committed per task for smoke tests without any
 download. Dataset schema and column details are documented on the dataset card.
-
-## Scoring
-
-| Task | How a prediction is graded |
-|---|---|
-| Vision2Code | the model's code is executed to a STEP solid, voxelized on a normalized 64³ grid, and compared to the ground-truth solid by voxel IoU (`|A∩B| / |A∪B|`) |
-| CodeEdit | the same voxel IoU, **normalized** as the model's improvement over the unedited program toward the target: `(IoU_model − IoU_orig) / (1 − IoU_orig)`, clipped to `[0, 1]` |
-| Vision-QA & Code-QA | each numeric answer is scored by `min(pred, gt) / max(pred, gt)`; exact match for counts / integers / yes-no (same metric for both the image and code variant) |
-
-No external judge model is involved, so any submission can be re-graded to the
-same number — see [`tools/regrade.py`](tools/regrade.py).
 
 ## Repository layout
 
