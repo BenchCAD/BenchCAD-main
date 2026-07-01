@@ -6,28 +6,39 @@ set.
 
 ## Resolved
 
-### 2026-06-27 — `double_simplex_sprocket` GT timeouts (≈26 Vision2Code records)
+### 2026-06 — 26 Vision2Code GT records that don't always build a STEP
 
-**Problem.** The Vision2Code ground-truth STEP solids are generated locally at
-download time by running each GT CadQuery program in a subprocess with a 90 s
-timeout (`scoring/exec_cq.py::execute_cq_to_step`). The `double_simplex_sprocket`
-family is unusually slow to tessellate/export (its slowest instances take ~50–68 s
-even on fast hardware). On slower machines, under parallel evaluation, or with
-subprocess + import overhead, the slowest of these exceed 90 s and fail to produce
-a STEP, so they get **omitted** — independent evaluators (including Anthropic, who
-reported evaluating 17,874 of 17,900 files) drop the same ~26 records.
+**Symptom.** Vision2Code scores each prediction against a ground-truth STEP solid.
+STEPs are not shipped in the dataset — they are built at download time by running
+each record's GT CadQuery program in a subprocess
+(`scoring/exec_cq.py::execute_cq_to_step`). The slowest tail of programs — led by
+the `double_simplex_sprocket` family — can exceed the execution timeout on slower
+hardware or under parallel contention; the subprocess is killed, no STEP is
+written, and those records are dropped. Independent evaluators hit the same
+records: Anthropic's Fable 5 / Mythos 5 system card reports evaluating 17,874 of
+17,900 Vision2Code files, omitting "26 records whose CadQuery code failed to
+produce a STEP file."
 
-**Root cause.** Not broken code: all 17,900 GT programs execute and export a valid
-STEP given enough time (verified — 0 hard failures in the pinned
-`cadquery 2.3.0` / `cadquery-ocp 7.9.3.0` environment). The ~26 omissions are a
-**timeout/hardware sensitivity** of one slow-geometry family, not a data defect.
+**Not a data defect.** We rebuilt the entire `double_simplex_sprocket` family (the
+slow-family culprit) from its GT code: **185 / 185 execute and export a valid,
+scorable STEP** — 0 execution failures, 0 tessellation failures — in the pinned
+`cadquery 2.3.0` / `cadquery-ocp 7.9.3.0` environment. Under 6-way parallel
+contention on a fast (Apple-silicon) workstation the slowest built in 39 s; none
+exceeded 90 s. The omissions are a timeout-margin / hardware sensitivity of the
+build-GT-locally step — the same valid programs just need longer than the old
+budget on slower machines — not bad ground truth.
 
-**Fix.** Raised the `execute_cq_to_step` default timeout from 90 s to 300 s (the
-slowest valid program is ~68 s on fast hardware, leaving generous margin for slower
-machines and contention). No dataset change is needed — GT STEPs are produced
-locally on download — so with the larger timeout all **17,900** records are
-scorable. Anthropic's published numbers are over the 17,874-record subset; results
-on the full set are directly comparable once the slow records build.
+**Interim fix (merged).** Raised the default `execute_cq_to_step` timeout from
+90 s to 300 s.
+
+**Definitive fix.** `Vision2Code/tools/build_gt_steps.py` builds every GT STEP once
+(parallel, with a serial retry for the slow tail) and packages them as a
+`gt_steps.parquet`. Shipping these pre-built STEPs in the dataset removes the
+local-execution step entirely, so the full 17,900-record set scores identically on
+any machine — no timeout, no hardware sensitivity — and the tool's report gives an
+authoritative build status for every record. Until the STEPs ship, Anthropic's
+numbers are over the 17,874-record subset and are directly comparable to full-set
+numbers once the slow records build.
 
 ## Per-record corrections
 
