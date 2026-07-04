@@ -5,8 +5,14 @@ type: dataset
 authors:
   - given-names: Haozhe
     family-names: Zhang
+  - given-names: Kaichen
+    family-names: Liu
+  - given-names: Miaomiao
+    family-names: Chen
   - given-names: Lei
     family-names: Li
+  - given-names: Shaojie
+    family-names: Yang
   - given-names: Cheng
     family-names: Peng
   - given-names: Hanjie
@@ -35,8 +41,14 @@ preferred-citation:
   authors:
     - given-names: Haozhe
       family-names: Zhang
+    - given-names: Kaichen
+      family-names: Liu
+    - given-names: Miaomiao
+      family-names: Chen
     - given-names: Lei
       family-names: Li
+    - given-names: Shaojie
+      family-names: Yang
     - given-names: Cheng
       family-names: Peng
     - given-names: Hanjie
