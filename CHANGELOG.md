@@ -20,6 +20,13 @@ harness changes that can move reported numbers are called out explicitly.
   when it exists, so raw-shape outputs are scored instead of failing
   (`benchcad_core/scoring/exec_cq.py`). Aggregate effect on scores is negligible.
 
+### Scoring — QA
+- **Negative `dim` answers are now scoreable.** `qa_score_single` returned 0 for
+  any `dim`/`ratio` pair with a non-positive value, so the 18 Code QA rows whose
+  gold is a negative signed extrude/cutBlind depth sum scored 0 even when exactly
+  right — capping Code QA at ~0.9925, for all models equally. Now uses a
+  sign-checked magnitude ratio. See `docs/ERRATA.md`. (reported in #33)
+
 ### Harness
 - **GT STEP build timeout raised 90 s → 300 s**, plus a new
   `Vision2Code/tools/build_gt_steps.py` to pre-build every GT STEP once. GT STEPs

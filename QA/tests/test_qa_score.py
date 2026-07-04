@@ -32,9 +32,14 @@ def test_ratio_accuracy_symmetric():
     assert qa_score_single(5, 5, "ratio") == 1.0
 
 
-def test_non_positive_is_zero():
-    assert qa_score_single(-1, 10, "dim") == 0.0
-    assert qa_score_single(10, 0, "dim") == 0.0
+def test_dim_signed_and_zero():
+    # dim answers may be negative (e.g. a signed sum of extrude/cutBlind depths) or
+    # zero; an exactly-correct answer must score 1.0, and the sign must match.
+    assert qa_score_single(-1.3, -1.3, "dim") == 1.0   # correct negative (regression)
+    assert qa_score_single(-8, -10, "dim") == 0.8      # magnitude ratio, matched signs
+    assert qa_score_single(0, 0, "dim") == 1.0         # correct zero
+    assert qa_score_single(-5, 5, "dim") == 0.0        # opposite signs -> wrong
+    assert qa_score_single(10, 0, "dim") == 0.0        # only one side zero
 
 
 def test_qa_score_mean_and_empty():
