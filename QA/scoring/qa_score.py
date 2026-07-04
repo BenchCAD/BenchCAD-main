@@ -2,13 +2,13 @@
 
 Per-pair score depends on `type`:
     integer / count / boolean / bool   → exact match  (1.0 if pred == gt else 0.0)
-    dim / ratio / anything else        → symmetric ratio accuracy
-                                         min(pred, gt) / max(pred, gt),
-                                         0.0 if either non-positive
+    dim / ratio / anything else        → sign-checked symmetric ratio accuracy
+                                         min(|pred|, |gt|) / max(|pred|, |gt|),
+                                         0.0 if the signs differ (a 0 answer
+                                         scores 1.0 only when pred == gt)
 
-Exact match is required for boolean (0/1) answers, where ratio accuracy
-collapses to 0 even when pred == gt == 0. It also matches the natural
-semantics of counts and line numbers (off-by-one is wrong, not "92% right").
+Exact match suits the natural semantics of booleans, counts, and line
+numbers — an off-by-one is wrong, not "92% right".
 
 Also includes a JSON-array parser robust to leading prose / fenced blocks.
 """
@@ -54,9 +54,13 @@ def qa_score_single(pred: float, gt: float, type_: str = "dim") -> float:
     gt = float(gt)
     if (type_ or "").lower() in _EXACT_TYPES:
         return 1.0 if pred == gt else 0.0
-    if gt <= 0 or pred <= 0:
+    # dim/ratio answers may be negative (e.g. a signed sum of extrude/cutBlind
+    # depths) or zero — an exactly-correct one must score 1.0.
+    if gt == 0 or pred == 0:
+        return 1.0 if pred == gt else 0.0
+    if (pred < 0) != (gt < 0):
         return 0.0
-    return round(min(pred, gt) / max(pred, gt), 4)
+    return round(min(abs(pred), abs(gt)) / max(abs(pred), abs(gt)), 4)
 
 
 def qa_score(pred_answers: list[float], qa_pairs: list[dict]) -> float:

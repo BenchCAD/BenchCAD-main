@@ -6,6 +6,25 @@ set.
 
 ## Resolved
 
+### 2026-07 — Negative-gold `dim` answers were unscoreable (18 Code QA rows)
+
+**Problem.** `QA/scoring/qa_score.py::qa_score_single` scored `dim`/`ratio` answers
+with a symmetric min/max ratio and returned 0 whenever either side was ≤ 0. The
+"sum of all extrude/cutBlind depth values" template (tier_a_L3) has **18 Code QA
+records with a negative gold**: `cutBlind` depths are negative in CadQuery, so the
+signed sum of the depth literals is negative. An exactly-correct answer therefore
+scored 0, which capped the attainable Code QA score at ~0.9925 — for all models
+equally. Reported by @jaemoshin (#33).
+
+**Not a data defect.** The golds are correct: for all 18 rows the parsed signed sum
+of the extrude/cutBlind depth literals equals the stored gold.
+
+**Fix.** `qa_score_single` now compares magnitudes with a sign-match check —
+`min(|pred|,|gt|) / max(|pred|,|gt|)`, 0 if the signs differ, and a 0 answer scores
+1.0 only when `pred == gt`. Positive-answer scoring is unchanged; regression test in
+`QA/tests/test_qa_score.py`. Code QA scores rise slightly for models that answered
+these rows correctly, so listed Code QA numbers should be re-graded.
+
 ### 2026-06 — 26 Vision2Code GT records that don't always build a STEP
 
 **Symptom.** Vision2Code scores each prediction against a ground-truth STEP solid.
