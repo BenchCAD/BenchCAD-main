@@ -131,11 +131,10 @@ code / errata fixes.
 
 ```bibtex
 @article{zhang2026benchcad,
-  title  = {BenchCAD: A Comprehensive, Industry-Standard Benchmark for Programmatic CAD},
-  author = {Zhang, Haozhe and Li, Lei and Peng, Cheng and Chen, Hanjie},
-  year   = {2026},
-  eprint = {2605.10865},
-  archivePrefix = {arXiv}
+  title   = {BenchCAD: A Comprehensive, Industry-Standard Benchmark for Programmatic CAD},
+  author  = {Zhang, Haozhe and Liu, Kaichen and Chen, Miaomiao and Li, Lei and Yang, Shaojie and Peng, Cheng and Chen, Hanjie},
+  journal = {arXiv preprint arXiv:2605.10865},
+  year    = {2026}
 }
 ```
 
