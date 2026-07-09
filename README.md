@@ -24,8 +24,9 @@ BenchCAD evaluates whether a model can *understand and write parametric CAD code
 — the [CadQuery](https://github.com/CadQuery/cadquery) programs that generate real
 mechanical parts. It is built on **17,900 execution-verified CadQuery programs**
 across **106 industrial part families** (bevel gears, compression springs, twist
-drills, threaded adapters, …) drawn from **47 engineering standards** (ISO / DIN / EN /
-ASME / IEC). The benchmark decomposes model ability into four tasks (across three task
+drills, threaded adapters, …), **52 of which are anchored to real specification
+tables** from **47 engineering standards** (ISO / DIN / EN / ASME / IEC). The
+benchmark decomposes model ability into four tasks (across three task
 dirs — QA splits into a vision and a code variant) spanning perception,
 parametric abstraction, and executable synthesis.
 
