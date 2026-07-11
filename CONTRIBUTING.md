@@ -94,8 +94,9 @@ the official scorer.
    `submission.jsonl` + your run config. We re-grade, add a row to
    [`leaderboard.json`](leaderboard.json), and run
    `uv run python tools/build_leaderboard.py` to refresh
-   [`LEADERBOARD.md`](LEADERBOARD.md). For the private held-out split, you submit
-   predictions and we grade against the hidden answers.
+   [`LEADERBOARD.md`](LEADERBOARD.md). All ground truth is public — nothing is
+   withheld: you run the full evaluation split, submit your raw predictions, and
+   we re-grade them with the same public scorer.
 
 `leaderboard.json` is the single source of truth for the board (same schema the
 website renders); every number on it is one we reproduced, never self-reported.
