@@ -41,4 +41,4 @@ harness changes that can move reported numbers are called out explicitly.
 
 ## [0.1.0] — 2026-06
 - Initial release: `code_gen` (17,900 samples / 106 part families),
-  `QA` (2,400 numeric questions / 200 parts), `edit-bench` (748 held-out edit set).
+  `QA` (2,400 numeric questions / 200 parts), `edit-bench` (748 instruction-guided edit pairs).

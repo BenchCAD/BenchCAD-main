@@ -17,8 +17,9 @@
 - [ ] `uv run pytest -q` passes
 - [ ] If I changed scoring or execution logic, I added/updated a test that fails
       before the change and passes after
-- [ ] I did **not** commit any benchmark ground-truth answers into the repo
-      (held-out test answers stay out of git / public data)
+- [ ] I did **not** commit large benchmark data files into the repo
+      (the full ground-truth dataset lives on HuggingFace, not in git; only the
+      tiny `test_data/` smoke fixtures belong in the repo)
 
 ## Model result submission (fill in only if submitting leaderboard numbers)
 
