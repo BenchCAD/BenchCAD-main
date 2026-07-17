@@ -31,18 +31,35 @@ env = vf.load_environment("benchcad-vision2code", num_examples=100)
 ```
 
 `load_environment(num_examples=None, exec_timeout=300)` — `num_examples` caps to
-the first N parts (handy for quick runs; omit for the full set). `exec_timeout`
-is the per-program CadQuery→STEP execution timeout in seconds; raise it for
-slow-tessellating families on slower hardware.
+the first N parts (handy for quick runs; omit for the full set).
 
-Generation-side knobs — max output tokens, request timeout, reasoning effort —
-are **sampling args** passed to the rollout at eval time, not part of the
-environment:
+### Two independent timeouts — don't confuse them
 
-```bash
-uv run vf-eval benchcad-vision2code -n 5 \
-  -S '{"max_tokens": 16000, "reasoning_effort": "high"}'
+**Response timeout** — how long the model is allowed to take to answer. Reasoning
+models often think for a while before responding, and a short client timeout cuts
+them off. This lives on the **rollout's OpenAI client, not the environment** — set
+it there, generously, for slow reasoning models:
+
+```python
+from openai import AsyncOpenAI
+import verifiers as vf
+
+client = AsyncOpenAI(timeout=3600)   # 1 h — so slow reasoning isn't cut off
+env = vf.load_environment("benchcad-vision2code", num_examples=100)
+# ...evaluate the env with `client`. The other generation knobs — max_tokens,
+# reasoning_effort — are sampling args (`vf-eval -S '{...}'`), also client-side.
 ```
+
+**Execution timeout** (`exec_timeout`, default 300 s) — a *separate* knob that
+only bounds the CadQuery→STEP subprocess runs used to **score** a rollout (the
+model's program and the ground truth), not the model's response. It's a
+`load_environment` argument:
+
+```python
+env = vf.load_environment("benchcad-vision2code", exec_timeout=600)
+```
+
+Raise it for slow-tessellating families on slower hardware.
 
 ## Notes
 
