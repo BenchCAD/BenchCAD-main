@@ -15,6 +15,7 @@ from pathlib import Path
 
 from scoring.qa_score import parse_json_numbers, qa_score, qa_score_single
 
+from benchcad_core.run_config import DEFAULT_MAX_TOKENS, DEFAULT_TIMEOUT
 from pipeline.prompt import build as build_prompt
 
 
@@ -51,7 +52,8 @@ def _write_results(jsonl: Path, rows: dict) -> None:
 
 
 def run_record(*, record: dict, data_dir: Path, results_root: Path,
-               model: str, mode: str = "code") -> dict:
+               model: str, mode: str = "code",
+               max_tokens: int = DEFAULT_MAX_TOKENS, timeout: int = DEFAULT_TIMEOUT) -> dict:
     """Run one (model, record) → write the result row to results.jsonl."""
     rid = record["record_id"]
     paths = _outputs_paths(results_root, model, rid)
@@ -76,7 +78,7 @@ def run_record(*, record: dict, data_dir: Path, results_root: Path,
     t0 = time.time()
     try:
         raw = call_model(model=model, system=system, user_text=user_text,
-                         image_paths=image_paths, max_tokens=16000)
+                         image_paths=image_paths, max_tokens=max_tokens, timeout=timeout)
         api_err = None
     except Exception as e:
         raw, api_err = "", f"{type(e).__name__}: {e}"

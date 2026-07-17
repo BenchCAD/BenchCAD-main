@@ -13,3 +13,9 @@ models:
 #  - claude-opus-4-7
 #  - claude-opus-4-7:reasoning=high
 #  - gemini-3-pro-preview
+
+# Generation knobs (all optional; omitted keys use built-in defaults). QA is
+# text-only — no CadQuery execution — so exec_timeout does not apply here.
+gen:
+  max_tokens: 16000    # per-call output budget (OpenAI reasoning models floor to 32000)
+  timeout: 3600        # per model-call timeout, seconds — 1 hr, for long reasoning

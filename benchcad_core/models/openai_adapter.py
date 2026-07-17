@@ -38,6 +38,11 @@ def generate(*, model: str, system: str, user_text: str,
         base = model[: -len("-thinking")]
         real_model = f"{base}-chat-latest"
         reasoning_effort = "high"
+    if reasoning_effort:
+        # Reasoning tokens are billed against max_completion_tokens; floor the
+        # budget so a long reasoning pass doesn't consume it all and leave no
+        # room for the actual answer.
+        max_tokens = max(max_tokens, 32000)
 
     user_content: list = [{"type": "text", "text": user_text}]
     for p in image_paths:
