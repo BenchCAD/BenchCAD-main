@@ -12,7 +12,8 @@ Dispatches by model id prefix:
     openrouter/*                → openrouter
 
 Special model-id suffixes (all routed inside the relevant adapter):
-    :reasoning=high|medium      → reasoning_effort
+    :reasoning=high|medium|low  → reasoning effort (openai / anthropic / openrouter)
+    :reasoning=<int>            → reasoning-token budget (openrouter)
     :thinking=off               → gemini, disables thinking
 """
 

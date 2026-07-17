@@ -61,6 +61,7 @@ override-dependencies = ["numpy>=1.26"]
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["Vision2Code/tests", "CodeEdit/tests", "QA/tests", "tests"]
+pythonpath = ["."]  # repo root importable, so `tests/` can `import benchcad_core`
 
 [tool.ruff]
 line-length = 88
