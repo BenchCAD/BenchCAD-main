@@ -16,3 +16,9 @@ models:
 
 modes:
   - instruction
+
+# Generation + execution knobs (all optional; omitted keys use built-in defaults).
+gen:
+  max_tokens: 16000    # per-call output budget (OpenAI reasoning models floor to 32000)
+  timeout: 3600        # per model-call timeout, seconds — 1 hr, for long reasoning
+  exec_timeout: 300    # CadQuery → STEP execution timeout, seconds

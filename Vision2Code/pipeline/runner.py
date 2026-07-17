@@ -13,6 +13,11 @@ import json
 import time
 from pathlib import Path
 
+from benchcad_core.run_config import (
+    DEFAULT_EXEC_TIMEOUT,
+    DEFAULT_MAX_TOKENS,
+    DEFAULT_TIMEOUT,
+)
 from benchcad_core.scoring.exec_cq import execute_cq_to_step, extract_code
 from benchcad_core.scoring.iou import iou_step_vs_step
 from pipeline.prompt import build as build_prompt
@@ -52,7 +57,9 @@ def _write_results(jsonl: Path, rows: dict) -> None:
 
 
 def run_record(*, record: dict, data_dir: Path, results_root: Path,
-               model: str, score: str = "iou") -> dict:
+               model: str, score: str = "iou",
+               max_tokens: int = DEFAULT_MAX_TOKENS, timeout: int = DEFAULT_TIMEOUT,
+               exec_timeout: int = DEFAULT_EXEC_TIMEOUT) -> dict:
     """Run one (model, record) → write the result row to results.jsonl.
 
     score: "iou" (raw voxel IoU, default — the metric Anthropic reports) or
@@ -70,7 +77,7 @@ def run_record(*, record: dict, data_dir: Path, results_root: Path,
     t0 = time.time()
     try:
         raw = call_model(model=model, system=system, user_text=user_text,
-                         image_paths=image_paths, max_tokens=16000)
+                         image_paths=image_paths, max_tokens=max_tokens, timeout=timeout)
         api_err = None
     except Exception as e:
         raw, api_err = "", f"{type(e).__name__}: {e}"
@@ -85,7 +92,7 @@ def run_record(*, record: dict, data_dir: Path, results_root: Path,
         status, err_msg = "no_code", "no parseable code in response"
     else:
         try:
-            execute_cq_to_step(code, paths["step"])
+            execute_cq_to_step(code, paths["step"], timeout=exec_timeout)
             status, err_msg = "ok", None
         except Exception as e:
             status, err_msg = "exec_fail", f"{type(e).__name__}: {e}"

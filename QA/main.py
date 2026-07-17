@@ -41,6 +41,8 @@ sys.path.insert(0, str(ROOT.parent))  # repo root, for benchcad_core
 
 from pipeline.runner import run_record  # noqa: E402
 
+from benchcad_core.run_config import gen_params  # noqa: E402
+
 DEFAULT_CONFIG = ROOT / "configs" / "test.yaml"
 REQUIRED_FIELDS = ("data_dir", "out_dir", "models")
 
@@ -114,6 +116,7 @@ def do_run(cfg: dict, args) -> None:
     mode     = str(cfg.get("mode", "code"))
     if mode not in ("code", "img", "both"):
         sys.exit(f"config mode must be code|img|both, got {mode!r}")
+    gp = gen_params(cfg)
 
     out_dir.mkdir(parents=True, exist_ok=True)
     records = load_records(data_dir)
@@ -131,12 +134,14 @@ def do_run(cfg: dict, args) -> None:
     print(f"data:   {data_dir}")
     print(f"out:    {out_dir}")
     print(f"mode:   {mode}")
+    print(f"gen:    max_tokens={gp['max_tokens']} timeout={gp['timeout']}s")
     print(f"runs:   {len(records)} record(s) × {len(models)} model(s)")
     for model in models:
         for i, rec in enumerate(records, 1):
             print(f"  [{model}] {i}/{len(records)} {rec['record_id']}", end=" ... ", flush=True)
             row = run_record(record=rec, data_dir=data_dir, results_root=out_dir,
-                             model=model, mode=mode)
+                             model=model, mode=mode,
+                             max_tokens=gp["max_tokens"], timeout=gp["timeout"])
             print(f"{row['status']:10s} qa_score={row['qa_score']:.3f}  ({row['lat_s']:.1f}s)")
     _print_results_summary(out_dir)
 

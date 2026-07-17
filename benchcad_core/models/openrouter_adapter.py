@@ -52,8 +52,8 @@ def generate(*, model: str, system: str, user_text: str,
 
     real_model, extra_body = _reasoning_extra_body(model[len("openrouter/"):])
     if extra_body:
-        # A reasoning pass can run well past the 120s call_model default; floor the
-        # request timeout so a slow reasoning response isn't cut off (mirrors the
+        # A reasoning pass can run long; floor the request timeout so a low
+        # configured timeout can't cut a slow reasoning response off (mirrors the
         # anthropic adapter's extended-thinking floor).
         timeout = max(timeout, 600)
 

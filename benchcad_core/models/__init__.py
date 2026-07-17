@@ -3,7 +3,7 @@
 Public:
     call_model(model: str, system: str, user_text: str,
                image_paths: list[Path] | None = None,
-               max_tokens: int = 4096, timeout: int = 120) -> str
+               max_tokens: int = 4096, timeout: int = 600) -> str
 
 Dispatches by model id prefix:
     gpt-* / o3 / o1 / o-*       → openai
@@ -45,7 +45,7 @@ def _route(model: str) -> str:
 
 def call_model(model: str, system: str, user_text: str,
                image_paths: list[Path] | None = None,
-               max_tokens: int = 4096, timeout: int = 120) -> str:
+               max_tokens: int = 4096, timeout: int = 600) -> str:
     images = [Path(p) for p in (image_paths or [])]
     provider = _route(model)
     if provider == "openai":

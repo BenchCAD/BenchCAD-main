@@ -28,6 +28,12 @@ harness changes that can move reported numbers are called out explicitly.
   sign-checked magnitude ratio. See `docs/ERRATA.md`. (reported in #33)
 
 ### Harness
+- **Model calls + CadQuery execution are configurable per run** via an optional
+  `gen:` block in each task config (`max_tokens`, `timeout`, `exec_timeout`).
+  Defaults are unchanged except the per-call timeout, raised 120 s → 600 s (and
+  `prod` configs set 3600 s so long reasoning passes aren't cut off); OpenAI
+  reasoning models floor `max_tokens` to 32000 so reasoning doesn't starve the
+  answer. See `benchcad_core/run_config.py`.
 - **OpenRouter models can now request reasoning tokens** via a `:reasoning=`
   model-id suffix (`high|medium|low` effort, an integer reasoning-token budget, or
   `off`), wired to OpenRouter's unified `reasoning` field. The suffix was

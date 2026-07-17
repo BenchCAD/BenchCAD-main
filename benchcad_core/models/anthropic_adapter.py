@@ -30,7 +30,7 @@ def generate(*, model: str, system: str, user_text: str,
             # max_tokens > budget_tokens, with room left over for the output.
             max_tokens = max(max_tokens, 16000)
             # Extended thinking can take ~2 min; floor the request timeout so a
-            # slow thinking response isn't cut off (call_model default is 120s).
+            # low configured timeout can't cut a slow thinking response off.
             timeout = max(timeout, 600)
 
     content: list = [{"type": "text", "text": user_text}]
