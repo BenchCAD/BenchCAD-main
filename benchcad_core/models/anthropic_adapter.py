@@ -8,11 +8,11 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-from . import _img_b64
+from . import _img_b64, usage_dict
 
 
 def generate(*, model: str, system: str, user_text: str,
-             image_paths: list[Path], max_tokens: int, timeout: int) -> str:
+             image_paths: list[Path], max_tokens: int, timeout: int) -> tuple[str, dict]:
     import anthropic
 
     api_key = os.environ.get("ANTHROPIC_API_KEY")
@@ -54,4 +54,9 @@ def generate(*, model: str, system: str, user_text: str,
     resp = client.messages.create(**kwargs)
     # Concatenate text blocks
     parts = [b.text for b in resp.content if getattr(b, "type", "") == "text"]
-    return "".join(parts)
+    u = getattr(resp, "usage", None)
+    usage = usage_dict(
+        prompt=getattr(u, "input_tokens", None) if u else None,
+        completion=getattr(u, "output_tokens", None) if u else None,
+    )
+    return "".join(parts), usage

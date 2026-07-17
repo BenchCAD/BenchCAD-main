@@ -17,7 +17,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-from . import _img_b64
+from . import _img_b64, usage_from_openai
 
 
 def _reasoning_extra_body(real_model: str) -> tuple[str, dict]:
@@ -43,7 +43,7 @@ def _reasoning_extra_body(real_model: str) -> tuple[str, dict]:
 
 
 def generate(*, model: str, system: str, user_text: str,
-             image_paths: list[Path], max_tokens: int, timeout: int) -> str:
+             image_paths: list[Path], max_tokens: int, timeout: int) -> tuple[str, dict]:
     import openai
 
     api_key = os.environ.get("OPENROUTER_API_KEY")
@@ -79,4 +79,5 @@ def generate(*, model: str, system: str, user_text: str,
         temperature=0.0,
         extra_body=extra_body or None,
     )
-    return resp.choices[0].message.content or ""
+    text = resp.choices[0].message.content or ""
+    return text, usage_from_openai(resp)

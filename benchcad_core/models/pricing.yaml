@@ -1,0 +1,18 @@
+# Token prices in USD per 1,000,000 tokens, used only to estimate run cost
+# (`cost_usd` in results.jsonl). Adding or correcting a model needs no code
+# change — just edit this file. Keys are the *base* model id: the routing prefix
+# (`openrouter/`) and behavior suffixes (`:reasoning=`, `:free`, `-thinking`) are
+# stripped before lookup. A model not listed here records `cost_usd: null`.
+#
+# VERIFY against current provider pricing before trusting the numbers — this is a
+# starting point, not a live feed.
+
+gpt-4o:       {input: 2.50, output: 10.00}
+gpt-4o-mini:  {input: 0.15, output: 0.60}
+o3:           {input: 2.00, output: 8.00}
+
+# Add the models you run below (examples — replace with real, current prices):
+# gpt-5.3:              {input: 1.25, output: 10.00}
+# claude-opus-4-7:      {input: 15.00, output: 75.00}
+# claude-sonnet-4-6:    {input: 3.00, output: 15.00}
+# gemini-3-pro-preview: {input: 1.25, output: 10.00}

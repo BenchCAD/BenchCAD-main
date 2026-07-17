@@ -8,9 +8,11 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
+from . import usage_dict
+
 
 def generate(*, model: str, system: str, user_text: str,
-             image_paths: list[Path], max_tokens: int, timeout: int) -> str:
+             image_paths: list[Path], max_tokens: int, timeout: int) -> tuple[str, dict]:
     from google import genai
     from google.genai import types
 
@@ -49,4 +51,17 @@ def generate(*, model: str, system: str, user_text: str,
         contents=[types.Content(role="user", parts=parts)],
         config=types.GenerateContentConfig(**config_kwargs),
     )
-    return resp.text or ""
+    um = getattr(resp, "usage_metadata", None)
+    if um is None:
+        usage = usage_dict()
+    else:
+        cand = getattr(um, "candidates_token_count", None)
+        thoughts = getattr(um, "thoughts_token_count", None)
+        has_out = cand is not None or thoughts is not None
+        usage = usage_dict(
+            prompt=getattr(um, "prompt_token_count", None),
+            completion=((cand or 0) + (thoughts or 0)) if has_out else None,
+            reasoning=thoughts,
+            total=getattr(um, "total_token_count", None),
+        )
+    return (resp.text or ""), usage

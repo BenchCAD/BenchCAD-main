@@ -28,6 +28,11 @@ harness changes that can move reported numbers are called out explicitly.
   sign-checked magnitude ratio. See `docs/ERRATA.md`. (reported in #33)
 
 ### Harness
+- **Per-record token usage + cost are recorded** in `results.jsonl`
+  (`prompt_tokens`, `completion_tokens`, `reasoning_tokens`, `total_tokens`,
+  `cost_usd`; wall-time `lat_s` was already there). `call_model` now returns a
+  `(text, usage)` `Completion`; per-call cost comes from an editable
+  `benchcad_core/models/pricing.yaml` (models not listed → `cost_usd: null`).
 - **Model calls + CadQuery execution are configurable per run** via an optional
   `gen:` block in each task config (`max_tokens`, `timeout`, `exec_timeout`).
   Defaults are unchanged except the per-call timeout, raised 120 s → 600 s (and
