@@ -15,6 +15,7 @@ from pathlib import Path
 
 from scoring.qa_score import parse_json_numbers, qa_score, qa_score_single
 
+from benchcad_core.models.pricing import cost_usd
 from benchcad_core.run_config import DEFAULT_MAX_TOKENS, DEFAULT_TIMEOUT
 from pipeline.prompt import build as build_prompt
 
@@ -63,6 +64,8 @@ def run_record(*, record: dict, data_dir: Path, results_root: Path,
         row = {
             "record_id": rid, "model": model, "status": "no_qa",
             "qa_score": 0.0, "n_qa": 0, "lat_s": 0.0,
+            "prompt_tokens": None, "completion_tokens": None,
+            "reasoning_tokens": None, "total_tokens": None, "cost_usd": None,
             "err": "record has no qa_pairs", "per_qa": [],
             "raw_path": None, "json_path": None,
         }
@@ -76,9 +79,12 @@ def run_record(*, record: dict, data_dir: Path, results_root: Path,
     # 2. Call model (text-only)
     from benchcad_core.models import call_model
     t0 = time.time()
+    usage: dict = {}
     try:
-        raw = call_model(model=model, system=system, user_text=user_text,
-                         image_paths=image_paths, max_tokens=max_tokens, timeout=timeout)
+        raw, usage = call_model(
+            model=model, system=system, user_text=user_text,
+            image_paths=image_paths, max_tokens=max_tokens, timeout=timeout,
+        )
         api_err = None
     except Exception as e:
         raw, api_err = "", f"{type(e).__name__}: {e}"
@@ -127,6 +133,11 @@ def run_record(*, record: dict, data_dir: Path, results_root: Path,
         "qa_score": round(float(score), 4),
         "n_qa": len(qa_pairs),
         "lat_s": round(lat, 2),
+        "prompt_tokens": usage.get("prompt_tokens"),
+        "completion_tokens": usage.get("completion_tokens"),
+        "reasoning_tokens": usage.get("reasoning_tokens"),
+        "total_tokens": usage.get("total_tokens"),
+        "cost_usd": cost_usd(model, usage.get("prompt_tokens"), usage.get("completion_tokens")),
         "err": err_msg,
         "pred_answers": answers,
         "gt_answers": [q["answer"] for q in qa_pairs],

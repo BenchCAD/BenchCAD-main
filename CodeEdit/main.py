@@ -110,6 +110,13 @@ def _print_results_summary(out_dir: Path) -> None:
     for (model, mode) in sorted(bucket):
         vals = bucket[(model, mode)]
         print(f"    {model:<{width}}{mode:<14} n={len(vals):<3} mean_norm={sum(vals)/len(vals):.3f}")
+    total_tok = sum(r.get("total_tokens") or 0 for r in rows)
+    total_cost = sum(r.get("cost_usd") or 0.0 for r in rows)
+    if total_tok:
+        line = f"tokens   → {total_tok:,} total"
+        if total_cost:
+            line += f"  ·  cost ≈ ${total_cost:.4f}"
+        print(line)
 
 
 def do_run(cfg: dict, args) -> None:

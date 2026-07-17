@@ -10,7 +10,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-from . import _img_b64
+from . import _img_b64, usage_from_openai
 
 
 def _max_tokens_kwarg(model: str, n: int) -> dict:
@@ -23,7 +23,7 @@ def _supports_temperature(model: str) -> bool:
 
 
 def generate(*, model: str, system: str, user_text: str,
-             image_paths: list[Path], max_tokens: int, timeout: int) -> str:
+             image_paths: list[Path], max_tokens: int, timeout: int) -> tuple[str, dict]:
     import openai
 
     api_key = os.environ.get("OPENAI_API_KEY")
@@ -66,4 +66,5 @@ def generate(*, model: str, system: str, user_text: str,
 
     client = openai.OpenAI(api_key=api_key)
     resp = client.chat.completions.create(**kwargs)
-    return resp.choices[0].message.content or ""
+    text = resp.choices[0].message.content or ""
+    return text, usage_from_openai(resp)

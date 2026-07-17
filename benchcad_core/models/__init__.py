@@ -3,7 +3,11 @@
 Public:
     call_model(model: str, system: str, user_text: str,
                image_paths: list[Path] | None = None,
-               max_tokens: int = 4096, timeout: int = 600) -> str
+               max_tokens: int = 4096, timeout: int = 600) -> Completion
+
+`Completion` is a (text, usage) NamedTuple. `usage` is a dict with keys
+prompt_tokens / completion_tokens / reasoning_tokens / total_tokens — any value
+may be None if the provider didn't report it.
 
 Dispatches by model id prefix:
     gpt-* / o3 / o1 / o-*       → openai
@@ -20,6 +24,7 @@ Special model-id suffixes (all routed inside the relevant adapter):
 from __future__ import annotations
 
 from pathlib import Path
+from typing import NamedTuple
 
 # Lazy-load .env once on import.
 try:
@@ -29,6 +34,44 @@ try:
     load_dotenv(_root / ".env", override=False)
 except ImportError:
     pass
+
+
+class Completion(NamedTuple):
+    """A model response: generated `text` plus a `usage` token-count dict."""
+    text: str
+    usage: dict
+
+
+def usage_dict(prompt=None, completion=None, reasoning=None, total=None) -> dict:
+    """Normalize token counts to the common usage schema (missing → None).
+
+    `total` is derived from prompt+completion when the provider didn't report it.
+    `reasoning` (when present) is a subset of `completion` — reasoning / thinking
+    tokens are billed as output.
+    """
+    if total is None and (prompt is not None or completion is not None):
+        total = (prompt or 0) + (completion or 0)
+    return {
+        "prompt_tokens": prompt,
+        "completion_tokens": completion,
+        "reasoning_tokens": reasoning,
+        "total_tokens": total,
+    }
+
+
+def usage_from_openai(resp) -> dict:
+    """Extract usage from an OpenAI-compatible response (openai + openrouter)."""
+    u = getattr(resp, "usage", None)
+    if u is None:
+        return usage_dict()
+    details = getattr(u, "completion_tokens_details", None)
+    reasoning = getattr(details, "reasoning_tokens", None) if details is not None else None
+    return usage_dict(
+        prompt=getattr(u, "prompt_tokens", None),
+        completion=getattr(u, "completion_tokens", None),
+        reasoning=reasoning,
+        total=getattr(u, "total_tokens", None),
+    )
 
 
 def _route(model: str) -> str:
@@ -45,7 +88,7 @@ def _route(model: str) -> str:
 
 def call_model(model: str, system: str, user_text: str,
                image_paths: list[Path] | None = None,
-               max_tokens: int = 4096, timeout: int = 600) -> str:
+               max_tokens: int = 4096, timeout: int = 600) -> Completion:
     images = [Path(p) for p in (image_paths or [])]
     provider = _route(model)
     if provider == "openai":
@@ -56,8 +99,9 @@ def call_model(model: str, system: str, user_text: str,
         from .gemini_adapter import generate
     else:
         from .openrouter_adapter import generate
-    return generate(model=model, system=system, user_text=user_text,
-                    image_paths=images, max_tokens=max_tokens, timeout=timeout)
+    text, usage = generate(model=model, system=system, user_text=user_text,
+                           image_paths=images, max_tokens=max_tokens, timeout=timeout)
+    return Completion(text, usage)
 
 
 def _img_b64(path: Path) -> str:

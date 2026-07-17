@@ -13,6 +13,7 @@ import json
 import time
 from pathlib import Path
 
+from benchcad_core.models.pricing import cost_usd
 from benchcad_core.run_config import (
     DEFAULT_EXEC_TIMEOUT,
     DEFAULT_MAX_TOKENS,
@@ -75,9 +76,12 @@ def run_record(*, record: dict, data_dir: Path, results_root: Path,
     # 2. Call model
     from benchcad_core.models import call_model
     t0 = time.time()
+    usage: dict = {}
     try:
-        raw = call_model(model=model, system=system, user_text=user_text,
-                         image_paths=image_paths, max_tokens=max_tokens, timeout=timeout)
+        raw, usage = call_model(
+            model=model, system=system, user_text=user_text,
+            image_paths=image_paths, max_tokens=max_tokens, timeout=timeout,
+        )
         api_err = None
     except Exception as e:
         raw, api_err = "", f"{type(e).__name__}: {e}"
@@ -140,6 +144,11 @@ def run_record(*, record: dict, data_dir: Path, results_root: Path,
         "score": round(float(primary), 4),
         "score_type": score,
         "lat_s": round(lat, 2),
+        "prompt_tokens": usage.get("prompt_tokens"),
+        "completion_tokens": usage.get("completion_tokens"),
+        "reasoning_tokens": usage.get("reasoning_tokens"),
+        "total_tokens": usage.get("total_tokens"),
+        "cost_usd": cost_usd(model, usage.get("prompt_tokens"), usage.get("completion_tokens")),
         "err": err_msg,
         "code_path": str(paths["code"].relative_to(results_root)) if paths["code"].exists() else None,
         "step_path": str(paths["step"].relative_to(results_root)) if paths["step"].exists() else None,
