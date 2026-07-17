@@ -190,11 +190,20 @@ def _completion_text(completion) -> str:
     return content or ""
 
 
-def load_environment(num_examples: int | None = None, **kwargs) -> vf.Environment:
+def load_environment(num_examples: int | None = None, exec_timeout: int = 300,
+                     **kwargs) -> vf.Environment:
     """Load the BenchCAD Vision2Code environment.
 
     Args:
         num_examples: if set, evaluate on the first N parts (handy for quick runs).
+        exec_timeout: per-program CadQuery→STEP execution timeout in seconds
+            (default 300, matching the canonical scorer). Raise it for slow-
+            tessellating families on slower hardware or under heavy contention.
+
+    Generation-side knobs (max output tokens, request timeout, reasoning effort)
+    are sampling args passed to the rollout at eval time — e.g.
+    `vf-eval benchcad-vision2code -S '{"max_tokens": 16000, "reasoning_effort": "high"}'`
+    — not baked into the environment.
     """
     from datasets import Dataset
 
@@ -227,8 +236,8 @@ def load_environment(num_examples: int | None = None, **kwargs) -> vf.Environmen
         with tempfile.TemporaryDirectory() as td:
             model_step, gt_step = Path(td) / "model.step", Path(td) / "gt.step"
             try:
-                execute_cq_to_step(code, model_step)
-                execute_cq_to_step(info["gt_code"], gt_step)
+                execute_cq_to_step(code, model_step, timeout=exec_timeout)
+                execute_cq_to_step(info["gt_code"], gt_step, timeout=exec_timeout)
             except Exception:
                 return 0.0  # non-executable prediction scores 0
             return iou_step_vs_step(model_step, gt_step)

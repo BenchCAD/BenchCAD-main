@@ -30,8 +30,19 @@ import verifiers as vf
 env = vf.load_environment("benchcad-vision2code", num_examples=100)
 ```
 
-`load_environment(num_examples=None)` — set `num_examples` to evaluate on the
-first N parts (handy for quick runs); omit for the full set.
+`load_environment(num_examples=None, exec_timeout=300)` — `num_examples` caps to
+the first N parts (handy for quick runs; omit for the full set). `exec_timeout`
+is the per-program CadQuery→STEP execution timeout in seconds; raise it for
+slow-tessellating families on slower hardware.
+
+Generation-side knobs — max output tokens, request timeout, reasoning effort —
+are **sampling args** passed to the rollout at eval time, not part of the
+environment:
+
+```bash
+uv run vf-eval benchcad-vision2code -n 5 \
+  -S '{"max_tokens": 16000, "reasoning_effort": "high"}'
+```
 
 ## Notes
 
