@@ -28,6 +28,11 @@ harness changes that can move reported numbers are called out explicitly.
   sign-checked magnitude ratio. See `docs/ERRATA.md`. (reported in #33)
 
 ### Harness
+- **OpenRouter models can now request reasoning tokens** via a `:reasoning=`
+  model-id suffix (`high|medium|low` effort, an integer reasoning-token budget, or
+  `off`), wired to OpenRouter's unified `reasoning` field. The suffix was
+  previously honored for OpenAI / Anthropic models but silently ignored for
+  `openrouter/*`. Reported scores for OpenRouter reasoning models can change.
 - **GT STEP build timeout raised 90 s → 300 s**, plus a new
   `Vision2Code/tools/build_gt_steps.py` to pre-build every GT STEP once. GT STEPs
   are otherwise produced locally by executing each GT program; the slowest tail
