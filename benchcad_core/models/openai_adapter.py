@@ -1,8 +1,14 @@
-"""OpenAI / o-series adapter (Chat Completions API).
+"""OpenAI adapter — Responses API for EVERY call (Chat Completions removed).
 
-Handles model-id suffixes:
-    *:reasoning=high|medium → reasoning_effort
-    *-thinking              → reasoning_effort=high (and chat-latest variant)
+Model-id suffixes:
+    *:reasoning=minimal|low|medium|high|xhigh|max → reasoning.effort (Responses API)
+    *-thinking                                    → effort=high (+ chat-latest variant)
+
+Bare model ids (no `:reasoning=` suffix) call Responses without a `reasoning`
+param — i.e. the model's own default effort. The Responses API is the only
+endpoint exposing the full effort ladder (none < minimal < low < medium < high <
+xhigh < max), so routing every tier through it keeps the endpoint from being a
+confound in an effort-vs-score comparison.
 """
 
 from __future__ import annotations
@@ -10,15 +16,12 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-from . import _img_b64, usage_from_openai
-
-
-def _max_tokens_kwarg(model: str, n: int) -> dict:
-    key = "max_completion_tokens" if model.startswith(("gpt-5", "o1", "o3")) else "max_tokens"
-    return {key: n}
+from . import _img_b64, usage_dict
 
 
 def _supports_temperature(model: str) -> bool:
+    # Reasoning models (gpt-5*, o1/o3) reject any temperature != default; older
+    # non-reasoning models still take temperature=0 for determinism.
     return not model.startswith(("o1", "o3", "gpt-5"))
 
 
@@ -39,32 +42,51 @@ def generate(*, model: str, system: str, user_text: str,
         real_model = f"{base}-chat-latest"
         reasoning_effort = "high"
     if reasoning_effort:
-        # Reasoning tokens are billed against max_completion_tokens; floor the
-        # budget so a long reasoning pass doesn't consume it all and leave no
-        # room for the actual answer.
+        # Reasoning tokens are billed against the output budget; floor it so a
+        # long reasoning pass doesn't consume it all and leave no room for the
+        # actual answer.
         max_tokens = max(max_tokens, 32000)
 
-    user_content: list = [{"type": "text", "text": user_text}]
+    content: list = [{"type": "input_text", "text": user_text}]
     for p in image_paths:
-        user_content.append({
-            "type": "image_url",
-            "image_url": {"url": f"data:image/png;base64,{_img_b64(p)}", "detail": "high"},
+        content.append({
+            "type": "input_image",
+            "image_url": f"data:image/png;base64,{_img_b64(p)}",
+            "detail": "high",
         })
     kwargs: dict = {
         "model": real_model,
-        "messages": [
-            {"role": "system", "content": system},
-            {"role": "user", "content": user_content},
-        ],
+        "instructions": system,
+        "input": [{"role": "user", "content": content}],
         "timeout": timeout,
-        **_max_tokens_kwarg(real_model, max_tokens),
     }
+    if reasoning_effort:
+        kwargs["reasoning"] = {"effort": reasoning_effort}
     if _supports_temperature(real_model):
         kwargs["temperature"] = 0.0
-    if reasoning_effort:
-        kwargs["reasoning_effort"] = reasoning_effort
+    # effort=max reasons without a fixed budget; matching the model-card eval,
+    # leave max_output_tokens UNSET (no cap → model's own limit) so a long
+    # reasoning+answer isn't truncated — ~11% of samples exceed 32k output, and
+    # truncating them to 0 drags mean IoU down (0.72 → 0.64). Every other tier
+    # (and bare/default) keeps the token cap.
+    if reasoning_effort != "max":
+        kwargs["max_output_tokens"] = max_tokens
 
     client = openai.OpenAI(api_key=api_key)
-    resp = client.chat.completions.create(**kwargs)
-    text = resp.choices[0].message.content or ""
-    return text, usage_from_openai(resp)
+    resp = client.responses.create(**kwargs)
+    return (resp.output_text or ""), _usage_from_responses(resp)
+
+
+def _usage_from_responses(resp) -> dict:
+    """Extract usage from a Responses-API response (input/output_tokens naming)."""
+    u = getattr(resp, "usage", None)
+    if u is None:
+        return usage_dict()
+    details = getattr(u, "output_tokens_details", None)
+    reasoning = getattr(details, "reasoning_tokens", None) if details is not None else None
+    return usage_dict(
+        prompt=getattr(u, "input_tokens", None),
+        completion=getattr(u, "output_tokens", None),
+        reasoning=reasoning,
+        total=getattr(u, "total_tokens", None),
+    )
