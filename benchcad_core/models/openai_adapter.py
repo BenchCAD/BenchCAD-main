@@ -64,12 +64,15 @@ def generate(*, model: str, system: str, user_text: str,
         kwargs["reasoning"] = {"effort": reasoning_effort}
     if _supports_temperature(real_model):
         kwargs["temperature"] = 0.0
-    # effort=max reasons without a fixed budget; matching the model-card eval,
-    # leave max_output_tokens UNSET (no cap → model's own limit) so a long
-    # reasoning+answer isn't truncated — ~11% of samples exceed 32k output, and
-    # truncating them to 0 drags mean IoU down (0.72 → 0.64). Every other tier
-    # (and bare/default) keeps the token cap.
-    if reasoning_effort != "max":
+    # effort=max reasons long. With NO cap, ~14% of B30 records spiral for 1-2h
+    # until the connection drops (api_fail) — and they re-spiral on retry, so it's
+    # systematic, not transient. A 128000 cap bounds a spiral to ~25min (→ no_code
+    # instead of a connection-killing 2h call) while staying high enough not to
+    # truncate legit long reasoning (max observed output ~107k). Other tiers keep
+    # the config's token budget.
+    if reasoning_effort == "max":
+        kwargs["max_output_tokens"] = max(max_tokens, 128000)
+    else:
         kwargs["max_output_tokens"] = max_tokens
 
     client = openai.OpenAI(api_key=api_key)
