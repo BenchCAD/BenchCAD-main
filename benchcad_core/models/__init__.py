@@ -13,10 +13,11 @@ Dispatches by model id prefix:
     gpt-* / o3 / o1 / o-*       → openai
     claude-*                    → anthropic
     gemini-*                    → gemini
+    grok-* / xai/*              → xai
     openrouter/*                → openrouter
 
 Special model-id suffixes (all routed inside the relevant adapter):
-    :reasoning=high|medium|low  → reasoning effort (openai / anthropic / openrouter)
+    :reasoning=high|medium|low  → reasoning effort (openai / anthropic / openrouter / xai)
     :reasoning=<int>            → reasoning-token budget (openrouter)
     :thinking=off               → gemini, disables thinking
 """
@@ -74,6 +75,26 @@ def usage_from_openai(resp) -> dict:
     )
 
 
+def usage_from_responses(resp) -> dict:
+    """Extract usage from a Responses-API response (openai + xai).
+
+    The Responses API names its counts input_tokens / output_tokens, where Chat
+    Completions says prompt_tokens / completion_tokens — hence the separate
+    reader from `usage_from_openai`.
+    """
+    u = getattr(resp, "usage", None)
+    if u is None:
+        return usage_dict()
+    details = getattr(u, "output_tokens_details", None)
+    reasoning = getattr(details, "reasoning_tokens", None) if details is not None else None
+    return usage_dict(
+        prompt=getattr(u, "input_tokens", None),
+        completion=getattr(u, "output_tokens", None),
+        reasoning=reasoning,
+        total=getattr(u, "total_tokens", None),
+    )
+
+
 def _route(model: str) -> str:
     if model.startswith("openrouter/"):
         return "openrouter"
@@ -83,6 +104,8 @@ def _route(model: str) -> str:
         return "anthropic"
     if model.startswith("gemini-"):
         return "gemini"
+    if model.startswith("xai/") or model.startswith("grok-"):
+        return "xai"
     raise ValueError(f"Unknown model family: {model}")
 
 
@@ -97,6 +120,8 @@ def call_model(model: str, system: str, user_text: str,
         from .anthropic_adapter import generate
     elif provider == "gemini":
         from .gemini_adapter import generate
+    elif provider == "xai":
+        from .xai_adapter import generate
     else:
         from .openrouter_adapter import generate
     text, usage = generate(model=model, system=system, user_text=user_text,

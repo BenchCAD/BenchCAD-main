@@ -52,6 +52,25 @@ harness changes that can move reported numbers are called out explicitly.
   of 17,900 records. See `docs/ERRATA.md`. Shipping the tool's pre-built STEPs
   removes the local-execution dependency entirely and makes the full
   17,900-record set score identically on any machine.
+- **xAI (Grok) models can be evaluated directly**, via `grok-*` or `xai/<slug>`
+  model ids and an `XAI_API_KEY` (or `GROK_API_KEY`) — previously they were only
+  reachable through `openrouter/x-ai/*`. Calls go to xAI's own Responses API
+  (`https://api.x.ai/v1`), which takes the same request shape as OpenAI's, so
+  images and the `:reasoning=` suffix work as they do elsewhere; the effort
+  ladder is xAI's (`none|low|medium|high|xhigh`) and is validated before the call
+  rather than 400-ing mid-run. `grok-*` covers the published line; the `xai/`
+  form is the escape hatch for models xAI serves under some other name, and
+  passes the slug through verbatim. See `benchcad_core/models/xai_adapter.py`.
+- **Budget a run against xAI by wall-clock, not by record count.** An xAI
+  reasoning model at high effort can spend essentially the whole output budget
+  on reasoning, so `gen.max_tokens` sets the *duration* of a run and not just a
+  ceiling — at an observed ~36 tok/s, a 16000-token budget is ~7 min per record.
+  Size each task config's `gen.timeout` above that: the openai SDK silently
+  retries a timeout twice before giving up, so an undersized timeout costs 3x
+  itself per record with no log line in between. `:reasoning=low` answers in
+  tens of seconds instead, at a real accuracy cost — in a 4-record Vision2Code
+  smoke it lost most of the score on one part by choosing the wrong base plane,
+  which voxel IoU punishes because it does not normalize rotation.
 - Contribution infrastructure: `CONTRIBUTING.md`, `tools/regrade.py` (re-grade
   submitted predictions), errata process.
 
