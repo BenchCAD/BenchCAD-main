@@ -3,7 +3,9 @@ name = "benchcad"
 version = "0.1.0"
 description = "BenchCAD: CodeEdit / Vision2Code / QA benchmarks for CAD code understanding"
 readme = "README.md"
-requires-python = ">=3.11,<3.14"
+# 3.11-3.12: numpy 1.26.4 (required by cadquery 2.3.0, pinned below) ships no
+# cp313 wheel, so 3.13 cannot install the CAD stack.
+requires-python = ">=3.11,<3.13"
 dependencies = [
     # LLM SDKs (used by all 3 tasks)
     "openai>=2.15.0",
@@ -56,7 +58,12 @@ dev = [
 package = false
 # nlopt 2.9+ declares numpy>=2 in its metadata but actually works fine with
 # numpy 1.26 at runtime. Cadquery 2.3.0 needs numpy<2, so override.
-override-dependencies = ["numpy>=1.26"]
+#
+# Pinned exactly, not `>=1.26`: the loose form let a re-resolve satisfy the
+# override with numpy 2.x, which breaks cadquery/nptyping at *runtime* rather
+# than at install. This override is also why the CAD pins here cannot be copied
+# verbatim into a publishable package — see environments/benchcad-vision2code.
+override-dependencies = ["numpy==1.26.4"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
