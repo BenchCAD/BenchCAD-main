@@ -2,8 +2,11 @@
 name = "benchcad-vision2code"
 description = "BenchCAD Vision2Code — image of a mechanical part -> CadQuery program, scored by voxel IoU on the executed STEP solid (no judge)."
 tags = ["eval", "vision", "code", "cad", "multimodal"]
-version = "0.1.1"
-requires-python = ">=3.11,<3.14"
+version = "0.1.2"
+# 3.11-3.12 only: numpy 1.26.4 (pinned below, required by cadquery 2.3.0) ships no
+# cp313 wheel, and neither does nlopt 2.7.1. Declaring <3.14 made `prime env
+# install` pick 3.13 and fail to resolve. (reported in #48)
+requires-python = ">=3.11,<3.13"
 dependencies = [
     "verifiers>=0.1.6",
     "datasets>=4.0.0",
@@ -13,6 +16,10 @@ dependencies = [
     # numpy<2; nlopt/scipy lean toward numpy 2) only resolves at specific versions,
     # so loose ranges silently break (e.g. a newer scipy needs np.long, gone in
     # numpy 1.26). Do not loosen without re-resolving against numpy 1.26.4.
+    #
+    # This list must resolve *on its own*, from wheel metadata alone: a consumer
+    # runs `uv pip install benchcad-vision2code` from the Prime hub into a bare
+    # venv, where none of this project's uv config exists. See tests/test_env_packages.py.
     "cadquery==2.3.0",
     "cadquery-ocp==7.9.3.0",
     "trimesh==4.12.2",
@@ -23,7 +30,13 @@ dependencies = [
     "typish==1.9.3",
     "nptyping==2.5.0",
     "ezdxf==1.4.3",
-    "nlopt==2.10.0",
+    # nlopt 2.8.0+ declares numpy>=2,<3 — irreconcilable with the numpy==1.26.4
+    # cadquery 2.3.0 needs, so a bare `uv pip install` of this package cannot
+    # resolve. 2.7.1 is the last release declaring numpy>=1.14 and is API-compatible
+    # with what cadquery's sketch solver calls. (Caveat: 2.7.1 publishes no macOS
+    # arm64 wheel, so Apple Silicon builds it from source; Linux/Windows/mac-x86
+    # get wheels, and the RL hosts this environment targets are Linux x86_64.)
+    "nlopt==2.7.1",
     "casadi==3.7.2",
 ]
 
@@ -31,8 +44,8 @@ dependencies = [
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
-[tool.uv]
-# cadquery 2.3.0 needs numpy<2 (it imports nptyping, which uses np.bool8 — removed
-# in numpy 2). nlopt>=2.9 declares numpy>=2 but runs fine on 1.26. Pin numpy to
-# 1.26.4 for everyone so both resolve (mirrors BenchCAD/BenchCAD-main).
-override-dependencies = ["numpy==1.26.4"]
+# NOTE: deliberately no `[tool.uv] override-dependencies` here. It used to carry
+# `numpy==1.26.4` to paper over the nlopt conflict, which worked when *developing*
+# in this directory and not at all for anyone installing the published wheel —
+# uv overrides are workspace config and are never written into wheel metadata.
+# Whatever this package needs to resolve has to live in `dependencies` above.
