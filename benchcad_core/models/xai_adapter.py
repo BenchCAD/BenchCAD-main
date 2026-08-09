@@ -33,7 +33,12 @@ starving the answer. Measurement says that was the wrong trade in both
 directions: the API does not truncate the answer to fit — a request capped at
 2000 output tokens returned 2047 tokens and a complete program — so the floor
 bought nothing, while doubling wall-clock and overriding a budget the run config
-had set deliberately. Size `gen.max_tokens` and `gen.timeout` together.
+had set deliberately.
+
+Note that `max_output_tokens` bounds the *answer*, not the reasoning: capped at
+2000 a call returned 5360 tokens, 5326 of them reasoning, and reported
+`status=completed`. So it is not a cost or duration control — the per-call
+timeout below is the only effective bound.
 """
 
 from __future__ import annotations
@@ -50,9 +55,19 @@ _BASE_URL = "https://api.x.ai/v1"
 # when xAI adds a tier — the ladder has moved more than once.
 _EFFORTS = ("none", "low", "medium", "high", "xhigh")
 
-# Measured throughput, used only to explain the timeout guidance above. At
-# effort=high, wall-clock per call is roughly max_output_tokens / this.
-_TOKENS_PER_SEC = 36
+# Floor for the per-call timeout, mirroring the anthropic/openrouter adapters'
+# floors for their reasoning paths. A normal high-effort call on a hard task
+# measured 4-5 minutes, but the same request re-run can take far longer — the
+# latency tail is stochastic, not a property of the prompt. 900 s leaves ample
+# headroom over the normal case while keeping a stalled call from running away.
+#
+# The openai SDK's default `max_retries=2` is deliberately left alone. Retries
+# are worth keeping here precisely because the tail *is* stochastic (a re-run of
+# an identical request has a real chance of completing), and because a run at
+# any concurrency will meet 429s, which is exactly what retries are for. That
+# does mean a hopeless call costs up to 3x this timeout, which is the reason the
+# floor is 900 s and not an hour: bound the worst case here, not in the retries.
+_MIN_TIMEOUT = 900
 
 
 def split_effort(model: str) -> tuple[str, str | None]:
@@ -96,6 +111,7 @@ def generate(*, model: str, system: str, user_text: str,
         raise RuntimeError("XAI_API_KEY not set in env")
 
     real_model, effort = split_effort(model)
+    timeout = max(timeout, _MIN_TIMEOUT)
 
     content: list = [{"type": "input_text", "text": user_text}]
     for p in image_paths:

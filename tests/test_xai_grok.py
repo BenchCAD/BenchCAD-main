@@ -163,6 +163,15 @@ def test_configured_budget_is_passed_through_untouched(monkeypatch, tmp_path, mo
     assert req["max_output_tokens"] == 4096
 
 
+def test_timeout_is_floored_but_a_larger_configured_value_wins(monkeypatch, tmp_path):
+    """The floor bounds a stalled call; an explicit larger timeout is the run
+    author's call and is left alone."""
+    _, req = _capture(monkeypatch, tmp_path, "grok-4.5", timeout=600)
+    assert req["timeout"] == 900
+    _, req = _capture(monkeypatch, tmp_path, "grok-4.5", timeout=3600)
+    assert req["timeout"] == 3600
+
+
 def test_temperature_sent_by_default(monkeypatch, tmp_path):
     _, req = _capture(monkeypatch, tmp_path, "xai/some-slug")
     assert req["temperature"] == 0.0
