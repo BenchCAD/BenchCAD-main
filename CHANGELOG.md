@@ -61,10 +61,14 @@ harness changes that can move reported numbers are called out explicitly.
   rather than 400-ing mid-run. `grok-*` covers the published line; the `xai/`
   form is the escape hatch for models xAI serves under some other name, and
   passes the slug through verbatim. See `benchcad_core/models/xai_adapter.py`.
-- **Budget a run against xAI by wall-clock, not by record count.** `max_tokens`
-  is not a control here: xAI's `max_output_tokens` bounds the answer, not the
-  reasoning, so a call capped at 2000 tokens can return 5360 and still report
-  `status=completed`. The per-call timeout is the only effective bound, and the
+- **`gen.max_tokens` is not sent to xAI, deliberately.** There it behaves as a
+  reasoning *target* rather than a ceiling, so sending one makes runs slower
+  rather than safer: the same image->CadQuery record used 32395 output tokens in
+  398 s with `max_output_tokens=16000`, and 10089 tokens in 134 s with the
+  parameter absent. Both completed with a valid program, and the capped call
+  overshot its own cap 2x — it only ever bounds the visible answer, which is a
+  few dozen tokens. Raising it to "remove the limit" is the worst case.
+  The per-call timeout is the only effective bound, and the
   adapter floors it to 900 s — a normal high-effort call on a hard task measured
   4–5 minutes, but an identical re-run can take far longer, so the tail is
   stochastic rather than a property of the prompt. The openai SDK's

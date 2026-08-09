@@ -155,12 +155,12 @@ def test_bare_id_sends_no_reasoning_param(monkeypatch, tmp_path):
 
 @pytest.mark.parametrize("model", ["grok-4.5", "grok-4.5:reasoning=high",
                                    "grok-4.5:reasoning=none"])
-def test_configured_budget_is_passed_through_untouched(monkeypatch, tmp_path, model):
-    """These models reason until the budget is gone, so wall-clock per call is
-    roughly max_output_tokens / 36 tok/s. Silently raising the run config's
-    budget doubles the run's duration and can blow the per-call timeout."""
+def test_max_tokens_is_not_forwarded(monkeypatch, tmp_path, model):
+    """Sending a cap acts as a reasoning target here, not a ceiling: the same
+    record used 32395 tokens / 398s with a 16000 cap and 10089 tokens / 134s
+    with none. It also overshoots its own cap, so it bounds nothing."""
     _, req = _capture(monkeypatch, tmp_path, model, max_tokens=4096)
-    assert req["max_output_tokens"] == 4096
+    assert "max_output_tokens" not in req
 
 
 def test_timeout_is_floored_but_a_larger_configured_value_wins(monkeypatch, tmp_path):

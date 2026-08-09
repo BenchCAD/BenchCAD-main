@@ -19,26 +19,21 @@ Reads `XAI_API_KEY` (xAI's own convention), falling back to `GROK_API_KEY` —
 both names are in circulation and a key under the wrong one is an unhelpful way
 to lose a run.
 
-**The configured output budget is passed through unchanged**, which matters more
-here than for other providers. An xAI reasoning model at high effort can spend
-essentially the whole output budget on reasoning — raising `max_output_tokens`
-raises wall-clock roughly proportionally, rather than only raising a ceiling
-that is usually not reached. At an observed ~36 tok/s that puts a 32000-token
-budget around 15 minutes per call, past the per-call timeout the run configs
-set; the openai SDK then retries a timeout twice, so the record burns ~3x that
-before failing, with no log line in between.
+**`max_tokens` is not forwarded at all.** On every other provider it is a
+ceiling; here it behaves as a reasoning *target*, and sending one makes runs
+slower rather than safer. Measured on one image→CadQuery record at high effort:
 
-An earlier version of this adapter floored the budget to keep reasoning from
-starving the answer. Measurement says that was the wrong trade in both
-directions: the API does not truncate the answer to fit — a request capped at
-2000 output tokens returned 2047 tokens and a complete program — so the floor
-bought nothing, while doubling wall-clock and overriding a budget the run config
-had set deliberately.
+    max_output_tokens=16000  ->  32395 output tokens (32158 reasoning), 398 s
+    max_output_tokens absent ->  10089 output tokens (10022 reasoning), 134 s
 
-Note that `max_output_tokens` bounds the *answer*, not the reasoning: capped at
-2000 a call returned 5360 tokens, 5326 of them reasoning, and reported
-`status=completed`. So it is not a cost or duration control — the per-call
-timeout below is the only effective bound.
+Both returned `status=completed` with a complete program, so the cap is not
+bounding anything — note the first row overshoots its own cap 2x. It only
+bounds the visible answer, which is a few dozen tokens and never approaches it.
+Sending a large value to "remove the limit" is the worst case: it inflates
+reasoning threefold and triples wall-clock for no gain.
+
+The per-call timeout is therefore the only effective bound, and the floor below
+is the one real safeguard.
 """
 
 from __future__ import annotations
@@ -121,11 +116,11 @@ def generate(*, model: str, system: str, user_text: str,
             "detail": "high",
         })
 
+    # `max_tokens` is deliberately not forwarded — see the module docstring.
     kwargs: dict = {
         "model": real_model,
         "instructions": system,
         "input": [{"role": "user", "content": content}],
-        "max_output_tokens": max_tokens,
         "timeout": timeout,
     }
     if effort is not None:
