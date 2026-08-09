@@ -167,14 +167,14 @@ def test_timeout_is_floored_but_a_larger_configured_value_wins(monkeypatch, tmp_
     """The floor bounds a stalled call; an explicit larger timeout is the run
     author's call and is left alone."""
     _, req = _capture(monkeypatch, tmp_path, "grok-4.5", timeout=600)
-    assert req["timeout"] == 900
+    assert req["timeout"] == 3000
     _, req = _capture(monkeypatch, tmp_path, "grok-4.5", timeout=3600)
     assert req["timeout"] == 3600
 
 
 def test_temperature_sent_by_default(monkeypatch, tmp_path):
     _, req = _capture(monkeypatch, tmp_path, "xai/some-slug")
-    assert req["temperature"] == 0.0
+    assert req["temperature"] == 0.7
 
 
 def test_temperature_omitted_for_grok_3(monkeypatch, tmp_path):

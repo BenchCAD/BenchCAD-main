@@ -69,9 +69,11 @@ harness changes that can move reported numbers are called out explicitly.
   overshot its own cap 2x — it only ever bounds the visible answer, which is a
   few dozen tokens. Raising it to "remove the limit" is the worst case.
   The per-call timeout is the only effective bound, and the
-  adapter floors it to 900 s — a normal high-effort call on a hard task measured
-  4–5 minutes, but an identical re-run can take far longer, so the tail is
-  stochastic rather than a property of the prompt. The openai SDK's
+  adapter floors it to 3000 s. That is sized from a measured distribution rather
+  than a guess: over a 299-record high-effort sweep, successful calls had a
+  median latency of ~1190 s and a maximum of ~2520 s, so a lower floor truncates
+  requests that are working — and since the SDK retries, a call killed early
+  costs 3x the timeout and often still fails. The openai SDK's
   `max_retries=2` is left alone for that same reason (a re-run may well succeed,
   and any concurrent run will meet 429s), which is why the floor is 900 s rather
   than an hour — a hopeless call costs up to 3x it. `:reasoning=low` answers in

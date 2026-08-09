@@ -51,18 +51,28 @@ _BASE_URL = "https://api.x.ai/v1"
 _EFFORTS = ("none", "low", "medium", "high", "xhigh")
 
 # Floor for the per-call timeout, mirroring the anthropic/openrouter adapters'
-# floors for their reasoning paths. A normal high-effort call on a hard task
-# measured 4-5 minutes, but the same request re-run can take far longer — the
-# latency tail is stochastic, not a property of the prompt. 900 s leaves ample
-# headroom over the normal case while keeping a stalled call from running away.
+# floors for their reasoning paths. Sized from the measured distribution of a
+# high-effort image->CadQuery workload: successful calls had a median latency of
+# ~1190 s and a maximum of ~2520 s. A floor much below that cuts off requests
+# that are working -- and because the openai SDK then retries, a call killed
+# early costs 3x the timeout and frequently still fails. An earlier revision
+# used 900 s, chosen to "bound the worst case" from a 20-record sample where
+# retries happened to rescue every call; over 299 records that margin vanished
+# and most requests were being truncated mid-flight.
 #
-# The openai SDK's default `max_retries=2` is deliberately left alone. Retries
-# are worth keeping here precisely because the tail *is* stochastic (a re-run of
-# an identical request has a real chance of completing), and because a run at
-# any concurrency will meet 429s, which is exactly what retries are for. That
-# does mean a hopeless call costs up to 3x this timeout, which is the reason the
-# floor is 900 s and not an hour: bound the worst case here, not in the retries.
-_MIN_TIMEOUT = 900
+# The SDK's default `max_retries=2` is deliberately left alone: the latency tail
+# is stochastic, so a re-run of an identical request has a real chance of
+# completing, and any concurrent run will meet 429s. Bound the worst case by
+# sizing this floor to the work, not by removing the retries.
+_MIN_TIMEOUT = 3000
+
+# Sampling temperature. Other adapters send 0.0 for determinism, which is worth
+# little here anyway — reasoning length varies run to run regardless, so an
+# identical request is not reproducible even at 0. 0.7 is the value the endpoint
+# reports when none is sent, i.e. the provider's own default; it is passed
+# explicitly so the run is pinned to a known value rather than to whatever the
+# default becomes later.
+_TEMPERATURE = 0.7
 
 
 def split_effort(model: str) -> tuple[str, str | None]:
@@ -85,14 +95,14 @@ def split_effort(model: str) -> tuple[str, str | None]:
 
 
 def supports_temperature(model: str) -> bool:
-    """Whether to send `temperature=0.0` for determinism.
+    """Whether to send `temperature` at all.
 
     xAI's docs say temperature is "not supported by grok-3 and reasoning
     models", but that is not what the API does — a reasoning model verified
-    against the live endpoint accepted `temperature: 0` and echoed it back.
-    Since a benchmark wants determinism wherever it can get it, temperature is
-    sent by default and withheld only from grok-3, the one family the docs name
-    concretely. `generate()` retries without it if a model disagrees.
+    against the live endpoint accepted an explicit temperature and echoed it
+    back. It is therefore sent to everything except grok-3, the one family the
+    docs name concretely, and `generate()` retries without it if a model
+    disagrees.
     """
     return not model.startswith("grok-3")
 
@@ -126,7 +136,7 @@ def generate(*, model: str, system: str, user_text: str,
     if effort is not None:
         kwargs["reasoning"] = {"effort": effort}
     if supports_temperature(real_model):
-        kwargs["temperature"] = 0.0
+        kwargs["temperature"] = _TEMPERATURE
 
     client = openai.OpenAI(api_key=api_key, base_url=_BASE_URL)
     try:
