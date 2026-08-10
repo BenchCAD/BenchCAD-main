@@ -165,6 +165,7 @@ def do_run(cfg: dict, args) -> None:
     from pipeline import runner as runner_mod
     from pipeline.prompt import build as build_prompt
 
+    import benchcad_core.scoring.views as views
     from benchcad_core import parallel
 
     def _unrenderable(rec, err):
@@ -186,10 +187,17 @@ def do_run(cfg: dict, args) -> None:
                       f"{row['status']:10s} {row['score_type']}={row['score']:.3f}  "
                       f"({row['lat_s']:.1f}s)", flush=True)
 
+        # The preview render of each generated STEP is a second VTK call and
+        # would abort the process from a worker, so it is queued and drawn here
+        # on the main thread once the pool has drained.
         with parallel.serialized_results(runner_mod), \
-             parallel.bounded_scoring(runner_mod, cp["score_workers"]):
+             parallel.bounded_scoring(runner_mod, cp["score_workers"]), \
+             parallel.deferred_previews(views) as pending:
             parallel.map_records(ready, lambda r, _m=model: one(_m, r),
                                  cp["api_workers"], report)
+        drawn = parallel.replay_previews(views, pending)
+        if drawn:
+            print(f"  rendered {drawn} preview image(s) on the main thread", flush=True)
     _print_results_summary(out_dir)
 
 

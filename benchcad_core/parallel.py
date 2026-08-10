@@ -21,8 +21,11 @@ anticipated:
 * **VTK renders only on the main thread.** Its Cocoa backend aborts the whole
   process with an NSException if a worker builds a render window, and it leaks a
   graphics context per render, so rendering hundreds in-process exhausts memory.
-  `prerender()` therefore warms the on-disk composite cache up front, on the main
-  thread, and workers only ever hit that cache.
+  There are two render sites, and both must be kept off the workers:
+  `prerender()` warms the ground-truth composite cache up front so prompt
+  building is a cache hit, and `deferred_previews()` queues the per-record
+  preview render of the *generated* STEP for replay on the main thread once the
+  pool has drained.
 * **`results.jsonl` is persisted read-modify-write**, which silently loses rows
   under concurrency. `serialized_results()` re-reads and merges under a lock.
 * **A worker must not raise.** One unscoreable record should cost that record,
@@ -108,6 +111,48 @@ def prerender(records: Iterable[dict], build_prompt: Callable, data_dir,
             if on_error:
                 on_error(rec, e)
     return ok
+
+
+@contextmanager
+def deferred_previews(views):
+    """Queue the generated-STEP preview renders instead of running them inline.
+
+    Scoring writes a preview PNG of each generated solid, which is a second VTK
+    render and therefore fatal inside a worker. The render is non-critical to
+    scoring, so it is deferred: this yields a list of `(step, png)` pairs that
+    `replay_previews()` draws on the main thread afterwards.
+
+    Prompt building calls the same function with no output path; that is served
+    from the on-disk cache `prerender()` warmed, so it is passed straight
+    through and never reaches VTK.
+    """
+    pending: list[tuple] = []
+    real = views.composite_for_step
+
+    def routed(step, out_png=None, **kw):
+        if out_png is not None:
+            pending.append((step, out_png))
+            return None
+        return real(step, **kw)
+
+    views.composite_for_step = routed
+    try:
+        yield pending
+    finally:
+        views.composite_for_step = real
+
+
+def replay_previews(views, pending) -> int:
+    """Draw the deferred previews on the calling (main) thread. Best effort."""
+    drawn = 0
+    for step, png in pending:
+        try:
+            if step.exists():
+                views.composite_for_step(step, png)
+                drawn += 1
+        except Exception:  # noqa: BLE001 - previews are for inspection only
+            pass
+    return drawn
 
 
 def map_records(records: Sequence[dict], work: Callable[[dict], Any],

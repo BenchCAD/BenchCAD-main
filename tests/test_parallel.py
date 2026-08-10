@@ -167,3 +167,49 @@ def test_prerender_runs_on_the_calling_thread():
                        lambda rec, _d: calls.append(threading.current_thread().name),
                        "data")
     assert set(calls) == {threading.current_thread().name}
+
+
+# --- the second VTK render site -----------------------------------------------
+
+def test_preview_renders_are_deferred_not_run_in_workers():
+    """Scoring renders a preview of the *generated* STEP — a second VTK call.
+
+    Warming the ground-truth cache is not enough: this one aborts the process
+    from a worker, which is exactly how the first concurrent run against the
+    live API died.
+    """
+    views = types.SimpleNamespace(rendered=[])
+
+    def real(step, out_png=None, **_kw):
+        views.rendered.append((step, out_png))
+        return out_png or f"{step}.png"
+
+    views.composite_for_step = real
+
+    with parallel.deferred_previews(views) as pending:
+        views.composite_for_step("gen_a.step", "gen_a.png")     # preview -> deferred
+        views.composite_for_step("gen_b.step", "gen_b.png")     # preview -> deferred
+        cached = views.composite_for_step("gt.step")            # prompt -> passthrough
+    assert cached == "gt.step.png", "prompt building must not be deferred"
+    assert len(pending) == 2
+    assert [s for s, _ in views.rendered] == ["gt.step"], "previews must not render inline"
+
+
+def test_replay_previews_draws_on_the_calling_thread(tmp_path):
+    step = tmp_path / "a.step"; step.write_text("x")
+    calls = []
+    views = types.SimpleNamespace(
+        composite_for_step=lambda s, p=None, **k: calls.append(threading.current_thread().name))
+    drawn = parallel.replay_previews(views, [(step, tmp_path / "a.png")])
+    assert drawn == 1
+    assert calls == [threading.current_thread().name]
+
+
+def test_replay_skips_missing_steps_and_survives_render_errors(tmp_path):
+    ok_step = tmp_path / "ok.step"; ok_step.write_text("x")
+    def boom(s, p=None, **k):
+        raise RuntimeError("render failed")
+    views = types.SimpleNamespace(composite_for_step=boom)
+    # a failing render and a missing file must not take the run down
+    assert parallel.replay_previews(views, [(ok_step, tmp_path / "ok.png"),
+                                            (tmp_path / "gone.step", tmp_path / "gone.png")]) == 0
