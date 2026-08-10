@@ -68,7 +68,7 @@ line-length = 88
 target-version = "py311"
 # test_data/ and contributions/ hold CadQuery *programs* (benchmark data), not
 # source — they use editor builtins like show_object and aren't linted.
-extend-exclude = ["**/test_data", "contributions"]
+extend-exclude = ["**/test_data", "**/lite_data", "contributions"]
 
 [tool.ruff.lint]
 select = ["E", "W", "F", "I", "B", "C4", "UP"]

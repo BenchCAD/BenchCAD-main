@@ -39,7 +39,7 @@ sys.path.insert(0, str(ROOT.parent))  # repo root, for benchcad_core
 
 from pipeline.runner import run_record  # noqa: E402
 
-from benchcad_core.run_config import gen_params  # noqa: E402
+from benchcad_core.run_config import concurrency_params, gen_params  # noqa: E402
 
 DEFAULT_CONFIG = ROOT / "configs" / "test.yaml"
 REQUIRED_FIELDS = ("data_dir", "out_dir", "models")
@@ -136,19 +136,60 @@ def do_run(cfg: dict, args) -> None:
         else:
             records = records[: args.limit]
 
+    cp = concurrency_params(cfg)
     print(f"config: {args.config}")
     print(f"data:   {data_dir}")
     print(f"out:    {out_dir}")
     print(f"gen:    max_tokens={gp['max_tokens']} timeout={gp['timeout']}s exec_timeout={gp['exec_timeout']}s")
+    print(f"conc:   api_workers={cp['api_workers']} score_workers={cp['score_workers']}")
     print(f"runs:   {len(records)} record(s) × {len(models)} model(s)")
+
+    def one(model, rec):
+        return run_record(record=rec, data_dir=data_dir, results_root=out_dir,
+                          model=model, score=args.score,
+                          max_tokens=gp["max_tokens"], timeout=gp["timeout"],
+                          exec_timeout=gp["exec_timeout"])
+
+    if cp["api_workers"] == 1:
+        for model in models:
+            for i, rec in enumerate(records, 1):
+                print(f"  [{model}] {i}/{len(records)} {rec['record_id']}", end=" ... ", flush=True)
+                row = one(model, rec)
+                print(f"{row['status']:10s} {row['score_type']}={row['score']:.3f}  ({row['lat_s']:.1f}s)")
+        _print_results_summary(out_dir)
+        return
+
+    # Concurrent path. Render the ground-truth composites here, on the main
+    # thread: VTK aborts the process if a worker builds a render window, and it
+    # leaks a graphics context per render. Workers then only hit the disk cache.
+    from pipeline import runner as runner_mod
+    from pipeline.prompt import build as build_prompt
+
+    from benchcad_core import parallel
+
+    def _unrenderable(rec, err):
+        print(f"  !! skipping {rec['record_id']}: ground truth will not render "
+              f"({type(err).__name__})", flush=True)
+
+    ready = parallel.prerender(records, build_prompt, data_dir, on_error=_unrenderable)
+    if len(ready) != len(records):
+        print(f"  pre-rendered {len(ready)}/{len(records)} composites "
+              f"({len(records) - len(ready)} dropped)", flush=True)
+
     for model in models:
-        for i, rec in enumerate(records, 1):
-            print(f"  [{model}] {i}/{len(records)} {rec['record_id']}", end=" ... ", flush=True)
-            row = run_record(record=rec, data_dir=data_dir, results_root=out_dir,
-                             model=model, score=args.score,
-                             max_tokens=gp["max_tokens"], timeout=gp["timeout"],
-                             exec_timeout=gp["exec_timeout"])
-            print(f"{row['status']:10s} {row['score_type']}={row['score']:.3f}  ({row['lat_s']:.1f}s)")
+        def report(done, rec, row, err, _m=model):
+            if err is not None:
+                print(f"  [{_m}] {done}/{len(ready)} {rec['record_id']} ... "
+                      f"FAILED {type(err).__name__}: {str(err)[:80]}", flush=True)
+            else:
+                print(f"  [{_m}] {done}/{len(ready)} {rec['record_id']} ... "
+                      f"{row['status']:10s} {row['score_type']}={row['score']:.3f}  "
+                      f"({row['lat_s']:.1f}s)", flush=True)
+
+        with parallel.serialized_results(runner_mod), \
+             parallel.bounded_scoring(runner_mod, cp["score_workers"]):
+            parallel.map_records(ready, lambda r, _m=model: one(_m, r),
+                                 cp["api_workers"], report)
     _print_results_summary(out_dir)
 
 

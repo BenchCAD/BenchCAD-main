@@ -80,6 +80,19 @@ harness changes that can move reported numbers are called out explicitly.
   tens of seconds instead, at a real accuracy cost — in a 4-record Vision2Code
   smoke it lost most of the score on one part by choosing the wrong base plane,
   which voxel IoU punishes because it does not normalize rotation.
+- **Records can be evaluated concurrently** via an optional `concurrency:` block
+  (`api_workers`, `score_workers`); the default `api_workers: 1` leaves existing
+  runs sequential and unchanged. The two pools are deliberately separate: a model
+  call costs a socket and blocks for minutes, while scoring spawns a ~0.5 GB
+  CadQuery/OCP subprocess and finishes in seconds, so a single pool either
+  starves the API or exhausts memory (64 concurrent scorers need ~25 GB). A
+  thread waiting on the API holds no scoring slot, which is what lets a large API
+  pool sit in front of a small scoring pool. `benchcad_core/parallel.py` also
+  handles three things that are only visible under load: ground-truth composites
+  are rendered up front on the main thread (VTK aborts the process if a worker
+  builds a render window, and leaks a graphics context per render), the
+  `results.jsonl` read-modify-write is serialised (it silently loses rows under
+  threads), and a worker exception fails one record instead of the batch.
 - Contribution infrastructure: `CONTRIBUTING.md`, `tools/regrade.py` (re-grade
   submitted predictions), errata process.
 
