@@ -155,12 +155,13 @@ def test_bare_id_sends_no_reasoning_param(monkeypatch, tmp_path):
 
 @pytest.mark.parametrize("model", ["grok-4.5", "grok-4.5:reasoning=high",
                                    "grok-4.5:reasoning=none"])
-def test_max_tokens_is_not_forwarded(monkeypatch, tmp_path, model):
-    """Sending a cap acts as a reasoning target here, not a ceiling: the same
-    record used 32395 tokens / 398s with a 16000 cap and 10089 tokens / 134s
-    with none. It also overshoots its own cap, so it bounds nothing."""
+def test_config_max_tokens_is_not_forwarded(monkeypatch, tmp_path, model):
+    """A cap near the model's working range acts as a reasoning target rather
+    than a ceiling (a request capped at 2000 returned 5360 tokens), so the run
+    config's budget is not passed through. A non-binding backstop is sent
+    instead, far above anything observed."""
     _, req = _capture(monkeypatch, tmp_path, model, max_tokens=4096)
-    assert "max_output_tokens" not in req
+    assert req["max_output_tokens"] == 512_000
 
 
 def test_timeout_is_floored_but_a_larger_configured_value_wins(monkeypatch, tmp_path):

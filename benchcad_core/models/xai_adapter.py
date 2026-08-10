@@ -74,6 +74,15 @@ _MIN_TIMEOUT = 3000
 # default becomes later.
 _TEMPERATURE = 0.7
 
+# Sent as a backstop, not a budget. Measured behaviour: a value near the model's
+# working range acts as a reasoning target rather than a ceiling (a request
+# capped at 2000 returned 5360 tokens), so a binding cap distorts the run. This
+# is set far above anything observed (max ~33k) so it never binds, while still
+# keeping the request bounded. Verified not to affect the timeout behaviour:
+# 512000, 16000 and no cap at all fail identically when the endpoint is
+# degraded, so this is not a reliability knob.
+_MAX_OUTPUT_TOKENS = 512_000
+
 
 def split_effort(model: str) -> tuple[str, str | None]:
     """Strip the optional `xai/` prefix and a trailing `:reasoning=<effort>`.
@@ -126,11 +135,14 @@ def generate(*, model: str, system: str, user_text: str,
             "detail": "high",
         })
 
-    # `max_tokens` is deliberately not forwarded — see the module docstring.
     kwargs: dict = {
         "model": real_model,
         "instructions": system,
         "input": [{"role": "user", "content": content}],
+        # A ceiling far above anything the model emits, so it never shapes the
+        # answer, but the request is still bounded rather than open-ended. The
+        # run config's `max_tokens` is not forwarded — see the module docstring.
+        "max_output_tokens": _MAX_OUTPUT_TOKENS,
         "timeout": timeout,
     }
     if effort is not None:
