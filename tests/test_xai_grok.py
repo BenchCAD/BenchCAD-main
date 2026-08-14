@@ -164,13 +164,14 @@ def test_config_max_tokens_is_not_forwarded(monkeypatch, tmp_path, model):
     assert req["max_output_tokens"] == 512_000
 
 
-def test_timeout_is_floored_but_a_larger_configured_value_wins(monkeypatch, tmp_path):
-    """The floor bounds a stalled call; an explicit larger timeout is the run
-    author's call and is left alone."""
-    _, req = _capture(monkeypatch, tmp_path, "grok-4.5", timeout=600)
-    assert req["timeout"] == 3000
-    _, req = _capture(monkeypatch, tmp_path, "grok-4.5", timeout=3600)
-    assert req["timeout"] == 3600
+@pytest.mark.parametrize("timeout", [450, 600, 3600])
+def test_configured_timeout_is_passed_through_unclamped(monkeypatch, tmp_path, timeout):
+    """Earlier revisions floored this to 900s and then 3000s, silently
+    overriding the caller. Both floors were derived from latencies that included
+    SDK retries; a real successful call takes 280-410s, so clamping only made
+    dead calls cost 3x the floor."""
+    _, req = _capture(monkeypatch, tmp_path, "grok-4.5", timeout=timeout)
+    assert req["timeout"] == timeout
 
 
 def test_temperature_sent_by_default(monkeypatch, tmp_path):

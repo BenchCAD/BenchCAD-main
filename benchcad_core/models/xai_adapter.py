@@ -50,21 +50,13 @@ _BASE_URL = "https://api.x.ai/v1"
 # when xAI adds a tier — the ladder has moved more than once.
 _EFFORTS = ("none", "low", "medium", "high", "xhigh")
 
-# Floor for the per-call timeout, mirroring the anthropic/openrouter adapters'
-# floors for their reasoning paths. Sized from the measured distribution of a
-# high-effort image->CadQuery workload: successful calls had a median latency of
-# ~1190 s and a maximum of ~2520 s. A floor much below that cuts off requests
-# that are working -- and because the openai SDK then retries, a call killed
-# early costs 3x the timeout and frequently still fails. An earlier revision
-# used 900 s, chosen to "bound the worst case" from a 20-record sample where
-# retries happened to rescue every call; over 299 records that margin vanished
-# and most requests were being truncated mid-flight.
-#
-# The SDK's default `max_retries=2` is deliberately left alone: the latency tail
-# is stochastic, so a re-run of an identical request has a real chance of
-# completing, and any concurrent run will meet 429s. Bound the worst case by
-# sizing this floor to the work, not by removing the retries.
-_MIN_TIMEOUT = 3000
+# No timeout floor. Two earlier revisions clamped the caller's timeout up (900s,
+# then 3000s), both sized from latencies that silently included the openai SDK's
+# retries -- so the "typical" call looked far slower than it is. Measured
+# directly, a successful call completes in 280-410s; a call that has not
+# returned by then does not return at all. Clamping therefore never rescued real
+# work, it just made every dead call cost 3x the floor before the retry, and it
+# overrode the run config without saying so. The caller decides.
 
 # Sampling temperature. Other adapters send 0.0 for determinism, which is worth
 # little here anyway — reasoning length varies run to run regardless, so an
@@ -125,7 +117,6 @@ def generate(*, model: str, system: str, user_text: str,
         raise RuntimeError("XAI_API_KEY not set in env")
 
     real_model, effort = split_effort(model)
-    timeout = max(timeout, _MIN_TIMEOUT)
 
     content: list = [{"type": "input_text", "text": user_text}]
     for p in image_paths:
