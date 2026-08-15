@@ -80,6 +80,9 @@ def test_pricing_key_strips_the_reasoning_suffix():
 # This is what the parser tests can't show: that the call we would put on the
 # wire is the one xAI's Responses API documents.
 
+_LAST_SEEN: dict = {}
+
+
 class _FakeUsage:
     input_tokens, output_tokens, total_tokens = 11, 22, 33
     output_tokens_details = type("D", (), {"reasoning_tokens": 7})()
@@ -98,14 +101,25 @@ def _capture(monkeypatch, tmp_path, model, _key_env="XAI_API_KEY", **overrides):
 
     seen = {}
 
+    class _FakeStream:
+        def __init__(self, kw):
+            seen["request"] = kw
+        def __enter__(self): return self
+        def __exit__(self, *a): return False
+        def __iter__(self): return iter(())          # keepalive frames, nothing to read
+        def get_final_response(self): return _FakeResp()
+
     class _FakeClient:
         def __init__(self, **kw):
             seen["client"] = kw
             self.responses = self
 
-        def create(self, **kw):
-            seen["request"] = kw
-            return _FakeResp()
+        def with_options(self, **kw):                 # timeout is applied here now
+            seen.setdefault("options", {}).update(kw)
+            return self
+
+        def stream(self, **kw):
+            return _FakeStream(kw)
 
     monkeypatch.setattr(openai, "OpenAI", _FakeClient)
     monkeypatch.delenv("XAI_API_KEY", raising=False)
@@ -118,6 +132,7 @@ def _capture(monkeypatch, tmp_path, model, _key_env="XAI_API_KEY", **overrides):
     assert text == "hello"
     assert usage == {"prompt_tokens": 11, "completion_tokens": 22,
                      "reasoning_tokens": 7, "total_tokens": 33}
+    _LAST_SEEN.clear(); _LAST_SEEN.update(seen)
     return seen["client"], seen["request"]
 
 
@@ -169,9 +184,10 @@ def test_configured_timeout_is_passed_through_unclamped(monkeypatch, tmp_path, t
     """Earlier revisions floored this to 900s and then 3000s, silently
     overriding the caller. Both floors were derived from latencies that included
     SDK retries; a real successful call takes 280-410s, so clamping only made
-    dead calls cost 3x the floor."""
-    _, req = _capture(monkeypatch, tmp_path, "grok-4.5", timeout=timeout)
-    assert req["timeout"] == timeout
+    dead calls cost 3x the floor. On the streaming path the timeout is per-read
+    and the server's keepalive resets it, so it no longer truncates a long pass."""
+    _capture(monkeypatch, tmp_path, "grok-4.5", timeout=timeout)
+    assert _LAST_SEEN["options"]["timeout"] == timeout
 
 
 def test_temperature_sent_by_default(monkeypatch, tmp_path):
@@ -196,14 +212,16 @@ def test_temperature_rejection_is_retried_once_without_it(monkeypatch, tmp_path)
         def __init__(self, **kw):
             self.responses = self
 
-        def create(self, **kw):
+        def with_options(self, **kw): return self
+
+        def stream(self, **kw):
             attempts.append(kw)
             if "temperature" in kw:
                 raise openai.BadRequestError(
                     "temperature is not supported by this model",
                     response=_httpx_response(), body=None,
                 )
-            return _FakeResp()
+            return _ok_stream()
 
     monkeypatch.setattr(openai, "OpenAI", _FakeClient)
     monkeypatch.setenv("XAI_API_KEY", "k")
@@ -225,7 +243,9 @@ def test_unrelated_bad_request_is_not_retried(monkeypatch, tmp_path):
         def __init__(self, **kw):
             self.responses = self
 
-        def create(self, **kw):
+        def with_options(self, **kw): return self
+
+        def stream(self, **kw):
             attempts.append(kw)
             raise openai.BadRequestError(
                 "The model foo does not exist", response=_httpx_response(), body=None,
@@ -237,6 +257,13 @@ def test_unrelated_bad_request_is_not_retried(monkeypatch, tmp_path):
         xai_adapter.generate(model="grok-4.5", system="s", user_text="u",
                              image_paths=[], max_tokens=10, timeout=1)
     assert len(attempts) == 1
+
+
+class _ok_stream:
+    def __enter__(self): return self
+    def __exit__(self, *a): return False
+    def __iter__(self): return iter(())
+    def get_final_response(self): return _FakeResp()
 
 
 def _httpx_response():

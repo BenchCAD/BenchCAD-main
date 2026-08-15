@@ -143,7 +143,7 @@ def generate(*, model: str, system: str, user_text: str,
 
     client = openai.OpenAI(api_key=api_key, base_url=_BASE_URL)
     try:
-        resp = client.responses.create(**kwargs)
+        resp = _stream(client, kwargs)
     except openai.BadRequestError as e:
         # Which models reject `temperature` is not reliably documented, and
         # getting it wrong would kill a whole run over a determinism nicety.
@@ -151,5 +151,29 @@ def generate(*, model: str, system: str, user_text: str,
         if "temperature" not in kwargs or "temperature" not in str(e).lower():
             raise
         kwargs.pop("temperature")
-        resp = client.responses.create(**kwargs)
+        resp = _stream(client, kwargs)
     return (resp.output_text or ""), usage_from_responses(resp)
+
+
+def _stream(client, kwargs):
+    """Issue the request as a stream and return the assembled final response.
+
+    Not for incremental output — this endpoint buffers the content and delivers
+    it in a burst at the end regardless. Streaming is for the keepalive: it emits
+    a frame every ~15s while generating, and a non-streaming request sends no
+    bytes at all for the whole generation.
+
+    That difference is decisive here. Long reasoning passes are real (one
+    measured call spent 1109s producing 40k reasoning tokens), and a silent
+    connection of that length does not survive: paired A/B on identical
+    requests returned 4/4 streaming versus 2/4 non-streaming, with the
+    non-streaming failures being silent hangs rather than errors. The keepalive
+    also keeps the read timeout from firing, since it is per-read — so a
+    generous per-call timeout no longer truncates a legitimately long pass.
+    """
+    timeout = kwargs.pop("timeout", None)
+    c = client.with_options(timeout=timeout) if timeout else client
+    with c.responses.stream(**kwargs) as stream:
+        for _ in stream:            # drain; frames are keepalives plus the final burst
+            pass
+        return stream.get_final_response()
