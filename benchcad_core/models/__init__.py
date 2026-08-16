@@ -37,6 +37,17 @@ except ImportError:
     pass
 
 
+class Turn(NamedTuple):
+    """One message in a multi-turn exchange.
+
+    `role` is "user" or "assistant"; `images` are attached to user turns only
+    (no provider accepts images on an assistant turn).
+    """
+    role: str
+    text: str
+    images: tuple = ()
+
+
 class Completion(NamedTuple):
     """A model response: generated `text` plus a `usage` token-count dict."""
     text: str
@@ -111,7 +122,14 @@ def _route(model: str) -> str:
 
 def call_model(model: str, system: str, user_text: str,
                image_paths: list[Path] | None = None,
-               max_tokens: int = 4096, timeout: int = 600) -> Completion:
+               max_tokens: int = 4096, timeout: int = 600,
+               turns: list | None = None) -> Completion:
+    """Single-shot by default; pass `turns` for a multi-turn exchange.
+
+    `turns` is a list of `Turn`, and when given it replaces `user_text` /
+    `image_paths` entirely — the agentic runner needs the model to see its own
+    previous programs as its own turns, not as text quoted back at it.
+    """
     images = [Path(p) for p in (image_paths or [])]
     provider = _route(model)
     if provider == "openai":
@@ -124,8 +142,16 @@ def call_model(model: str, system: str, user_text: str,
         from .xai_adapter import generate
     else:
         from .openrouter_adapter import generate
-    text, usage = generate(model=model, system=system, user_text=user_text,
-                           image_paths=images, max_tokens=max_tokens, timeout=timeout)
+    kw = dict(model=model, system=system, user_text=user_text,
+              image_paths=images, max_tokens=max_tokens, timeout=timeout)
+    if turns is not None:
+        import inspect
+        if "turns" not in inspect.signature(generate).parameters:
+            raise NotImplementedError(
+                f"multi-turn is not implemented for the {provider} adapter yet; "
+                f"it is available for openai and xai (both Responses API)")
+        kw["turns"] = turns
+    text, usage = generate(**kw)
     return Completion(text, usage)
 
 

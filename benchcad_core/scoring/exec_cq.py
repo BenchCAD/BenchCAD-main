@@ -60,6 +60,19 @@ def _patch_export(code: str, out_step: Path) -> str:
     return _OCP_HASHCODE_FIX + "\n" + patched
 
 
+# Model-written code runs in this subprocess. It used to inherit os.environ,
+# which handed every provider API key in the parent environment to code the
+# model authored -- harmless enough for a single-shot program, indefensible once
+# the model is told it is in a loop and its code will be executed. Pass only what
+# the interpreter needs to start.
+_ENV_KEEP = ("PATH", "HOME", "TMPDIR", "LANG", "LC_ALL", "SYSTEMROOT")
+
+
+def minimal_env() -> dict:
+    """The environment model-written code is executed with: no secrets."""
+    return {k: v for k, v in os.environ.items() if k in _ENV_KEEP}
+
+
 def execute_cq_to_step(code: str, step_path: Path, timeout: int = 300) -> None:
     """Execute `code` so `result` is exported to `step_path`. Raises on failure."""
     step_path.parent.mkdir(parents=True, exist_ok=True)
@@ -72,7 +85,7 @@ def execute_cq_to_step(code: str, step_path: Path, timeout: int = 300) -> None:
     try:
         r = subprocess.run(
             [sys.executable, tmp],
-            env=os.environ.copy(),
+            env=minimal_env(),
             timeout=timeout,
             capture_output=True,
         )
