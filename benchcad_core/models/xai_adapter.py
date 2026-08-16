@@ -108,8 +108,18 @@ def supports_temperature(model: str) -> bool:
     return not model.startswith("grok-3")
 
 
+def _content(text: str, image_paths) -> list:
+    out: list = [{"type": "input_text", "text": text}]
+    for p in image_paths:
+        out.append({"type": "input_image",
+                    "image_url": f"data:image/png;base64,{_img_b64(Path(p))}",
+                    "detail": "high"})
+    return out
+
+
 def generate(*, model: str, system: str, user_text: str,
-             image_paths: list[Path], max_tokens: int, timeout: int) -> tuple[str, dict]:
+             image_paths: list[Path], max_tokens: int, timeout: int,
+             turns: list | None = None) -> tuple[str, dict]:
     import openai
 
     api_key = os.environ.get("XAI_API_KEY") or os.environ.get("GROK_API_KEY")
@@ -118,18 +128,22 @@ def generate(*, model: str, system: str, user_text: str,
 
     real_model, effort = split_effort(model)
 
-    content: list = [{"type": "input_text", "text": user_text}]
-    for p in image_paths:
-        content.append({
-            "type": "input_image",
-            "image_url": f"data:image/png;base64,{_img_b64(p)}",
-            "detail": "high",
-        })
+    if turns is None:
+        conversation = [{"role": "user", "content": _content(user_text, image_paths)}]
+    else:
+        # Assistant turns carry text only -- no provider accepts an image there,
+        # and the model's own output never contains one anyway.
+        conversation = [
+            {"role": t.role,
+             "content": _content(t.text, t.images) if t.role == "user"
+                        else [{"type": "output_text", "text": t.text}]}
+            for t in turns
+        ]
 
     kwargs: dict = {
         "model": real_model,
         "instructions": system,
-        "input": [{"role": "user", "content": content}],
+        "input": conversation,
         # A ceiling far above anything the model emits, so it never shapes the
         # answer, but the request is still bounded rather than open-ended. The
         # run config's `max_tokens` is not forwarded — see the module docstring.
@@ -167,13 +181,27 @@ def _stream(client, kwargs):
     measured call spent 1109s producing 40k reasoning tokens), and a silent
     connection of that length does not survive: paired A/B on identical
     requests returned 4/4 streaming versus 2/4 non-streaming, with the
-    non-streaming failures being silent hangs rather than errors. The keepalive
-    also keeps the read timeout from firing, since it is per-read — so a
-    generous per-call timeout no longer truncates a legitimately long pass.
+    non-streaming failures being silent hangs rather than errors.
+
+    `timeout` is enforced twice, and both are needed. The SDK applies it per
+    read, which the keepalive defeats: a frame every ~15s resets that clock, so
+    a stalled generation can trickle keepalives indefinitely and never trip it.
+    One measured call streamed for 3685s under a 1800s timeout, returning a
+    normal-sized response — it was not doing more work, the request had simply
+    stopped progressing, and it cost a worker over an hour. So the elapsed time
+    is also checked against `timeout` as a wall-clock deadline, which is what
+    every caller already assumes the parameter means.
     """
+    import time
+
     timeout = kwargs.pop("timeout", None)
     c = client.with_options(timeout=timeout) if timeout else client
+    started = time.monotonic()
     with c.responses.stream(**kwargs) as stream:
         for _ in stream:            # drain; frames are keepalives plus the final burst
-            pass
+            if timeout and time.monotonic() - started > timeout:
+                raise TimeoutError(
+                    f"xAI stream exceeded {timeout}s of wall clock; keepalive "
+                    f"frames were still arriving, so the per-read timeout could "
+                    f"not fire")
         return stream.get_final_response()

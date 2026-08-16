@@ -48,20 +48,31 @@ SYSTEM_SUFFIX = f"""
 
 You are working in a directory, not answering in one shot.
 
-Files present:
-  target.png        the 2x2 composite you must reproduce
-  view_0.png .. view_3.png   the same four views, separately
-  tools.py          helpers, see below
+Everything about the directory is below, so there is nothing to discover: do not
+spend a round listing files, printing image sizes, or reading tools.py. The
+first episode measured this cost a full round.
+
+Files present, and their exact sizes:
+  target.png        {{target_w}}x{{target_h}} RGB — the 2x2 composite to reproduce
+  view_0.png .. view_3.png   {{view_w}}x{{view_h}} RGB — its four quadrants,
+                    in reading order: view_0 top-left, view_1 top-right,
+                    view_2 bottom-left, view_3 bottom-right
+  tools.py          the four helpers below, and nothing else
 
     import tools
-    tools.export(result, "my_part.step")   # CadQuery object -> STEP
-    tools.render("my_part.step")           # STEP -> 2x2 composite, same renderer
-                                           #   as the target, so it is directly
-                                           #   comparable
-    tools.crop("target.png", (0, 0, 256, 256))   # inspect one view or a detail
+    tools.export(result, "my_part.step")            -> Path
+        CadQuery Workplane or Shape -> STEP.
+    tools.render("my_part.step", "mine.png")        -> Path
+        STEP -> {{target_w}}x{{target_h}} composite, same four cameras, same
+        layout, same colour as target.png, so the two are directly comparable
+        pixel for pixel. Also writes mine_v0.png .. mine_v3.png, the four
+        individual views, each {{view_w}}x{{view_h}}.
+    tools.views("target.png")                       -> [Path, ...]
+        split any composite into its four quadrants.
+    tools.crop("target.png", (left, top, right, bottom))  -> Path
 
-numpy, PIL and the usual libraries are available, so you can compare images
-numerically rather than by eye.
+cadquery, numpy and PIL are imported the usual way and are all present, so you
+can compare images numerically rather than by eye. There is no network.
 
 Two kinds of block, and the difference matters:
 
@@ -75,16 +86,23 @@ Two kinds of block, and the difference matters:
                episode and is what gets scored.
 ```
 
-tools.render produces images in exactly the same convention as target.png --
-same four cameras, same 268x268 layout, same colour -- so your render and the
-target can be compared pixel for pixel.
-
 The directory is reset between rounds. Files you write do not survive, so each
 block must rebuild what it needs; the conversation is what persists.
 
-Do not submit a program you have not rendered and compared. A submission that
-skips verification is worth less than one that used every round, and you have
-{MAX_ROUNDS} of them.
+How to spend the rounds. Build something whole in your very first block, even
+if it is rough, then render it and compare. A rendered part you can diff tells
+you more in one round than any amount of reading the target's pixels, because
+it is measured in the same projection, the same scale and the same colour as
+the target. So:
+
+  round 1        build a first solid, export, render, diff against target.png
+  middle rounds  fix the largest disagreement you can see, re-render, re-diff
+  last round     submit your best geometry
+
+Inspecting target pixels without ever rendering your own part is the one way to
+waste this setting, and a submission that never rendered is rejected.
+
+You have {MAX_ROUNDS} rounds.
 """
 
 
@@ -155,12 +173,23 @@ def run_agentic(*, record: dict, data_dir: Path, work_dir: Path, model: str,
     # rendered with BenchCAD-main's renderer instead, which differs in size and
     # style; the model detected the shape mismatch, skipped its own comparison,
     # and was left optimising blind.
-    views = {"target.png": target_png, **_quadrants(target_png, Path(work_dir))}
+    quads = _quadrants(target_png, Path(work_dir))
+    views = {"target.png": target_png, **quads}
     box = Sandbox(work_dir, views, Path(__file__).resolve().parents[2])
+
+    from PIL import Image
+    tw, th = Image.open(target_png).size
+    suffix = SYSTEM_SUFFIX.format(target_w=tw, target_h=th,
+                                  view_w=tw // 2, view_h=th // 2)
 
     turns = [Turn("user", user_text, (target_png,))]
     rounds: list[dict] = []
-    submitted, last_step, executed = "", None, False
+    # `rendered`, not merely `executed`: running any Python at all is a far
+    # weaker condition than having looked at your own geometry, and the
+    # difference is the whole setting. The first clean episode ran nine rounds
+    # of pixel forensics on the target, produced no image in any of them, and
+    # submitted -- passing an "did it execute something" check the entire way.
+    submitted, last_step, rendered = "", None, False
     usage_total = {"prompt_tokens": 0, "completion_tokens": 0,
                    "reasoning_tokens": 0, "total_tokens": 0}
 
@@ -168,7 +197,7 @@ def run_agentic(*, record: dict, data_dir: Path, work_dir: Path, model: str,
         raw, usage, err = "", {}, None
         for attempt in range(CALL_ATTEMPTS):
             try:
-                raw, usage = call_model(model=model, system=system + SYSTEM_SUFFIX,
+                raw, usage = call_model(model=model, system=system + suffix,
                                         user_text="", max_tokens=max_tokens,
                                         timeout=timeout, turns=turns)
                 err = None
@@ -187,15 +216,18 @@ def run_agentic(*, record: dict, data_dir: Path, work_dir: Path, model: str,
         py, cq = _blocks(raw)
 
         if cq is not None:
-            if not executed and rnd < max_rounds:
-                # Submitting without ever running anything means the sandbox was
-                # not used at all; ask once, then accept whatever comes back.
+            if not rendered and rnd < max_rounds:
+                # Ask once, then accept whatever comes back — a model held
+                # hostage to a check it cannot satisfy just loses the record.
                 rounds.append({"round": rnd, "action": "submit_rejected"})
                 turns.append(Turn("user",
-                    "You have not rendered or checked this program yet. Export it, "
-                    "render it with tools.render, and compare that image with "
-                    "target.png. Send a ```python block to do that. Submit only "
-                    "after you have looked at the comparison.", ()))
+                    "You have not yet rendered this geometry. Reading the target's "
+                    "pixels is not the same as looking at your own part. In a "
+                    "```python block: build the solid, tools.export(result, "
+                    "'my_part.step'), tools.render('my_part.step', 'mine.png'), "
+                    "then compare mine.png with target.png numerically. The render "
+                    "comes back to you as an image. Submit after you have seen it.",
+                    ()))
                 continue
             submitted = cq
             rounds.append({"round": rnd, "action": "submit"})
@@ -208,7 +240,7 @@ def run_agentic(*, record: dict, data_dir: Path, work_dir: Path, model: str,
             continue
 
         res = box.run(py, timeout=exec_timeout)
-        executed = True
+        rendered = rendered or bool(res.images)
         box.reset()                                # each round starts clean
         rounds.append({"round": rnd, "action": "exec", "returncode": res.returncode,
                        "n_images": len(res.images)})
@@ -228,7 +260,7 @@ def run_agentic(*, record: dict, data_dir: Path, work_dir: Path, model: str,
             "in `result`.", ()))
         for attempt in range(CALL_ATTEMPTS):
             try:
-                raw, usage = call_model(model=model, system=system + SYSTEM_SUFFIX,
+                raw, usage = call_model(model=model, system=system + suffix,
                                         user_text="", max_tokens=max_tokens,
                                         timeout=timeout, turns=turns)
                 for k in usage_total:
