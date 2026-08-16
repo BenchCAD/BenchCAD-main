@@ -47,14 +47,24 @@ import os, shutil, tempfile
 os.environ.setdefault("BENCH_MESH_COLOR", "129,216,208")
 import _render
 
+# Composite width of the target this record must match. The renderer's own
+# default is the lite set's 128-per-view; the public set's targets are rendered
+# at twice that, so a hardcoded default silently produces an image half the
+# target's size and every numeric comparison the model attempts dies on a shape
+# mismatch. It did, for 95% of records in a 6-hour run.
+TARGET_W = {target_w}
+VIEW_SIZE = TARGET_W // 2 - 2 * _render.BORDER
+
 
 def render(step_path, out_png="my_render.png"):
     """Render a STEP to the 2x2 composite, pixel-identical in convention to the
-    target image: same cameras, same 268x268 layout, same colour. Returns the
-    output path. Also writes view_0..view_3.png for the individual views."""
+    target image: same cameras, same size, same colour, so the two can be
+    compared directly. Returns the output path. Also writes <stem>_v0..v3.png
+    for the individual views."""
     out = Path(out_png)
     tmp = tempfile.mkdtemp(dir=".")
-    _render.render_step_normalized(str(Path(step_path).resolve()), tmp)
+    _render.render_step_normalized(str(Path(step_path).resolve()), tmp,
+                                   size=VIEW_SIZE)
     shutil.move(f"{tmp}/composite.png", out)
     for i in range(4):
         src = Path(tmp) / f"view_{i}.png"
@@ -148,7 +158,6 @@ class Sandbox:
                 f"sandbox image {DOCKER_IMAGE!r} not found — build it with\n"
                 f"  docker build -f docker/sandbox.arm64.Dockerfile "
                 f"-t {DOCKER_IMAGE} .")
-        (self.dir / "tools.py").write_text(TOOLS_PY)
         # The renderer is copied in rather than mounted from the repo: the
         # container must not be able to see the repository at all.
         (self.dir / "_render.py").write_text(
@@ -158,6 +167,13 @@ class Sandbox:
             dst = self.dir / name
             shutil.copy(src, dst)
             self.targets[name] = dst
+
+        # Size the render tool to this record's target. Substituted rather than
+        # formatted because TOOLS_PY contains f-strings of its own.
+        from PIL import Image
+        primary = self.targets.get("target.png") or next(iter(self.targets.values()))
+        (self.dir / "tools.py").write_text(
+            TOOLS_PY.replace("{target_w}", str(Image.open(primary).size[0])))
         self._seeded = {p.name for p in self.dir.iterdir()}
         # Probe after seeding, so the check is that the *real* contents arrive.
         if not _mount_works(self.dir):
