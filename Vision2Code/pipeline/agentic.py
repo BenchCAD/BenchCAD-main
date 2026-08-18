@@ -64,9 +64,9 @@ You are working in a directory, not answering in one shot.
                              views(png)           -> four quadrants
                              crop(png, box)       -> region
 
-render draws your STEP with the same four cameras, the same layout and the
-same colour as target.png, so your render and the target are directly
-comparable.
+render draws your STEP with the same renderer that drew target.png -- same
+projection, same four cameras, same layout, same colour, same size -- so the two
+images are directly comparable, pixel for pixel.
 
 cadquery, numpy and PIL are available. There is no network.
 

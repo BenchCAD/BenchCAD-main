@@ -32,6 +32,11 @@ from pathlib import Path
 # was heavy enough that three concurrent records took the machine down; the
 # emulation, not the container, was the cost.
 DOCKER_IMAGE = "benchcad-sandbox:arm64"
+
+# The parallel scale the stored targets were rendered at. Verified by
+# re-rendering a corpus STEP and differencing: 0.55 reproduces them exactly
+# (RGB MAE 0.00); the module's current default does not.
+GT_PARALLEL_SCALE = 0.55
 MEMORY = "2g"
 CPUS = "1"
 
@@ -42,57 +47,61 @@ TOOLS_PY = '''\
 """Tools available in this working directory."""
 from pathlib import Path
 
-import os, shutil, tempfile
-
-os.environ.setdefault("BENCH_MESH_COLOR", "129,216,208")
 import _render
 
-# Composite width of the target this record must match. The renderer's own
-# default is the lite set's 128-per-view; the public set's targets are rendered
-# at twice that, so a hardcoded default silently produces an image half the
-# target's size and every numeric comparison the model attempts dies on a shape
-# mismatch. It did, for 95% of records in a 6-hour run.
-TARGET_W = {target_w}
-VIEW_SIZE = TARGET_W // 2 - 2 * _render.BORDER
+# The stored target images were rendered by this module at this scale. It is
+# pinned here rather than inherited: the module default has already moved once
+# to fix a clipping bug, and if it moves again the model's render silently stops
+# matching the target it is asked to reproduce. That comparison is the whole
+# point of the sandbox, so it is nailed to the corpus.
+_render.PARALLEL_SCALE = GT_SCALE
+
+# `_composite_2x2` lays out four views of `size` with a 4px border between and
+# around them, so a composite of width W is made of views of (W - 12) // 2.
+TARGET_W = TARGET_WIDTH
+VIEW_SIZE = (TARGET_W - 12) // 2
 
 
 def render(step_path, out_png="my_render.png"):
-    """Render a STEP to the 2x2 composite, pixel-identical in convention to the
-    target image: same cameras, same size, same colour, so the two can be
-    compared directly. Returns the output path. Also writes <stem>_v0..v3.png
-    for the individual views."""
+    """Render a STEP to the 2x2 composite in exactly the convention of
+    target.png -- same renderer, same four cameras, same projection, same colour,
+    same size -- so the two images can be compared directly. Returns the output
+    path, and also writes <stem>_v0..v3.png for the individual views."""
     out = Path(out_png)
-    tmp = tempfile.mkdtemp(dir=".")
-    _render.render_step_normalized(str(Path(step_path).resolve()), tmp,
-                                   size=VIEW_SIZE)
-    shutil.move(f"{tmp}/composite.png", out)
-    for i in range(4):
-        src = Path(tmp) / f"view_{i}.png"
-        if src.exists():
-            shutil.move(str(src), f"{out.stem}_v{i}.png")
-    shutil.rmtree(tmp, ignore_errors=True)
+    if out.exists():
+        out.unlink()          # composite_for_step returns early on a fresh file
+    _render.composite_for_step(Path(step_path).resolve(), out, size=VIEW_SIZE)
+    _split(out, out.stem)
     return out
+
+
+def _split(image_path, stem):
+    from PIL import Image
+    im = Image.open(image_path)
+    w, h = im.size
+    outs = []
+    boxes = [(0, 0, w // 2, h // 2), (w // 2, 0, w, h // 2),
+             (0, h // 2, w // 2, h), (w // 2, h // 2, w, h)]
+    for i, box in enumerate(boxes):
+        o = Path(stem + "_v" + str(i) + ".png")
+        im.crop(box).save(o)
+        outs.append(o)
+    return outs
 
 
 def views(image_path="target.png"):
     """Split a 2x2 composite into its four quadrants; returns their paths."""
-    from PIL import Image
-    im = Image.open(image_path); w, h = im.size
-    outs = []
-    for i, box in enumerate([(0,0,w//2,h//2), (w//2,0,w,h//2),
-                             (0,h//2,w//2,h), (w//2,h//2,w,h)]):
-        o = Path(f"{Path(image_path).stem}_v{i}.png"); im.crop(box).save(o); outs.append(o)
-    return outs
+    return _split(image_path, Path(image_path).stem)
 
 
 def crop(image_path, box, out_png=None):
     """Crop `image_path` to box=(left, top, right, bottom) and save it.
 
-    The composite is a 2x2 grid, so a single view is one quadrant — here the
-    top-left view is box=(0, 0, TARGET_W // 2, TARGET_W // 2)."""
+    The composite is a 2x2 grid, so one view is one quadrant: the top-left is
+    box=(0, 0, TARGET_W // 2, TARGET_W // 2)."""
     from PIL import Image
     im = Image.open(image_path)
-    out = Path(out_png or f"crop_{Path(image_path).stem}.png")
+    out = Path(out_png or ("crop_" + Path(image_path).stem + ".png"))
     im.crop(tuple(box)).save(out)
     return out
 
@@ -160,8 +169,12 @@ class Sandbox:
                 f"-t {DOCKER_IMAGE} .")
         # The renderer is copied in rather than mounted from the repo: the
         # container must not be able to see the repository at all.
+        # It is the module that rendered the targets -- views.py, a parallel
+        # projection. It used to be lite_renderer.py, which draws a 60-degree
+        # perspective: every comparison the model made was between two different
+        # projections of the same solid, and no fitting could close that.
         (self.dir / "_render.py").write_text(
-            (Path(repo_root) / "benchcad_core/scoring/lite_renderer.py").read_text())
+            (Path(repo_root) / "benchcad_core/scoring/views.py").read_text())
         self.targets = {}
         for name, src in target_images.items():
             dst = self.dir / name
@@ -173,7 +186,8 @@ class Sandbox:
         from PIL import Image
         primary = self.targets.get("target.png") or next(iter(self.targets.values()))
         (self.dir / "tools.py").write_text(
-            TOOLS_PY.replace("{target_w}", str(Image.open(primary).size[0])))
+            TOOLS_PY.replace("TARGET_WIDTH", str(Image.open(primary).size[0]))
+                    .replace("GT_SCALE", repr(GT_PARALLEL_SCALE)))
         self._seeded = {p.name for p in self.dir.iterdir()}
         # Probe after seeding, so the check is that the *real* contents arrive.
         if not _mount_works(self.dir):
