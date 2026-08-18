@@ -191,10 +191,12 @@ class Sandbox:
     def reset(self) -> None:
         """Return the directory to its seeded state.
 
-        Each round starts clean so a round's code must be self-contained and its
-        result reproducible; otherwise state accumulates invisibly and a later
-        round can succeed only because of a file an earlier one happened to
-        leave behind. Logs live outside the mount and survive.
+        Called once per record, not per round. Resetting every round was the
+        original design and it was wrong: it forces each block to rebuild
+        everything it needs from scratch, so the model cannot keep a helper
+        script, a measurement, or the solid it built last round. The episode
+        stops being a working session and becomes ten independent attempts that
+        happen to share a transcript. Logs live outside the mount either way.
         """
         for p in self.dir.iterdir():
             if p.name in self._seeded:

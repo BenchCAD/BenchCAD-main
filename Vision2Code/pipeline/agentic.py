@@ -74,7 +74,7 @@ cadquery, numpy and PIL are available. There is no network.
              images it wrote
 ```cadquery  your final answer — it ends the episode and is what gets scored
 
-The directory resets between rounds; the conversation is what persists. You
+The directory persists across rounds: files you write are still there next round. You
 have {{rounds}} rounds, and submit the geometry you judge best.
 """
 
@@ -206,7 +206,6 @@ def run_agentic(*, record: dict, data_dir: Path, work_dir: Path, model: str,
             continue
 
         res = box.run(py, timeout=exec_timeout)
-        box.reset()                                # each round starts clean
         rounds.append({"round": rnd, "action": "exec", "returncode": res.returncode,
                        "n_images": len(res.images)})
         # Always show the result, including on the last round -- the final round
@@ -251,8 +250,9 @@ def run_agentic(*, record: dict, data_dir: Path, work_dir: Path, model: str,
         except Exception:                             # noqa: BLE001 - reported as status
             last_step = None
     if last_step is None:
-        # From the log, not the working directory: the per-round reset empties
-        # the directory, so nothing the model built is still sitting there.
+        # From the log, which holds every round's geometry in order, so the
+        # newest surviving solid is found even if the model overwrote or removed
+        # the file it built earlier in the episode.
         cands = box.artifacts(".step")
         last_step = cands[-1] if cands else None
 
