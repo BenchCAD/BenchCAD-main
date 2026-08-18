@@ -52,6 +52,47 @@ harness changes that can move reported numbers are called out explicitly.
   of 17,900 records. See `docs/ERRATA.md`. Shipping the tool's pre-built STEPs
   removes the local-execution dependency entirely and makes the full
   17,900-record set score identically on any machine.
+- **xAI (Grok) models can be evaluated directly**, via `grok-*` or `xai/<slug>`
+  model ids and an `XAI_API_KEY` (or `GROK_API_KEY`) — previously they were only
+  reachable through `openrouter/x-ai/*`. Calls go to xAI's own Responses API
+  (`https://api.x.ai/v1`), which takes the same request shape as OpenAI's, so
+  images and the `:reasoning=` suffix work as they do elsewhere; the effort
+  ladder is xAI's (`none|low|medium|high|xhigh`) and is validated before the call
+  rather than 400-ing mid-run. `grok-*` covers the published line; the `xai/`
+  form is the escape hatch for models xAI serves under some other name, and
+  passes the slug through verbatim. See `benchcad_core/models/xai_adapter.py`.
+- **`gen.max_tokens` is not sent to xAI, deliberately.** There it behaves as a
+  reasoning *target* rather than a ceiling, so sending one makes runs slower
+  rather than safer: the same image->CadQuery record used 32395 output tokens in
+  398 s with `max_output_tokens=16000`, and 10089 tokens in 134 s with the
+  parameter absent. Both completed with a valid program, and the capped call
+  overshot its own cap 2x — it only ever bounds the visible answer, which is a
+  few dozen tokens. Raising it to "remove the limit" is the worst case.
+  The per-call timeout is the only effective bound, and the
+  adapter floors it to 3000 s. That is sized from a measured distribution rather
+  than a guess: over a 299-record high-effort sweep, successful calls had a
+  median latency of ~1190 s and a maximum of ~2520 s, so a lower floor truncates
+  requests that are working — and since the SDK retries, a call killed early
+  costs 3x the timeout and often still fails. The openai SDK's
+  `max_retries=2` is left alone for that same reason (a re-run may well succeed,
+  and any concurrent run will meet 429s), which is why the floor is 900 s rather
+  than an hour — a hopeless call costs up to 3x it. `:reasoning=low` answers in
+  tens of seconds instead, at a real accuracy cost — in a 4-record Vision2Code
+  smoke it lost most of the score on one part by choosing the wrong base plane,
+  which voxel IoU punishes because it does not normalize rotation.
+- **Records can be evaluated concurrently** via an optional `concurrency:` block
+  (`api_workers`, `score_workers`); the default `api_workers: 1` leaves existing
+  runs sequential and unchanged. The two pools are deliberately separate: a model
+  call costs a socket and blocks for minutes, while scoring spawns a ~0.5 GB
+  CadQuery/OCP subprocess and finishes in seconds, so a single pool either
+  starves the API or exhausts memory (64 concurrent scorers need ~25 GB). A
+  thread waiting on the API holds no scoring slot, which is what lets a large API
+  pool sit in front of a small scoring pool. `benchcad_core/parallel.py` also
+  handles three things that are only visible under load: ground-truth composites
+  are rendered up front on the main thread (VTK aborts the process if a worker
+  builds a render window, and leaks a graphics context per render), the
+  `results.jsonl` read-modify-write is serialised (it silently loses rows under
+  threads), and a worker exception fails one record instead of the batch.
 - Contribution infrastructure: `CONTRIBUTING.md`, `tools/regrade.py` (re-grade
   submitted predictions), errata process.
 

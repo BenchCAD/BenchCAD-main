@@ -59,7 +59,7 @@ parametric abstraction, and executable synthesis.
 uv sync
 
 # LLM API keys only — benchmark data is public
-cp .env.example .env   # then paste OPENAI / ANTHROPIC / GEMINI / OPENROUTER keys
+cp .env.example .env   # then paste OPENAI / ANTHROPIC / GEMINI / XAI / OPENROUTER keys
 ```
 
 ## Quick start
