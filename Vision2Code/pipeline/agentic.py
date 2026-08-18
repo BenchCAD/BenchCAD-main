@@ -44,65 +44,38 @@ CALL_ATTEMPTS = 5
 RETRY_BACKOFF_S = 5
 _FENCE = re.compile(r"```(python|cadquery)\s*\n(.*?)```", re.DOTALL)
 
+# Deliberately close to the mechanical minimum: what each fenced block does,
+# that the directory resets, the round budget, and that the answer is whatever
+# geometry the model judges best. An earlier version also prescribed how to
+# spend the rounds and argued that diffing a render beats reading the target's
+# pixels. That was strategy, not interface, and it steered the model into
+# maximising agreement between two silhouettes -- a proxy that is not monotone
+# in the voxel IoU actually being scored. One record swept parameters to a
+# self-reported 0.60 on its own pixel metric and scored 0.000, down from a
+# single-shot 0.696. What the tools are good for is the model's call.
 SYSTEM_SUFFIX = f"""
 
 You are working in a directory, not answering in one shot.
 
-Everything about the directory is below, so there is nothing to discover: do not
-spend a round listing files, printing image sizes, or reading tools.py. The
-first episode measured this cost a full round.
+  target.png                 {{target_w}}x{{target_h}} — the composite to reproduce
+  view_0.png .. view_3.png   {{view_w}}x{{view_h}} — its four quadrants, in reading order
+  tools.py                   export(result, path) -> STEP
+                             render(step, png)    -> {{target_w}}x{{target_h}} composite
+                             views(png)           -> four quadrants
+                             crop(png, box)       -> region
 
-Files present, and their exact sizes:
-  target.png        {{target_w}}x{{target_h}} RGB — the 2x2 composite to reproduce
-  view_0.png .. view_3.png   {{view_w}}x{{view_h}} RGB — its four quadrants,
-                    in reading order: view_0 top-left, view_1 top-right,
-                    view_2 bottom-left, view_3 bottom-right
-  tools.py          the four helpers below, and nothing else
+render draws your STEP with the same four cameras, the same layout and the
+same colour as target.png, so your render and the target are directly
+comparable.
 
-    import tools
-    tools.export(result, "my_part.step")            -> Path
-        CadQuery Workplane or Shape -> STEP.
-    tools.render("my_part.step", "mine.png")        -> Path
-        STEP -> {{target_w}}x{{target_h}} composite, same four cameras, same
-        layout, same colour as target.png, so the two are directly comparable
-        pixel for pixel. Also writes mine_v0.png .. mine_v3.png, the four
-        individual views, each {{view_w}}x{{view_h}}.
-    tools.views("target.png")                       -> [Path, ...]
-        split any composite into its four quadrants.
-    tools.crop("target.png", (left, top, right, bottom))  -> Path
+cadquery, numpy and PIL are available. There is no network.
 
-cadquery, numpy and PIL are imported the usual way and are all present, so you
-can compare images numerically rather than by eye. There is no network.
+```python    runs in the directory; you get back stdout, stderr, and any
+             images it wrote
+```cadquery  your final answer — it ends the episode and is what gets scored
 
-Two kinds of block, and the difference matters:
-
-```python
-...            runs in the directory; you get stdout, stderr, and any images it
-               writes, so render and look before you commit
-```
-
-```cadquery
-...            your final answer. Send this only when you are done — it ends the
-               episode and is what gets scored.
-```
-
-The directory is reset between rounds. Files you write do not survive, so each
-block must rebuild what it needs; the conversation is what persists.
-
-How to spend the rounds. Build something whole in your very first block, even
-if it is rough, then render it and compare. A rendered part you can diff tells
-you more in one round than any amount of reading the target's pixels, because
-it is measured in the same projection, the same scale and the same colour as
-the target. So:
-
-  round 1        build a first solid, export, render, diff against target.png
-  middle rounds  fix the largest disagreement you can see, re-render, re-diff
-  last round     submit your best geometry
-
-Inspecting target pixels without ever rendering your own part is the one way to
-waste this setting, and a submission that never rendered is rejected.
-
-You have {MAX_ROUNDS} rounds.
+The directory resets between rounds; the conversation is what persists. You
+have {{rounds}} rounds, and submit the geometry you judge best.
 """
 
 
@@ -179,17 +152,16 @@ def run_agentic(*, record: dict, data_dir: Path, work_dir: Path, model: str,
 
     from PIL import Image
     tw, th = Image.open(target_png).size
+    # The budget stated in the prompt is the budget actually enforced. It came
+    # from the module constant, so a per-call max_rounds of 25 still told the
+    # model it had 10 while the observations counted to 25.
     suffix = SYSTEM_SUFFIX.format(target_w=tw, target_h=th,
-                                  view_w=tw // 2, view_h=th // 2)
+                                  view_w=tw // 2, view_h=th // 2,
+                                  rounds=max_rounds)
 
     turns = [Turn("user", user_text, (target_png,))]
     rounds: list[dict] = []
-    # `rendered`, not merely `executed`: running any Python at all is a far
-    # weaker condition than having looked at your own geometry, and the
-    # difference is the whole setting. The first clean episode ran nine rounds
-    # of pixel forensics on the target, produced no image in any of them, and
-    # submitted -- passing an "did it execute something" check the entire way.
-    submitted, last_step, rendered = "", None, False
+    submitted, last_step = "", None
     usage_total = {"prompt_tokens": 0, "completion_tokens": 0,
                    "reasoning_tokens": 0, "total_tokens": 0}
 
@@ -216,19 +188,13 @@ def run_agentic(*, record: dict, data_dir: Path, work_dir: Path, model: str,
         py, cq = _blocks(raw)
 
         if cq is not None:
-            if not rendered and rnd < max_rounds:
-                # Ask once, then accept whatever comes back — a model held
-                # hostage to a check it cannot satisfy just loses the record.
-                rounds.append({"round": rnd, "action": "submit_rejected"})
-                turns.append(Turn("user",
-                    "You have not yet rendered this geometry. Reading the target's "
-                    "pixels is not the same as looking at your own part. In a "
-                    "```python block: build the solid, tools.export(result, "
-                    "'my_part.step'), tools.render('my_part.step', 'mine.png'), "
-                    "then compare mine.png with target.png numerically. The render "
-                    "comes back to you as an image. Submit after you have seen it.",
-                    ()))
-                continue
+            # No gate. An earlier version refused a submission from an episode
+            # that had never rendered, which is a strategy requirement dressed
+            # as a protocol one: it forces the model to spend a round producing
+            # an image whether or not that is the best use of the round, and it
+            # pushed toward the same silhouette-matching proxy the prompt no
+            # longer argues for. Whether the tools are worth using is the
+            # measurement.
             submitted = cq
             rounds.append({"round": rnd, "action": "submit"})
             break
@@ -240,7 +206,6 @@ def run_agentic(*, record: dict, data_dir: Path, work_dir: Path, model: str,
             continue
 
         res = box.run(py, timeout=exec_timeout)
-        rendered = rendered or bool(res.images)
         box.reset()                                # each round starts clean
         rounds.append({"round": rnd, "action": "exec", "returncode": res.returncode,
                        "n_images": len(res.images)})

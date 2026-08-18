@@ -88,8 +88,8 @@ def views(image_path="target.png"):
 def crop(image_path, box, out_png=None):
     """Crop `image_path` to box=(left, top, right, bottom) and save it.
 
-    The composite is a 2x2 grid, so a single view is one quadrant — e.g. the
-    top-left view of a 512x512 composite is box=(0, 0, 256, 256)."""
+    The composite is a 2x2 grid, so a single view is one quadrant — here the
+    top-left view is box=(0, 0, TARGET_W // 2, TARGET_W // 2)."""
     from PIL import Image
     im = Image.open(image_path)
     out = Path(out_png or f"crop_{Path(image_path).stem}.png")
