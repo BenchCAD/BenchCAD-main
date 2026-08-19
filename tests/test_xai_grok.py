@@ -131,7 +131,7 @@ def _capture(monkeypatch, tmp_path, model, _key_env="XAI_API_KEY", **overrides):
     text, usage = xai_adapter.generate(**kwargs)
     assert text == "hello"
     assert usage == {"prompt_tokens": 11, "completion_tokens": 22,
-                     "reasoning_tokens": 7, "total_tokens": 33}
+                     "reasoning_tokens": 7, "total_tokens": 33, "cached_tokens": None}
     _LAST_SEEN.clear(); _LAST_SEEN.update(seen)
     return seen["client"], seen["request"]
 

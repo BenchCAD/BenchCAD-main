@@ -54,7 +54,8 @@ class Completion(NamedTuple):
     usage: dict
 
 
-def usage_dict(prompt=None, completion=None, reasoning=None, total=None) -> dict:
+def usage_dict(prompt=None, completion=None, reasoning=None, total=None,
+               cached=None) -> dict:
     """Normalize token counts to the common usage schema (missing → None).
 
     `total` is derived from prompt+completion when the provider didn't report it.
@@ -68,6 +69,11 @@ def usage_dict(prompt=None, completion=None, reasoning=None, total=None) -> dict
         "completion_tokens": completion,
         "reasoning_tokens": reasoning,
         "total_tokens": total,
+        # A subset of `prompt`, billed at the provider's cache-read rate, which
+        # is a fraction of the input rate. Ignoring it overstates the cost of any
+        # multi-turn setting, because a loop resends its whole history every turn
+        # and most of it is a cache hit.
+        "cached_tokens": cached,
     }
 
 
@@ -78,11 +84,14 @@ def usage_from_openai(resp) -> dict:
         return usage_dict()
     details = getattr(u, "completion_tokens_details", None)
     reasoning = getattr(details, "reasoning_tokens", None) if details is not None else None
+    pdetails = getattr(u, "prompt_tokens_details", None)
+    cached = getattr(pdetails, "cached_tokens", None) if pdetails is not None else None
     return usage_dict(
         prompt=getattr(u, "prompt_tokens", None),
         completion=getattr(u, "completion_tokens", None),
         reasoning=reasoning,
         total=getattr(u, "total_tokens", None),
+        cached=cached,
     )
 
 
@@ -98,11 +107,14 @@ def usage_from_responses(resp) -> dict:
         return usage_dict()
     details = getattr(u, "output_tokens_details", None)
     reasoning = getattr(details, "reasoning_tokens", None) if details is not None else None
+    idetails = getattr(u, "input_tokens_details", None)
+    cached = getattr(idetails, "cached_tokens", None) if idetails is not None else None
     return usage_dict(
         prompt=getattr(u, "input_tokens", None),
         completion=getattr(u, "output_tokens", None),
         reasoning=reasoning,
         total=getattr(u, "total_tokens", None),
+        cached=cached,
     )
 
 
