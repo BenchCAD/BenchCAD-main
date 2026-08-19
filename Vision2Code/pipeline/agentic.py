@@ -53,14 +53,14 @@ _FENCE = re.compile(r"```(python|cadquery)\s*\n(.*?)```", re.DOTALL)
 # in the voxel IoU actually being scored. One record swept parameters to a
 # self-reported 0.60 on its own pixel metric and scored 0.000, down from a
 # single-shot 0.696. What the tools are good for is the model's call.
-SYSTEM_SUFFIX = f"""
+SYSTEM_SUFFIX = """
 
 You are working in a directory, not answering in one shot.
 
-  target.png                 {{target_w}}x{{target_h}} — the composite to reproduce
-  view_0.png .. view_3.png   {{view_w}}x{{view_h}} — its four quadrants, in reading order
+  target.png                 {target_w}x{target_h} — the composite to reproduce
+  view_0.png .. view_3.png   {view_w}x{view_h} — its four quadrants, in reading order
   tools.py                   export(result, path) -> STEP
-                             render(step, png)    -> {{target_w}}x{{target_h}} composite
+                             render(step, png)    -> {target_w}x{target_h} composite
                              views(png)           -> four quadrants
                              crop(png, box)       -> region
 
@@ -75,7 +75,7 @@ cadquery, numpy and PIL are available. There is no network.
 ```cadquery  your final answer — it ends the episode and is what gets scored
 
 The directory persists across rounds: files you write are still there next round. You
-have {{rounds}} rounds, and submit the geometry you judge best.
+have {rounds} rounds, and submit the geometry you judge best.
 """
 
 
