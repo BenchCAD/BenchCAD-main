@@ -13,8 +13,8 @@ for it, so the cost is paid by programs that were going to import it anyway.
 
 try:
     from OCP.TopoDS import (  # noqa: F401
-        TopoDS_CompSolid,
         TopoDS_Compound,
+        TopoDS_CompSolid,
         TopoDS_Edge,
         TopoDS_Face,
         TopoDS_Shape,
