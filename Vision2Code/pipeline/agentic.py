@@ -33,7 +33,13 @@ from benchcad_core.models import Turn, call_model
 from benchcad_core.sandbox import Sandbox
 from benchcad_core.scoring.exec_cq import execute_cq_to_step
 
-MAX_ROUNDS = 10
+# The measured working length, not a guess. Given 100 rounds the model stops on
+# its own at a median of 70 and only 4 records in 50 reach the cap; given 10 it
+# hits the cap 98% of the time, so every number collected at 10 was measuring
+# "what it can do in ten rounds", not what it can do. Paired over 50 records,
+# 10 -> 100 is +0.266 IoU (95% CI [+0.176, +0.360], 43 wins to 7) at roughly 60x
+# the tokens. See configs/agentic.yaml for the cost curve and cheaper settings.
+MAX_ROUNDS = 100
 # One dead round discards every round before it, since they share a conversation,
 # so a round is worth retrying harder than a single-shot call would be.
 CALL_ATTEMPTS = 5

@@ -24,7 +24,21 @@ models:
 
 agentic:
   enabled: true
-  max_rounds: 10       # 25 was measured no better, at ~6x the tokens
+  max_rounds: 100
+  # Measured on 50 records of the public set with grok-4.5, each budget paired
+  # against the same records at 10 rounds:
+  #
+  #     rounds   mean IoU   tokens/record   $/record   delta vs 10
+  #          1     0.3194            17 k      0.03     (single-shot)
+  #         10     0.4246            55 k      0.15     --
+  #         25     0.5407           402 k      1.10     +0.123
+  #        100     0.6907         3,337 k      7.25     +0.266
+  #
+  # 100 is where the model stops on its own: median 70 rounds used, 4 records in
+  # 50 reach the cap. At 10 it hits the cap 98% of the time. Lower it if the bill
+  # matters more than the ceiling -- 25 keeps about half the gain for a seventh
+  # of the cost -- but know that anything below ~70 is measuring the budget as
+  # much as the model.
 
 gen:
   max_tokens: 16000

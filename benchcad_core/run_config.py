@@ -29,7 +29,7 @@ DEFAULT_EXEC_TIMEOUT = 300
 
 # Concurrent model calls. 1 keeps the historical sequential behaviour; raise it
 # to overlap the minutes each reasoning call spends blocked on the network.
-DEFAULT_MAX_ROUNDS = 10
+DEFAULT_MAX_ROUNDS = 100
 DEFAULT_AGENTIC = False
 DEFAULT_API_WORKERS = 1
 # Concurrent CadQuery executions. Deliberately small and separate from
