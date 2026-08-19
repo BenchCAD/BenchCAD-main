@@ -240,8 +240,14 @@ class Sandbox:
         from .scoring.exec_cq import _OCP_HASHCODE_FIX
         script = self.dir / "_run.py"
         script.write_text(_OCP_HASHCODE_FIX + "\n" + code)
+        # Named so a timeout can actually stop it. `subprocess.run(timeout=)`
+        # kills the local docker CLI; the container it started keeps running,
+        # and with model code that hangs it runs forever. Unnamed, there was
+        # nothing to kill: a 100-round batch left 52 orphans alive, some 40
+        # minutes old, and the VM went from 10.7 GB free to 3.8 GB.
+        container = f"benchcad-{self.dir.name[:40]}-{self._round + 1}"
         cmd = [
-            "docker", "run", "--rm",
+            "docker", "run", "--rm", "--name", container,
             "--network", "none",              # no exfiltration, no fetching
             "--memory", MEMORY, "--cpus", CPUS,
             "--pids-limit", "256",
@@ -258,6 +264,8 @@ class Sandbox:
             r = subprocess.run(cmd, timeout=timeout, capture_output=True)
             rc, out, err = r.returncode, r.stdout, r.stderr
         except subprocess.TimeoutExpired:
+            subprocess.run(["docker", "kill", container],
+                           capture_output=True, timeout=60)
             rc, out, err = -1, b"", f"timeout after {timeout}s".encode()
         now = self._snapshot()
         fresh = [self.dir / n for n, m in now.items()
