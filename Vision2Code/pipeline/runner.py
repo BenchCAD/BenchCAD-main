@@ -60,12 +60,19 @@ def _write_results(jsonl: Path, rows: dict) -> None:
 def run_record(*, record: dict, data_dir: Path, results_root: Path,
                model: str, score: str = "iou",
                max_tokens: int = DEFAULT_MAX_TOKENS, timeout: int = DEFAULT_TIMEOUT,
-               exec_timeout: int = DEFAULT_EXEC_TIMEOUT) -> dict:
+               exec_timeout: int = DEFAULT_EXEC_TIMEOUT,
+               agentic: bool = False, max_rounds: int = 10) -> dict:
     """Run one (model, record) → write the result row to results.jsonl.
 
     score: "iou" (raw voxel IoU, default — the metric Anthropic reports) or
     "composite" (the fused BenchCAD total: 0.60 IoU + 0.20 essential-op +
     0.10 Feature-F1 + 0.05 Chamfer + 0.05 Hausdorff).
+
+    agentic: give the model a sandboxed working directory instead of one shot at
+    the answer — the target views as files, the renderer that drew them, and
+    `max_rounds` turns to build, render and compare before it commits. Scored
+    through the same execute + IoU path, so the two settings are comparable.
+    Requires the sandbox image; see docker/sandbox.arm64.Dockerfile.
     """
     rid = record["record_id"]
     paths = _outputs_paths(results_root, model, rid)
@@ -77,18 +84,33 @@ def run_record(*, record: dict, data_dir: Path, results_root: Path,
     from benchcad_core.models import call_model
     t0 = time.time()
     usage: dict = {}
-    try:
-        raw, usage = call_model(
-            model=model, system=system, user_text=user_text,
-            image_paths=image_paths, max_tokens=max_tokens, timeout=timeout,
-        )
-        api_err = None
-    except Exception as e:
-        raw, api_err = "", f"{type(e).__name__}: {e}"
+    rounds: list = []
+    if agentic:
+        from pipeline.agentic import run_agentic
+        try:
+            res = run_agentic(
+                record=record, data_dir=data_dir,
+                work_dir=results_root / "work" / _safe_model(model) / rid,
+                model=model, system=system, user_text=user_text,
+                target_png=image_paths[0], max_tokens=max_tokens, timeout=timeout,
+                max_rounds=max_rounds, exec_timeout=exec_timeout)
+            raw, usage, rounds = res["code"], res["usage"], res["rounds"]
+            api_err = None if res["code"].strip() else "agentic produced no program"
+        except Exception as e:
+            raw, api_err = "", f"{type(e).__name__}: {e}"
+    else:
+        try:
+            raw, usage = call_model(
+                model=model, system=system, user_text=user_text,
+                image_paths=image_paths, max_tokens=max_tokens, timeout=timeout,
+            )
+            api_err = None
+        except Exception as e:
+            raw, api_err = "", f"{type(e).__name__}: {e}"
     lat = time.time() - t0
 
-    # 3. Extract + execute → STEP
-    code = extract_code(raw) if raw else ""
+    # 3. Extract + execute → STEP. The agentic arm already returns bare code.
+    code = (raw if agentic else extract_code(raw)) if raw else ""
     paths["code"].write_text(code or raw or "")
     if api_err:
         status, err_msg = "api_fail", api_err
@@ -138,6 +160,8 @@ def run_record(*, record: dict, data_dir: Path, results_root: Path,
     # 6. Persist with overwrite by (model, record_id)
     row = {
         "record_id": rid,
+        **({"agentic_rounds": len(rounds),
+            "agentic_actions": [d.get("action") for d in rounds]} if agentic else {}),
         "model": model,
         "status": status,
         "iou": round(float(iou), 4),

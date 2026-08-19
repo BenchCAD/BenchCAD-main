@@ -1,0 +1,36 @@
+# Vision2Code with a sandbox: the model gets the target views as files, the
+# renderer that drew them, and a fixed number of rounds to build, render and
+# compare before it answers. Scored through the same execute + voxel-IoU path as
+# a single-shot run, so the two are directly comparable.
+#
+# Build the container first (once):
+#   docker build -f docker/sandbox.arm64.Dockerfile -t benchcad-sandbox:arm64 .
+# amd64 hosts: use docker/sandbox.Dockerfile. Emulating amd64 on Apple silicon is
+# heavy enough that a few concurrent records can take the machine down.
+#
+# The container runtime must be able to bind-mount out_dir. colima shares only
+# $HOME; a working directory outside it mounts empty and every round then reports
+# a missing file. The sandbox probes for this at startup and refuses to run.
+#
+#   uv run python main.py --config configs/agentic.yaml
+#
+# For the paired single-shot baseline, run the same records with `agentic` off.
+
+data_dir: data
+out_dir:  results_agentic
+
+models:
+  - xai/grok-4.5:reasoning=high
+
+agentic:
+  enabled: true
+  max_rounds: 10       # 25 was measured no better, at ~6x the tokens
+
+gen:
+  max_tokens: 16000
+  timeout: 900         # per model call, wall clock; a round is ~20-200s
+  exec_timeout: 300    # per sandbox command
+
+concurrency:
+  api_workers: 16      # each record holds one socket for most of its episode
+  score_workers: 2     # CadQuery is ~0.5 GB per process
