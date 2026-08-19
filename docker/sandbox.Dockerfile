@@ -18,6 +18,11 @@ RUN pip install --no-cache-dir \
         nlopt==2.7.1 casadi==3.7.2 pillow vtk
 
 # Model code runs unprivileged, with no home it can persist to.
+# The image ships the cadquery/OCP compatibility patch itself, so any program
+# run in this container can use a selector -- not only the ones our harness
+# prepends it to. See docker/sitecustomize.py.
+COPY docker/sitecustomize.py /usr/local/lib/python3.12/site-packages/sitecustomize.py
+
 RUN useradd -m -u 1000 runner
 USER runner
 WORKDIR /work

@@ -27,6 +27,11 @@ RUN pip install --no-cache-dir \
         casadi==3.7.2 pillow vtk \
  && pip install --no-cache-dir --no-deps nlopt==2.11.0
 
+# The image ships the cadquery/OCP compatibility patch itself, so any program
+# run in this container can use a selector -- not only the ones our harness
+# prepends it to. See docker/sitecustomize.py.
+COPY docker/sitecustomize.py /usr/local/lib/python3.12/site-packages/sitecustomize.py
+
 RUN useradd -m -u 1000 runner
 USER runner
 WORKDIR /work
