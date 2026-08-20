@@ -41,8 +41,18 @@ def base_model(model: str) -> str:
     return m
 
 
-def cost_usd(model: str, prompt_tokens, completion_tokens) -> float | None:
-    """USD cost for one call, or None if token counts or the price are unknown."""
+def cost_usd(model: str, prompt_tokens, completion_tokens,
+             cached_tokens=None) -> float | None:
+    """USD cost for one call, or None if token counts or the price are unknown.
+
+    `cached_tokens` is the part of `prompt_tokens` the provider served from its
+    prompt cache, billed at `cache_read` instead of `input`. Passing None bills
+    everything at the full input rate, which is an upper bound — and a loose one
+    for a multi-turn loop, where the whole transcript is resent each turn and
+    most of it hits the cache. Verified against a live xAI call: 212 prompt
+    tokens of which 128 cached, 21 output, billed $0.000330; full-rate arithmetic
+    says $0.000550.
+    """
     if prompt_tokens is None and completion_tokens is None:
         return None
     price = _prices().get(base_model(model))
@@ -50,4 +60,8 @@ def cost_usd(model: str, prompt_tokens, completion_tokens) -> float | None:
         return None
     pin = float(price.get("input", 0.0))
     pout = float(price.get("output", 0.0))
-    return round((prompt_tokens or 0) / 1e6 * pin + (completion_tokens or 0) / 1e6 * pout, 6)
+    pcache = float(price.get("cache_read", pin))
+    cached = min(cached_tokens or 0, prompt_tokens or 0)
+    fresh = (prompt_tokens or 0) - cached
+    return round(fresh / 1e6 * pin + cached / 1e6 * pcache
+                 + (completion_tokens or 0) / 1e6 * pout, 6)

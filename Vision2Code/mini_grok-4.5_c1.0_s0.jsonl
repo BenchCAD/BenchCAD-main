@@ -1,0 +1,1 @@
+{"record_id": "threaded_adapter_000415_s20260505", "model": "xai/grok-4.5", "cost_limit": 1.0, "step_limit": 0, "exit_status": "LimitsExceeded", "n_calls": 39, "cost": 1.03512, "answer_path": "", "answer_chars": 0, "lat_s": 945.9}

@@ -1,0 +1,3 @@
+{"record_id": "threaded_adapter_000415_s20260505", "model": "xai/grok-4.5", "cost_limit": 3.0, "step_limit": 0, "exit_status": "RepeatedFormatError", "n_calls": 3, "cost": 0.00586, "answer_path": "", "answer_chars": 0, "lat_s": 6.3}
+{"record_id": "threaded_adapter_000415_s20260505", "model": "xai/grok-4.5", "cost_limit": 3.0, "step_limit": 0, "exit_status": "RepeatedFormatError", "n_calls": 3, "cost": 0.00576, "answer_path": "", "answer_chars": 0, "lat_s": 5.8}
+{"record_id": "threaded_adapter_000415_s20260505", "model": "xai/grok-4.5", "cost_limit": 3.0, "step_limit": 0, "exit_status": "LimitsExceeded", "n_calls": 82, "cost": 3.03565, "answer_path": "", "answer_chars": 0, "lat_s": 2275.4}

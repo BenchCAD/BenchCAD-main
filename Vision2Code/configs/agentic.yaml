@@ -1,0 +1,50 @@
+# Vision2Code with a sandbox: the model gets the target views as files, the
+# renderer that drew them, and a fixed number of rounds to build, render and
+# compare before it answers. Scored through the same execute + voxel-IoU path as
+# a single-shot run, so the two are directly comparable.
+#
+# Build the container first (once):
+#   docker build -f docker/sandbox.arm64.Dockerfile -t benchcad-sandbox:arm64 .
+# amd64 hosts: use docker/sandbox.Dockerfile. Emulating amd64 on Apple silicon is
+# heavy enough that a few concurrent records can take the machine down.
+#
+# The container runtime must be able to bind-mount out_dir. colima shares only
+# $HOME; a working directory outside it mounts empty and every round then reports
+# a missing file. The sandbox probes for this at startup and refuses to run.
+#
+#   uv run python main.py --config configs/agentic.yaml
+#
+# For the paired single-shot baseline, run the same records with `agentic` off.
+
+data_dir: data
+out_dir:  results_agentic
+
+models:
+  - xai/grok-4.5:reasoning=high
+
+agentic:
+  enabled: true
+  max_rounds: 100
+  # Measured on 50 records of the public set with grok-4.5, each budget paired
+  # against the same records at 10 rounds:
+  #
+  #     rounds   mean IoU   tokens/record   $/record   delta vs 10
+  #          1     0.3194            17 k      0.03     (single-shot)
+  #         10     0.4246            55 k      0.15     --
+  #         25     0.5407           402 k      1.10     +0.123
+  #        100     0.6907         3,337 k      7.25     +0.266
+  #
+  # 100 is where the model stops on its own: median 70 rounds used, 4 records in
+  # 50 reach the cap. At 10 it hits the cap 98% of the time. Lower it if the bill
+  # matters more than the ceiling -- 25 keeps about half the gain for a seventh
+  # of the cost -- but know that anything below ~70 is measuring the budget as
+  # much as the model.
+
+gen:
+  max_tokens: 16000
+  timeout: 900         # per model call, wall clock; a round is ~20-200s
+  exec_timeout: 300    # per sandbox command
+
+concurrency:
+  api_workers: 16      # each record holds one socket for most of its episode
+  score_workers: 2     # CadQuery is ~0.5 GB per process

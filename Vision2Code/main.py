@@ -39,7 +39,11 @@ sys.path.insert(0, str(ROOT.parent))  # repo root, for benchcad_core
 
 from pipeline.runner import run_record  # noqa: E402
 
-from benchcad_core.run_config import concurrency_params, gen_params  # noqa: E402
+from benchcad_core.run_config import (  # noqa: E402
+    agentic_params,
+    concurrency_params,
+    gen_params,
+)
 
 DEFAULT_CONFIG = ROOT / "configs" / "test.yaml"
 REQUIRED_FIELDS = ("data_dir", "out_dir", "models")
@@ -137,18 +141,22 @@ def do_run(cfg: dict, args) -> None:
             records = records[: args.limit]
 
     cp = concurrency_params(cfg)
+    ap = agentic_params(cfg)
     print(f"config: {args.config}")
     print(f"data:   {data_dir}")
     print(f"out:    {out_dir}")
     print(f"gen:    max_tokens={gp['max_tokens']} timeout={gp['timeout']}s exec_timeout={gp['exec_timeout']}s")
     print(f"conc:   api_workers={cp['api_workers']} score_workers={cp['score_workers']}")
+    mode = f"agentic (sandbox, {ap['max_rounds']} rounds)" if ap["enabled"] else "single-shot"
+    print(f"mode:   {mode}")
     print(f"runs:   {len(records)} record(s) × {len(models)} model(s)")
 
     def one(model, rec):
         return run_record(record=rec, data_dir=data_dir, results_root=out_dir,
                           model=model, score=args.score,
                           max_tokens=gp["max_tokens"], timeout=gp["timeout"],
-                          exec_timeout=gp["exec_timeout"])
+                          exec_timeout=gp["exec_timeout"],
+                          agentic=ap["enabled"], max_rounds=ap["max_rounds"])
 
     if cp["api_workers"] == 1:
         for model in models:

@@ -38,3 +38,5 @@ Vision2Code/lite_data/
 # Fetched model responses from a two-phase run (data, regenerable)
 raw_responses*.jsonl
 */raw_responses*.jsonl
+agentic_*.jsonl
+*/agentic_*.jsonl
