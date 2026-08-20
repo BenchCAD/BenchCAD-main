@@ -97,11 +97,17 @@ def _blocks(raw: str) -> tuple[str | None, str | None]:
 
 
 def _observation(rnd: int, res, max_rounds: int) -> Turn:
+    # No truncation here. The sandbox already caps stdout and stderr at their
+    # last 4000 characters, and it keeps the tail on purpose: the model's way
+    # of working is to sweep parameters in a loop and print the winner at the
+    # end, so the answer is the final line. Taking the head of that tail threw
+    # exactly that line away -- 30% of stdout samples were long enough to cut,
+    # and 36% of those lost the BEST line the round existed to produce.
     parts = [f"Round {rnd}/{max_rounds} — exit {res.returncode}"]
     if res.stdout.strip():
-        parts.append(f"stdout:\n{res.stdout.strip()[:2000]}")
+        parts.append(f"stdout:\n{res.stdout.strip()}")
     if res.stderr.strip():
-        parts.append(f"stderr:\n{res.stderr.strip()[:2000]}")
+        parts.append(f"stderr:\n{res.stderr.strip()}")
     if res.images:
         parts.append(f"images produced: {', '.join(p.name for p in res.images)} (shown below)")
     elif res.ok:
