@@ -25,7 +25,7 @@ only text and images, which all of them support identically.
 
 from __future__ import annotations
 
-import re
+import json
 import time
 from pathlib import Path
 
@@ -45,22 +45,34 @@ MAX_ROUNDS = 100
 CALL_ATTEMPTS = 5
 NUDGE_BUDGET = 5          # extra calls a run may spend recovering the format
 
-_NUDGE = ("That reply had no fenced code block, so nothing ran. Reply with one "
-          "fenced block and nothing else, starting with the opening fence -- no "
-          "preamble and no text after it. Tag it `python` to run it here, or "
-          "`cadquery` to submit your final answer.")
-# Backoff between attempts. Without it the three retries fired within a couple of
-# seconds of each other and a record died in 17s -- against a transient the
-# retries are just the same failure three times, and under concurrency they add
-# load to whatever caused it. Doubling from 5s spreads the last attempt ~75s out.
+_NUDGE = ("You replied without calling a tool, so nothing ran and the round was "
+          "not spent. Call run_python to investigate, or submit when you have "
+          "the geometry you want scored.")
+
+TOOLS = [
+    {"type": "function", "name": "run_python",
+     "description": ("Run Python in the working directory and get back stdout, "
+                     "stderr and any images it wrote. cadquery, numpy and PIL "
+                     "are importable, tools.py is on the path, and files you "
+                     "write persist into the next call."),
+     "parameters": {"type": "object", "additionalProperties": False,
+                    "required": ["code"],
+                    "properties": {"code": {
+                        "type": "string",
+                        "description": "The program to run."}}}},
+    {"type": "function", "name": "submit",
+     "description": ("Submit the CadQuery program for the geometry you judge "
+                     "best. This ends the episode and is what gets scored, so "
+                     "call it once and last."),
+     "parameters": {"type": "object", "additionalProperties": False,
+                    "required": ["code"],
+                    "properties": {"code": {
+                        "type": "string",
+                        "description": ("A complete CadQuery program leaving the "
+                                        "final solid in `result`.")}}}},
+]
+
 RETRY_BACKOFF_S = 5
-_FENCE = re.compile(r"```([A-Za-z0-9_+-]*)[ \t]*\r?\n(.*?)```", re.DOTALL)
-# Insurance, not the fix. Persisting the raw replies showed the failures are
-# short prose -- "I'll inspect the images and craft CadQuery to match the bolt
-# geometry." -- and not one tag mismatch in 90 samples. But a tag is a free
-# thing to get wrong, so accept `py`, `Python`, an untagged fence, anything;
-# only `cadquery` means submit, because submitting ends the episode and is the
-# more deliberate act, so ambiguity has to resolve toward running the code.
 
 # Deliberately close to the mechanical minimum: what each fenced block does,
 # that the directory resets, the round budget, and that the answer is whatever
@@ -88,72 +100,61 @@ images are directly comparable, pixel for pixel.
 
 cadquery, numpy and PIL are available. There is no network.
 
-Every reply is one fenced code block and nothing else. Begin the reply with the
-opening fence: no preamble, no announcement of what you are about to do, no text
-after the closing fence. Tag the fence `python` to run it in the directory and
-get back stdout, stderr and any images it wrote. Tag it `cadquery` to submit
-your final answer, which ends the episode and is what gets scored.
-
-The directory persists across rounds: files you write are still there next round.
-Submit the geometry you judge best.
+Work through the run_python tool. A round is one run_python call, and the
+directory persists between them. When you have the geometry you want scored,
+call submit; that ends the episode.
 """
 
 
-def _blocks(raw: str) -> tuple[str | None, str | None]:
-    """Return (python, cadquery) — the last block of each kind, if any."""
-    py = cq = None
-    for kind, body in _FENCE.findall(raw or ""):
-        if kind.lower() in ("cadquery", "cq"):
-            cq = body
-        else:
-            py = body
-    return py, cq
+def _arg_code(call) -> str | None:
+    """The `code` argument of a tool call, or None if the model mangled it.
+
+    A schema constrains what the model is asked for, not what arrives: a
+    truncated generation can still deliver unparseable JSON, and that is a
+    malformed call rather than a decision to stop.
+    """
+    try:
+        code = json.loads(call.arguments or "{}").get("code")
+    except (ValueError, AttributeError):
+        return None
+    return code if isinstance(code, str) and code.strip() else None
 
 
-def _keep_raw(box, rnd: int, raw: str) -> None:
-    """Persist the model's reply verbatim, before anything tries to parse it.
+def _keep_raw(box, n: int, raw: str, calls=()) -> None:
+    """Persist what the model actually returned, before anything interprets it.
 
-    The sandbox only archives a round that ran code, so the rounds worth
-    diagnosing -- the ones where no block was found -- left nothing behind at
-    all. That made the largest failure in the harness unreadable: 64% of
-    first rounds on grok-4.5 produce no parseable block, and there was no way
-    to tell whether the model wrote prose, wrote code without a fence, or
-    wrote a fence whose tag our regex does not accept.
+    The sandbox only archives a call that ran code, so the calls worth
+    diagnosing left nothing behind at all. That made the largest failure in the
+    text-fence version of this harness unreadable for weeks; the same blind
+    spot would hide a malformed tool call just as well.
     """
     try:
         d = box.log_dir / "raw"               # flat: a call is not a round
         d.mkdir(parents=True, exist_ok=True)
-        (d / f"call_{rnd:03d}.txt").write_text(raw or "", encoding="utf-8")
+        (d / f"call_{n:03d}.json").write_text(json.dumps(
+            {"text": raw or "",
+             "tool_calls": [{"name": c.name, "arguments": c.arguments}
+                            for c in calls]},
+            ensure_ascii=False, indent=1), encoding="utf-8")
     except OSError:
         pass                                  # diagnosis must never end a run
 
 
-def _observation(rnd: int, res, max_rounds: int) -> Turn:
-    # No truncation here. The sandbox already caps stdout and stderr at their
-    # last 4000 characters, and it keeps the tail on purpose: the model's way
-    # of working is to sweep parameters in a loop and print the winner at the
-    # end, so the answer is the final line. Taking the head of that tail threw
-    # exactly that line away -- 30% of stdout samples were long enough to cut,
-    # and 36% of those lost the BEST line the round existed to produce.
+def _observation(rnd: int, res, max_rounds: int) -> str:
+    """The tool result text. No truncation here -- the sandbox already bounds it."""
     parts = [f"Round {rnd}/{max_rounds} — exit {res.returncode}"]
     if res.stdout.strip():
         parts.append(f"stdout:\n{res.stdout.strip()}")
     if res.stderr.strip():
         parts.append(f"stderr:\n{res.stderr.strip()}")
     if res.images:
-        parts.append(f"images produced: {', '.join(p.name for p in res.images)} (shown below)")
+        parts.append(f"images produced: {', '.join(p.name for p in res.images)}"
+                     f" (attached to the next message)")
     elif res.ok:
         parts.append("no images were written")
-    if rnd >= max_rounds - 1:
-        # Without this the episode simply stops: the last round's output was
-        # never shown and no turn ever asked for an answer, so a model that
-        # budgeted its rounds for investigation was cut off mid-investigation
-        # having submitted nothing. Every record in the first working run
-        # ended this way.
-        parts.append("This is your final observation — no further ```python "
-                     "block will be run. Reply now with your ```cadquery "
-                     "answer, using the best geometry you have.")
-    return Turn("user", "\n\n".join(parts), tuple(res.images[:3]))
+    if rnd >= max_rounds:
+        parts.append("That was the last round. Call submit now.")
+    return "\n\n".join(parts)
 
 
 def _quadrants(target_png: Path, work_dir: Path) -> dict:
@@ -212,12 +213,13 @@ def run_agentic(*, record: dict, data_dir: Path, work_dir: Path, model: str,
     rnd, calls = 0, 0
     while rnd < max_rounds and calls < max_rounds + NUDGE_BUDGET:
         calls += 1
-        raw, usage, err = "", {}, None
+        raw, usage, tcalls, err = "", {}, (), None
         for attempt in range(CALL_ATTEMPTS):
             try:
-                raw, usage = call_model(model=model, system=system + suffix,
-                                        user_text="", max_tokens=max_tokens,
-                                        timeout=timeout, turns=turns)
+                raw, usage, tcalls = call_model(
+                    model=model, system=system + suffix, user_text="",
+                    max_tokens=max_tokens, timeout=timeout, turns=turns,
+                    tools=TOOLS)
                 err = None
                 break
             except Exception as e:                    # noqa: BLE001 - retried
@@ -230,38 +232,53 @@ def run_agentic(*, record: dict, data_dir: Path, work_dir: Path, model: str,
 
         for k in usage_total:
             usage_total[k] += (usage.get(k) or 0)
-        _keep_raw(box, calls, raw)
-        turns.append(Turn("assistant", raw or "", ()))
-        py, cq = _blocks(raw)
+        _keep_raw(box, calls, raw, tcalls)
+        turns.append(Turn("assistant", raw or "", (), tuple(tcalls)))
 
-        if cq is not None:
-            # No gate. An earlier version refused a submission from an episode
-            # that had never rendered, which is a strategy requirement dressed
-            # as a protocol one: it forces the model to spend a round producing
-            # an image whether or not that is the best use of the round, and it
-            # pushed toward the same silhouette-matching proxy the prompt no
-            # longer argues for. Whether the tools are worth using is the
-            # measurement.
-            submitted = cq
-            rounds.append({"round": rnd + 1, "action": "submit"})
-            break
-
-        if py is None:
+        if not tcalls:
             # Not a round. The model produced no work, so charging it a round
-            # spends the budget on the harness's own parsing problem: 12 of 299
-            # records burned all ten that way and never ran a line of code.
-            rounds.append({"round": rnd + 1, "action": "no_block"})
+            # would spend the budget on the protocol rather than the task.
+            rounds.append({"round": rnd + 1, "action": "no_call"})
             turns.append(Turn("user", _NUDGE, ()))
             continue
 
-        rnd += 1
-        res = box.run(py, timeout=exec_timeout)
-        rounds.append({"round": rnd, "action": "exec", "returncode": res.returncode,
-                       "n_images": len(res.images)})
-        # Always show the result, including on the last round -- the final round
-        # is the model's chance to answer, and it cannot answer from output it
-        # was never shown.
-        turns.append(_observation(rnd, res, max_rounds))
+        # Every call the model made needs a result, or the next request is
+        # rejected for an unanswered call -- including calls we do not act on.
+        images: list = []
+        done = False
+        for call in tcalls:
+            code = _arg_code(call)
+            if code is None:
+                turns.append(Turn("tool", "That call had no usable `code` "
+                                          "argument. Send it again.", (),
+                                  (), call.call_id))
+                rounds.append({"round": rnd + 1, "action": "bad_args"})
+                continue
+            if call.name == "submit":
+                submitted = code
+                rounds.append({"round": rnd + 1, "action": "submit"})
+                turns.append(Turn("tool", "submitted", (), (), call.call_id))
+                done = True
+                continue
+            if done:
+                turns.append(Turn("tool", "not run: the episode ended with "
+                                          "submit.", (), (), call.call_id))
+                continue
+            rnd += 1
+            res = box.run(code, timeout=exec_timeout)
+            rounds.append({"round": rnd, "action": "exec",
+                           "returncode": res.returncode,
+                           "n_images": len(res.images)})
+            turns.append(Turn("tool", _observation(rnd, res, max_rounds), (),
+                              (), call.call_id))
+            images.extend(res.images[:3])
+        if done:
+            break
+        # Images cannot ride on a tool result in this API, so they follow as a
+        # user turn. Without this the model is told an image exists and never
+        # sees it, which is the whole point of the sandbox undone.
+        if images:
+            turns.append(Turn("user", "Images from that call:", tuple(images[:3])))
 
     # The rounds are for investigation; answering is separate. A model that
     # spends its whole budget measuring has done the right thing and must still
@@ -269,21 +286,25 @@ def run_agentic(*, record: dict, data_dir: Path, work_dir: Path, model: str,
     # disk. One extra call, only when nothing was submitted.
     if not submitted and rounds and rounds[-1]["action"] != "api_fail":
         turns.append(Turn("user",
-            "Rounds are finished. Reply with only a ```cadquery block: the "
-            "complete program for your best geometry, leaving the final solid "
-            "in `result`.", ()))
+            "Rounds are finished. Call submit now with the complete CadQuery "
+            "program for your best geometry, leaving the final solid in "
+            "`result`.", ()))
         for attempt in range(CALL_ATTEMPTS):
             try:
-                raw, usage = call_model(model=model, system=system + suffix,
-                                        user_text="", max_tokens=max_tokens,
-                                        timeout=timeout, turns=turns)
+                raw, usage, tcalls = call_model(
+                    model=model, system=system + suffix, user_text="",
+                    max_tokens=max_tokens, timeout=timeout, turns=turns,
+                    tools=TOOLS)
                 for k in usage_total:
                     usage_total[k] += (usage.get(k) or 0)
-                _keep_raw(box, len(rounds) + 1, raw)
-                _, cq = _blocks(raw)
-                if cq is not None:
-                    submitted = cq
-                    rounds.append({"round": len(rounds) + 1, "action": "submit_final"})
+                _keep_raw(box, calls + 1, raw, tcalls)
+                for call in tcalls:
+                    code = _arg_code(call)
+                    if code and call.name == "submit":
+                        submitted = code
+                        rounds.append({"round": len(rounds) + 1,
+                                       "action": "submit_final"})
+                        break
                 break
             except Exception:                         # noqa: BLE001 - retried
                 if attempt < CALL_ATTEMPTS - 1:

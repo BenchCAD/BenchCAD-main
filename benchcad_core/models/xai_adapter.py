@@ -41,7 +41,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-from . import _img_b64, usage_from_responses
+from . import ToolCall, _img_b64, usage_from_responses
 
 _BASE_URL = "https://api.x.ai/v1"
 
@@ -117,9 +117,43 @@ def _content(text: str, image_paths) -> list:
     return out
 
 
+def _input_items(turns) -> list:
+    """Flatten `Turn`s into Responses API input items.
+
+    A function call and its result are not messages in this API -- they are
+    top-level items alongside the messages, and the result is matched to the
+    call by `call_id`. Emitting them inside a message content array is accepted
+    by the request validator and then silently ignored by the model, which
+    reads as the model forgetting what it just ran.
+    """
+    items: list = []
+    for t in turns:
+        if t.role == "tool":
+            items.append({"type": "function_call_output",
+                          "call_id": t.call_id, "output": t.text})
+            continue
+        if t.role == "assistant":
+            if t.text:
+                items.append({"role": "assistant",
+                              "content": [{"type": "output_text", "text": t.text}]})
+            for c in t.tool_calls:
+                items.append({"type": "function_call", "call_id": c.call_id,
+                              "name": c.name, "arguments": c.arguments})
+            continue
+        items.append({"role": "user", "content": _content(t.text, t.images)})
+    return items
+
+
+def _tool_calls(resp) -> list:
+    return [ToolCall(getattr(o, "call_id", "") or getattr(o, "id", ""),
+                     getattr(o, "name", ""), getattr(o, "arguments", "") or "")
+            for o in (getattr(resp, "output", None) or [])
+            if getattr(o, "type", "") == "function_call"]
+
+
 def generate(*, model: str, system: str, user_text: str,
              image_paths: list[Path], max_tokens: int, timeout: int,
-             turns: list | None = None) -> tuple[str, dict]:
+             turns: list | None = None, tools: list | None = None):
     import openai
 
     api_key = os.environ.get("XAI_API_KEY") or os.environ.get("GROK_API_KEY")
@@ -131,14 +165,7 @@ def generate(*, model: str, system: str, user_text: str,
     if turns is None:
         conversation = [{"role": "user", "content": _content(user_text, image_paths)}]
     else:
-        # Assistant turns carry text only -- no provider accepts an image there,
-        # and the model's own output never contains one anyway.
-        conversation = [
-            {"role": t.role,
-             "content": _content(t.text, t.images) if t.role == "user"
-                        else [{"type": "output_text", "text": t.text}]}
-            for t in turns
-        ]
+        conversation = _input_items(turns)
 
     kwargs: dict = {
         "model": real_model,
@@ -154,6 +181,11 @@ def generate(*, model: str, system: str, user_text: str,
         kwargs["reasoning"] = {"effort": effort}
     if supports_temperature(real_model):
         kwargs["temperature"] = _TEMPERATURE
+    if tools is not None:
+        kwargs["tools"] = tools
+        # Let the model answer in prose when it has nothing to run; forcing a
+        # call would turn "I am finished" into a spurious one.
+        kwargs["tool_choice"] = "auto"
 
     client = openai.OpenAI(api_key=api_key, base_url=_BASE_URL)
     try:
@@ -166,7 +198,10 @@ def generate(*, model: str, system: str, user_text: str,
             raise
         kwargs.pop("temperature")
         resp = _stream(client, kwargs)
-    return (resp.output_text or ""), usage_from_responses(resp)
+    text, usage = (resp.output_text or ""), usage_from_responses(resp)
+    if tools is not None:
+        return text, usage, _tool_calls(resp)
+    return text, usage
 
 
 def _stream(client, kwargs):
