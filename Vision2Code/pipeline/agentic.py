@@ -161,8 +161,6 @@ def _observation(rnd: int, res, max_rounds: int) -> str:
                      f" (attached to the next message)")
     elif res.ok:
         parts.append("no images were written")
-    if rnd >= max_rounds:
-        parts.append("That was the last round. Call submit now.")
     return "\n\n".join(parts)
 
 
@@ -220,6 +218,13 @@ def run_agentic(*, record: dict, data_dir: Path, work_dir: Path, model: str,
     usage_total = {"prompt_tokens": 0, "completion_tokens": 0,
                    "reasoning_tokens": 0, "total_tokens": 0}
 
+    # The budget ends the episode where it runs out, with no warning turn and
+    # no closing call. mini-swe-agent's limit does exactly this -- it raises
+    # before the call that would exceed the budget -- and an arm that announces
+    # its last round, or grants a turn to answer in after the work is over, is
+    # measuring a protocol the comparison does not have. The model may call
+    # submit on any of its rounds; spending them all on investigation instead
+    # is a choice it made.
     rnd, calls = 0, 0
     while rnd < max_rounds and calls < max_rounds + NUDGE_BUDGET:
         calls += 1
