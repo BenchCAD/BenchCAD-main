@@ -114,6 +114,26 @@ def export(result, step_path="my_part.step"):
 '''
 
 
+KEEP = 10_000          # matches mini-swe-agent, so the comparison isn't confounded
+HALF = KEEP // 2
+
+
+def _clip(text: str) -> str:
+    """Bound an observation without dropping the part that carries the answer.
+
+    A flat tail cap of 4000 was cutting 23.4% of rounds, and the rounds it cut
+    are the ones worth reading: the model sweeps parameters in a loop, so a
+    long output is a search and a short one is a couple of measurements. Head
+    and tail together keep the setup and the winner; the count in between
+    tells the model it was cut, which a silent truncation never does.
+    """
+    if len(text) < KEEP:
+        return text
+    return (f"{text[:HALF]}\n"
+            f"<elided_chars>{len(text) - KEEP} characters elided</elided_chars>\n"
+            f"{text[-HALF:]}")
+
+
 def _is_png(p: Path) -> bool:
     """A file the model wrote is only an image if the API will accept it.
 
@@ -298,8 +318,8 @@ class Sandbox:
                  if self._seen.get(n) != m and _is_png(self.dir / n)]
         self._seen = now
         res = Result(rc,
-                     out.decode(errors="replace")[-4000:],
-                     err.decode(errors="replace")[-4000:],
+                     _clip(out.decode(errors="replace")),
+                     _clip(err.decode(errors="replace")),
                      sorted(fresh))
         # Hand back the archived copies, not the working-directory originals.
         # The caller resets between rounds, and reset runs before the images are
