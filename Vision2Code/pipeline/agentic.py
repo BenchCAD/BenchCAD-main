@@ -298,6 +298,15 @@ def run_agentic(*, record: dict, data_dir: Path, work_dir: Path, model: str,
     # over the single-shot baseline; at the 100 rounds actually used it never
     # fired once in 104 records, because the last observation says to submit and
     # the model does. It was dead code that flattered a retired configuration.
+    #
+    # Nor does anything stand in for the program it did submit. A submission
+    # that does not execute used to fall back to the newest STEP anywhere in
+    # the log -- geometry from any earlier round, possibly a half-built probe
+    # the model had already moved on from, scored as though it were the answer.
+    # mini-swe-agent reads the one file its protocol names and scores zero when
+    # that file is missing or broken, and there is no version of this benchmark
+    # where scoring an artefact the model did not put forward is the honest
+    # comparison.
     code = submitted
     if code.strip():
         step = Path(work_dir) / "final.step"
@@ -306,12 +315,6 @@ def run_agentic(*, record: dict, data_dir: Path, work_dir: Path, model: str,
             last_step = step
         except Exception:                             # noqa: BLE001 - reported as status
             last_step = None
-    if last_step is None:
-        # From the log, which holds every round's geometry in order, so the
-        # newest surviving solid is found even if the model overwrote or removed
-        # the file it built earlier in the episode.
-        cands = box.artifacts(".step")
-        last_step = cands[-1] if cands else None
 
     return {"code": code, "step": last_step, "rounds": rounds,
             "n_rounds": len(rounds), "usage": usage_total,
