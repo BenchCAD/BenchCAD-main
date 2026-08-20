@@ -114,6 +114,32 @@ def export(result, step_path="my_part.step"):
 '''
 
 
+def _is_png(p: Path) -> bool:
+    """A file the model wrote is only an image if the API will accept it.
+
+    Two ways a render goes wrong. A container killed mid-write, or a render
+    that raised after opening its output, leaves a zero-byte .png. And a
+    projection that collapses -- edges viewed exactly edge-on -- writes a
+    structurally perfect PNG that is 1 pixel wide. Both come back from the
+    API as 400 invalid_image, which ends the episode: eight zero-byte files
+    and a 1x173 edge render between them truncated six records of a
+    299-record run, one at round 19 of 100.
+
+    So: real PNG header, big enough to be a picture, and an IEND to show the
+    writer finished. 8px is far below any real render here (the smallest
+    legitimate one seen is 74x48) and far above the degenerate ones.
+    """
+    try:
+        b = p.read_bytes()
+    except OSError:
+        return False
+    if len(b) < 24 or b[:8] != b"\x89PNG\r\n\x1a\n":
+        return False
+    w = int.from_bytes(b[16:20], "big")
+    h = int.from_bytes(b[20:24], "big")
+    return w >= 8 and h >= 8 and b"IEND" in b[-16:]
+
+
 @dataclass
 class Result:
     """One execution: what the model's code printed, and any images it made."""
@@ -269,7 +295,7 @@ class Sandbox:
             rc, out, err = -1, b"", f"timeout after {timeout}s".encode()
         now = self._snapshot()
         fresh = [self.dir / n for n, m in now.items()
-                 if self._seen.get(n) != m]
+                 if self._seen.get(n) != m and _is_png(self.dir / n)]
         self._seen = now
         res = Result(rc,
                      out.decode(errors="replace")[-4000:],
