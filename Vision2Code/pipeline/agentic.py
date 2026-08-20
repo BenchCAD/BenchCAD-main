@@ -290,39 +290,14 @@ def run_agentic(*, record: dict, data_dir: Path, work_dir: Path, model: str,
         if images:
             turns.append(Turn("user", "Images from that call:", tuple(images[:3])))
 
-    # The rounds are for investigation; answering is separate. A model that
-    # spends its whole budget measuring has done the right thing and must still
-    # be asked for the program, or the episode scores whatever happened to be on
-    # disk. One extra call, only when nothing was submitted.
-    if not submitted and rounds and rounds[-1]["action"] != "api_fail":
-        turns.append(Turn("user",
-            "Rounds are finished. Call submit now with the complete CadQuery "
-            "program for your best geometry, leaving the final solid in "
-            "`result`.", ()))
-        for attempt in range(CALL_ATTEMPTS):
-            try:
-                raw, usage, tcalls = call_model(
-                    model=model, system=system + suffix, user_text="",
-                    max_tokens=max_tokens, timeout=timeout, turns=turns,
-                    tools=TOOLS)
-                for k in usage_total:
-                    usage_total[k] += (usage.get(k) or 0)
-                _keep_raw(box, calls + 1, raw, tcalls)
-                for call in tcalls:
-                    code = _arg_code(call)
-                    if code and call.name == "submit":
-                        submitted = code
-                        rounds.append({"round": len(rounds) + 1,
-                                       "action": "submit_final"})
-                        break
-                break
-            except Exception:                         # noqa: BLE001 - retried
-                if attempt < CALL_ATTEMPTS - 1:
-                    time.sleep(RETRY_BACKOFF_S * 2 ** attempt)
-
-    # Score the submitted program; fall back to the last STEP the model built,
-    # so a run that exhausted its rounds mid-investigation is not scored as zero
-    # when it already had working geometry on disk.
+    # Score the submitted program. Nothing asks for one on the model's behalf:
+    # an episode that spends its whole budget and never calls submit has failed
+    # to manage its budget, and that is part of the task rather than something
+    # the harness should paper over. The extra call it used to make fired 24
+    # times in 299 at a 10-round budget and produced answers worth 0.027 IoU
+    # over the single-shot baseline; at the 100 rounds actually used it never
+    # fired once in 104 records, because the last observation says to submit and
+    # the model does. It was dead code that flattered a retired configuration.
     code = submitted
     if code.strip():
         step = Path(work_dir) / "final.step"
