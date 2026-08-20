@@ -74,6 +74,15 @@ TOOLS = [
 
 RETRY_BACKOFF_S = 5
 
+# Per-execution wall clock. 300s was censoring real work rather than catching
+# runaways: 10 of 353 executions in the first half hour of a run hit it, each
+# on a different record and each on a program that was building geometry, not
+# looping forever. A round lost that way is not fatal -- the model is told
+# "timeout after 300s" and continues -- but it is a round spent on nothing.
+# The same value bounds the final scoring execution, so a submitted program
+# slower than the cap scored zero for being slow.
+EXEC_TIMEOUT = 600
+
 # Deliberately close to the mechanical minimum: what each fenced block does,
 # that the directory resets, the round budget, and that the answer is whatever
 # geometry the model judges best. An earlier version also prescribed how to
@@ -183,7 +192,8 @@ def _quadrants(target_png: Path, work_dir: Path) -> dict:
 def run_agentic(*, record: dict, data_dir: Path, work_dir: Path, model: str,
                 system: str, user_text: str, target_png: Path,
                 max_tokens: int, timeout: int,
-                max_rounds: int = MAX_ROUNDS, exec_timeout: int = 300) -> dict:
+                max_rounds: int = MAX_ROUNDS,
+                exec_timeout: int = EXEC_TIMEOUT) -> dict:
     """Run one record. Returns the transcript plus the program to score."""
     # tools.render is the same renderer that produced target.png -- same cameras,
     # same 268x268 layout, same palette, verified pixel-identical -- so the model
