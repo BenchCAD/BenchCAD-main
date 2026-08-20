@@ -316,7 +316,15 @@ def run_agentic(*, record: dict, data_dir: Path, work_dir: Path, model: str,
         except Exception:                             # noqa: BLE001 - reported as status
             last_step = None
 
+    # `api_err` is the provider's own error when the episode was cut short by
+    # one, and None otherwise. An episode that ends without a program has two
+    # very different causes -- the model never submitted, or the provider
+    # stopped answering -- and only the first is the model's. Scoring the
+    # second as zero measures our API reliability; the caller needs to be able
+    # to tell them apart and re-run rather than record a result.
     return {"code": code, "step": last_step, "rounds": rounds,
             "n_rounds": len(rounds), "usage": usage_total,
             "submitted": bool(submitted),
+            "api_err": rounds[-1].get("err") if rounds and
+                       rounds[-1]["action"] == "api_fail" else None,
             "final_status": rounds[-1]["action"] if rounds else "no_rounds"}

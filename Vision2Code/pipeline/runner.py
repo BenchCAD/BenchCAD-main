@@ -95,7 +95,11 @@ def run_record(*, record: dict, data_dir: Path, results_root: Path,
                 target_png=image_paths[0], max_tokens=max_tokens, timeout=timeout,
                 max_rounds=max_rounds, exec_timeout=exec_timeout)
             raw, usage, rounds = res["code"], res["usage"], res["rounds"]
-            api_err = None if res["code"].strip() else "agentic produced no program"
+            # Prefer the provider's error over a generic one: an episode the
+            # provider cut short is a run to repeat, while an episode that
+            # simply never submitted is a result.
+            api_err = res.get("api_err") or (
+                None if res["code"].strip() else "agentic produced no program")
         except Exception as e:
             raw, api_err = "", f"{type(e).__name__}: {e}"
     else:

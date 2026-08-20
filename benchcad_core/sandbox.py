@@ -134,6 +134,9 @@ def _clip(text: str) -> str:
             f"{text[-HALF:]}")
 
 
+MIN_IMAGE_PIXELS = 512    # xAI's stated floor, quoted verbatim in _is_png
+
+
 def _is_png(p: Path) -> bool:
     """A file the model wrote is only an image if the API will accept it.
 
@@ -145,9 +148,13 @@ def _is_png(p: Path) -> bool:
     and a 1x173 edge render between them truncated six records of a
     299-record run, one at round 19 of 100.
 
-    So: real PNG header, big enough to be a picture, and an IEND to show the
-    writer finished. 8px is far below any real render here (the smallest
-    legitimate one seen is 74x48) and far above the degenerate ones.
+    The threshold is the provider's, not a guess. Two earlier revisions of this
+    guard picked a bound from whatever had just broken -- a header check after
+    the zero-byte files, then 8px per side after a 1x173 edge render -- and a
+    27x16 crop walked through both. xAI states the rule in the rejection
+    itself: "Image has 432 total pixels (27x16), which is below the minimum of
+    512 pixels." So the bound is on the product, and this is that number rather
+    than a fourth guess at it.
     """
     try:
         b = p.read_bytes()
@@ -157,7 +164,7 @@ def _is_png(p: Path) -> bool:
         return False
     w = int.from_bytes(b[16:20], "big")
     h = int.from_bytes(b[20:24], "big")
-    return w >= 8 and h >= 8 and b"IEND" in b[-16:]
+    return w * h >= MIN_IMAGE_PIXELS and b"IEND" in b[-16:]
 
 
 @dataclass
