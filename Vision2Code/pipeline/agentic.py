@@ -43,12 +43,24 @@ MAX_ROUNDS = 100
 # One dead round discards every round before it, since they share a conversation,
 # so a round is worth retrying harder than a single-shot call would be.
 CALL_ATTEMPTS = 5
+NUDGE_BUDGET = 5          # extra calls a run may spend recovering the format
+
+_NUDGE = ("That reply had no fenced code block, so nothing ran. Reply with one "
+          "fenced block and nothing else, starting with the opening fence -- no "
+          "preamble and no text after it. Tag it `python` to run it here, or "
+          "`cadquery` to submit your final answer.")
 # Backoff between attempts. Without it the three retries fired within a couple of
 # seconds of each other and a record died in 17s -- against a transient the
 # retries are just the same failure three times, and under concurrency they add
 # load to whatever caused it. Doubling from 5s spreads the last attempt ~75s out.
 RETRY_BACKOFF_S = 5
-_FENCE = re.compile(r"```(python|cadquery)\s*\n(.*?)```", re.DOTALL)
+_FENCE = re.compile(r"```([A-Za-z0-9_+-]*)[ \t]*\r?\n(.*?)```", re.DOTALL)
+# Insurance, not the fix. Persisting the raw replies showed the failures are
+# short prose -- "I'll inspect the images and craft CadQuery to match the bolt
+# geometry." -- and not one tag mismatch in 90 samples. But a tag is a free
+# thing to get wrong, so accept `py`, `Python`, an untagged fence, anything;
+# only `cadquery` means submit, because submitting ends the episode and is the
+# more deliberate act, so ambiguity has to resolve toward running the code.
 
 # Deliberately close to the mechanical minimum: what each fenced block does,
 # that the directory resets, the round budget, and that the answer is whatever
@@ -61,7 +73,7 @@ _FENCE = re.compile(r"```(python|cadquery)\s*\n(.*?)```", re.DOTALL)
 # single-shot 0.696. What the tools are good for is the model's call.
 SYSTEM_SUFFIX = """
 
-You are working in a directory, not answering in one shot.
+You are working in a directory over {rounds} rounds, not answering in one shot.
 
   target.png                 {target_w}x{target_h} — the composite to reproduce
   view_0.png .. view_3.png   {view_w}x{view_h} — its four quadrants, in reading order
@@ -76,12 +88,14 @@ images are directly comparable, pixel for pixel.
 
 cadquery, numpy and PIL are available. There is no network.
 
-```python    runs in the directory; you get back stdout, stderr, and any
-             images it wrote
-```cadquery  your final answer — it ends the episode and is what gets scored
+Every reply is one fenced code block and nothing else. Begin the reply with the
+opening fence: no preamble, no announcement of what you are about to do, no text
+after the closing fence. Tag the fence `python` to run it in the directory and
+get back stdout, stderr and any images it wrote. Tag it `cadquery` to submit
+your final answer, which ends the episode and is what gets scored.
 
-The directory persists across rounds: files you write are still there next round. You
-have {rounds} rounds, and submit the geometry you judge best.
+The directory persists across rounds: files you write are still there next round.
+Submit the geometry you judge best.
 """
 
 
@@ -89,11 +103,29 @@ def _blocks(raw: str) -> tuple[str | None, str | None]:
     """Return (python, cadquery) — the last block of each kind, if any."""
     py = cq = None
     for kind, body in _FENCE.findall(raw or ""):
-        if kind == "python":
-            py = body
-        else:
+        if kind.lower() in ("cadquery", "cq"):
             cq = body
+        else:
+            py = body
     return py, cq
+
+
+def _keep_raw(box, rnd: int, raw: str) -> None:
+    """Persist the model's reply verbatim, before anything tries to parse it.
+
+    The sandbox only archives a round that ran code, so the rounds worth
+    diagnosing -- the ones where no block was found -- left nothing behind at
+    all. That made the largest failure in the harness unreadable: 64% of
+    first rounds on grok-4.5 produce no parseable block, and there was no way
+    to tell whether the model wrote prose, wrote code without a fence, or
+    wrote a fence whose tag our regex does not accept.
+    """
+    try:
+        d = box.log_dir / "raw"               # flat: a call is not a round
+        d.mkdir(parents=True, exist_ok=True)
+        (d / f"call_{rnd:03d}.txt").write_text(raw or "", encoding="utf-8")
+    except OSError:
+        pass                                  # diagnosis must never end a run
 
 
 def _observation(rnd: int, res, max_rounds: int) -> Turn:
@@ -177,7 +209,9 @@ def run_agentic(*, record: dict, data_dir: Path, work_dir: Path, model: str,
     usage_total = {"prompt_tokens": 0, "completion_tokens": 0,
                    "reasoning_tokens": 0, "total_tokens": 0}
 
-    for rnd in range(1, max_rounds + 1):
+    rnd, calls = 0, 0
+    while rnd < max_rounds and calls < max_rounds + NUDGE_BUDGET:
+        calls += 1
         raw, usage, err = "", {}, None
         for attempt in range(CALL_ATTEMPTS):
             try:
@@ -191,11 +225,12 @@ def run_agentic(*, record: dict, data_dir: Path, work_dir: Path, model: str,
                 if attempt < CALL_ATTEMPTS - 1:
                     time.sleep(RETRY_BACKOFF_S * 2 ** attempt)
         if err is not None:
-            rounds.append({"round": rnd, "action": "api_fail", "err": err})
+            rounds.append({"round": rnd + 1, "action": "api_fail", "err": err})
             break
 
         for k in usage_total:
             usage_total[k] += (usage.get(k) or 0)
+        _keep_raw(box, calls, raw)
         turns.append(Turn("assistant", raw or "", ()))
         py, cq = _blocks(raw)
 
@@ -208,15 +243,18 @@ def run_agentic(*, record: dict, data_dir: Path, work_dir: Path, model: str,
             # longer argues for. Whether the tools are worth using is the
             # measurement.
             submitted = cq
-            rounds.append({"round": rnd, "action": "submit"})
+            rounds.append({"round": rnd + 1, "action": "submit"})
             break
 
         if py is None:
-            rounds.append({"round": rnd, "action": "no_block"})
-            turns.append(Turn("user", "No ```python or ```cadquery block found. "
-                                      "Send one.", ()))
+            # Not a round. The model produced no work, so charging it a round
+            # spends the budget on the harness's own parsing problem: 12 of 299
+            # records burned all ten that way and never ran a line of code.
+            rounds.append({"round": rnd + 1, "action": "no_block"})
+            turns.append(Turn("user", _NUDGE, ()))
             continue
 
+        rnd += 1
         res = box.run(py, timeout=exec_timeout)
         rounds.append({"round": rnd, "action": "exec", "returncode": res.returncode,
                        "n_images": len(res.images)})
@@ -241,6 +279,7 @@ def run_agentic(*, record: dict, data_dir: Path, work_dir: Path, model: str,
                                         timeout=timeout, turns=turns)
                 for k in usage_total:
                     usage_total[k] += (usage.get(k) or 0)
+                _keep_raw(box, len(rounds) + 1, raw)
                 _, cq = _blocks(raw)
                 if cq is not None:
                     submitted = cq
