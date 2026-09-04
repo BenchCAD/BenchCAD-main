@@ -26,6 +26,7 @@ only text and images, which all of them support identically.
 from __future__ import annotations
 
 import json
+import os
 import time
 from pathlib import Path
 
@@ -73,6 +74,7 @@ TOOLS = [
 ]
 
 RETRY_BACKOFF_S = 5
+SUPPRESS_IMAGES = bool(os.environ.get("BENCH_NO_IMAGE_FEEDBACK"))
 
 # Per-execution wall clock. 300s was censoring real work rather than catching
 # runaways: 10 of 353 executions in the first half hour of a run hit it, each
@@ -292,7 +294,15 @@ def run_agentic(*, record: dict, data_dir: Path, work_dir: Path, model: str,
         # Images cannot ride on a tool result in this API, so they follow as a
         # user turn. Without this the model is told an image exists and never
         # sees it, which is the whole point of the sandbox undone.
-        if images:
+        #
+        # BENCH_NO_IMAGE_FEEDBACK exists to test whether that is true. The
+        # render reaches the model twice -- once as pixels its own code reads
+        # and reduces to a number, and once as a picture attached here -- and
+        # only the second is being ablated. 72% of programs compute a metric in
+        # code and 45% print a best-so-far line, which is a search that never
+        # needed to look at anything; whether the picture adds to that is a
+        # measurement nobody has made.
+        if images and not SUPPRESS_IMAGES:
             turns.append(Turn("user", "Images from that call:", tuple(images[:3])))
 
     # Score the submitted program. Nothing asks for one on the model's behalf:
