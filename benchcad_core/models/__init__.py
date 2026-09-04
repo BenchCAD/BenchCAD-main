@@ -15,6 +15,7 @@ Dispatches by model id prefix:
     gemini-*                    → gemini
     grok-* / xai/*              → xai
     openrouter/*                → openrouter
+    opencode/*                  → openrouter adapter, OpenCode Zen base url
 
 Special model-id suffixes (all routed inside the relevant adapter):
     :reasoning=high|medium|low  → reasoning effort (openai / anthropic / openrouter / xai)
@@ -147,6 +148,8 @@ def usage_from_responses(resp) -> dict:
 
 
 def _route(model: str) -> str:
+    if model.startswith("opencode/"):
+        return "openrouter"          # OpenCode Zen speaks the same wire format
     if model.startswith("openrouter/"):
         return "openrouter"
     if model.startswith(("gpt-", "o3", "o1")):
