@@ -103,6 +103,15 @@ and pulled into the gitignored `data/` folder on first `prod` run. One config pe
 | CodeEdit | `edit-bench` | 748 | instruction-guided edit benchmark |
 | Vision-QA / Code-QA | `QA` | 2,400 | numeric questions over 200 parts (dimensions, counts, ratios); asked from the rendered image (`mode: img`) or the CadQuery code (`mode: code`) |
 
+**Vision2Code input.** The model sees one 524×524 px image: four diagonal views of
+the part, each 256×256 px, in a 2×2 grid with a 4 px white gutter. The runner renders
+it from the ground-truth STEP with `benchcad_core/scoring/views.py`, as it has since
+the first public release. This is the canonical input, and every Vision2Code score this
+repository produces is measured on it. The `view_*_png` / `composite_png` columns of
+`code_gen` are 128 px previews from a different renderer. They are not the evaluation
+input, and scores measured on them are not comparable with scores from this runner
+([#54](https://github.com/BenchCAD/BenchCAD-main/issues/54)).
+
 A tiny `test_data/` (≈4 records) is committed per task for smoke tests without any
 download. Dataset schema and column details are documented on the dataset card.
 
