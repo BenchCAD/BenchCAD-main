@@ -40,3 +40,5 @@ raw_responses*.jsonl
 */raw_responses*.jsonl
 agentic_*.jsonl
 */agentic_*.jsonl
+mini_*.jsonl
+*/mini_*.jsonl
