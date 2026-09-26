@@ -13,9 +13,15 @@ noticed, because a clipped render is still a valid PNG.
 
 These tests are pure geometry: they project the vertices the way the camera does
 and compare the extent to the viewport, with no VTK and no window, so they run
-anywhere. `test_scale_covers_the_normalisation_bound` fails at 0.55 and passes at
-0.90 on the bound alone; `test_no_reference_is_clipped` fails at 0.55 on real
-parts, and skips when the corpus is not checked out beside this repository.
+anywhere. `test_no_reference_is_clipped` skips when the corpus is not checked out
+beside this repository.
+
+0.55 is still the shipped value. It is the canonical Vision2Code framing, the
+one every published number was measured on, so widening it changes the
+benchmark's input. It will change together with re-rendered dataset views, as a
+new input version (#54). Until then the clipping checks are strict expected
+failures: they document the limitation, and they fail loudly the day the scale
+changes, so this marker cannot outlive the fix.
 """
 
 from __future__ import annotations
@@ -38,6 +44,13 @@ NORMALISED_BOUND = math.sqrt(3.0) / 2.0
 
 V2C = Path(__file__).resolve().parents[1] / "Vision2Code"
 
+#: the canonical 0.55 framing clips; see views.PARALLEL_SCALE and #54
+CLIPS_AT_CANONICAL_SCALE = pytest.mark.xfail(
+    strict=True,
+    reason="canonical framing (PARALLEL_SCALE 0.55) clips blocky parts; "
+           "widening it is a new input version, see #54",
+)
+
 
 def projected_half_extent(verts: np.ndarray) -> float:
     """Largest half-extent the camera has to cover, over all four views.
@@ -59,6 +72,7 @@ def projected_half_extent(verts: np.ndarray) -> float:
     return worst
 
 
+@CLIPS_AT_CANONICAL_SCALE
 def test_scale_covers_the_normalisation_bound():
     """No shape can reach past sqrt(3)/2, so the viewport must not be smaller."""
     assert PARALLEL_SCALE >= NORMALISED_BOUND, (
@@ -72,6 +86,7 @@ def test_scale_is_not_wastefully_large():
     assert PARALLEL_SCALE <= 1.2 * NORMALISED_BOUND
 
 
+@CLIPS_AT_CANONICAL_SCALE
 def test_a_unit_cube_fits():
     """The worst case in closed form, with no file on disk.
 
@@ -113,9 +128,12 @@ def test_render_windows_are_released(tmp_path):
 
 @pytest.mark.parametrize("name", [
     # the three worst offenders measured over the corpus, and one that always fit
-    "data/steps/table_000328_s20260505.step",
-    "data/steps/clevis_000428_s20260505.step",
-    "lite_data/steps/phone_stand_000000_s20260728.step",
+    pytest.param("data/steps/table_000328_s20260505.step",
+                 marks=CLIPS_AT_CANONICAL_SCALE),
+    pytest.param("data/steps/clevis_000428_s20260505.step",
+                 marks=CLIPS_AT_CANONICAL_SCALE),
+    pytest.param("lite_data/steps/phone_stand_000000_s20260728.step",
+                 marks=CLIPS_AT_CANONICAL_SCALE),
     "data/steps/wing_nut_000120_s20260505.step",
 ])
 def test_no_reference_is_clipped(name):
