@@ -3,10 +3,12 @@
 # compare before it answers. Scored through the same execute + voxel-IoU path as
 # a single-shot run, so the two are directly comparable.
 #
-# Build the container first (once):
-#   docker build -f docker/sandbox.arm64.Dockerfile -t benchcad-sandbox:arm64 .
-# amd64 hosts: use docker/sandbox.Dockerfile. Emulating amd64 on Apple silicon is
-# heavy enough that a few concurrent records can take the machine down.
+# Build the container first (once), from the repo root:
+#   arm64 (Apple silicon):  docker build -f docker/sandbox.arm64.Dockerfile -t benchcad-sandbox:arm64 .
+#   amd64:                  docker build -f docker/sandbox.Dockerfile -t benchcad-sandbox:amd64 .
+# The harness picks the tag for the host's architecture (override with
+# BENCH_SANDBOX_IMAGE). Don't emulate amd64 on Apple silicon: it is heavy enough
+# that a few concurrent records can take the machine down.
 #
 # The container runtime must be able to bind-mount out_dir. colima shares only
 # $HOME; a working directory outside it mounts empty and every round then reports

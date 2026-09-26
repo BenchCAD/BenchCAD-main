@@ -23,6 +23,8 @@ looks safe.
 
 from __future__ import annotations
 
+import os
+import platform
 import shutil
 import subprocess
 from dataclasses import dataclass, field
@@ -30,8 +32,13 @@ from pathlib import Path
 
 # Native to the host architecture. An amd64 image under QEMU on Apple silicon
 # was heavy enough that three concurrent records took the machine down; the
-# emulation, not the container, was the cost.
-DOCKER_IMAGE = "benchcad-sandbox:arm64"
+# emulation, not the container, was the cost. arm64 hosts build
+# docker/sandbox.arm64.Dockerfile, everything else docker/sandbox.Dockerfile,
+# each under its own tag; BENCH_SANDBOX_IMAGE overrides the choice.
+_ARM64 = platform.machine().lower() in ("arm64", "aarch64")
+DOCKER_IMAGE = os.environ.get("BENCH_SANDBOX_IMAGE") or (
+    "benchcad-sandbox:arm64" if _ARM64 else "benchcad-sandbox:amd64")
+_DOCKERFILE = "docker/sandbox.arm64.Dockerfile" if _ARM64 else "docker/sandbox.Dockerfile"
 
 # The parallel scale the stored targets were rendered at. Verified by
 # re-rendering a corpus STEP and differencing: 0.55 reproduces them exactly
@@ -218,8 +225,7 @@ class Sandbox:
         if not _image_present():
             raise RuntimeError(
                 f"sandbox image {DOCKER_IMAGE!r} not found — build it with\n"
-                f"  docker build -f docker/sandbox.arm64.Dockerfile "
-                f"-t {DOCKER_IMAGE} .")
+                f"  docker build -f {_DOCKERFILE} -t {DOCKER_IMAGE} .")
         # The renderer is copied in rather than mounted from the repo: the
         # container must not be able to see the repository at all.
         # It is the module that rendered the targets -- views.py, a parallel
