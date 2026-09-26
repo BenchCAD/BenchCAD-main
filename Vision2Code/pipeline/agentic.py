@@ -9,18 +9,15 @@ them numerically before committing.
 Their reported effect on a 1,000-file subset, five runs averaged, max effort:
 Mythos 5 went 0.379 -> 0.650 with tools, Mythos Preview 0.356 -> 0.610. The
 mechanism is measurement rather than inspection — a model that can only look at
-a 268px render fixes orientation and gross proportion, while one that can crop
-and diff can chase dimensions.
+a render fixes orientation and gross proportion, while one that can crop and
+diff can chase dimensions.
 
-Shape of the loop: the model writes a ```python block, the sandbox runs it, and
-the model gets back stdout, stderr, and any images the code produced. It submits
-by emitting a ```cadquery block, which is what gets scored — through the same
-`execute_cq_to_step` + `iou_step_vs_step` as a single-shot run, so the two
-settings stay comparable.
-
-Orchestrated turns rather than native tool-calling, because provider tool
-schemas differ and this benchmark exists to compare providers; the exchange uses
-only text and images, which all of them support identically.
+Shape of the loop: the model drives the sandbox through two native tools.
+`run_python` runs code in the working directory and returns stdout, stderr and
+any images the code wrote. `submit` ends the episode with the program to score,
+which goes through the same `execute_cq_to_step` + `iou_step_vs_step` as a
+single-shot run, so the two settings stay comparable. Nothing is submitted on
+the model's behalf: an episode that never calls `submit` scores zero.
 """
 
 from __future__ import annotations
@@ -196,7 +193,7 @@ def run_agentic(*, record: dict, data_dir: Path, work_dir: Path, model: str,
                 exec_timeout: int = EXEC_TIMEOUT) -> dict:
     """Run one record. Returns the transcript plus the program to score."""
     # tools.render is the same renderer that produced target.png -- same cameras,
-    # same 268x268 layout, same palette, verified pixel-identical -- so the model
+    # same layout and size, same palette, verified pixel-identical -- so the model
     # can diff its own render against the target directly. An earlier version
     # rendered with BenchCAD-main's renderer instead, which differs in size and
     # style; the model detected the shape mismatch, skipped its own comparison,
