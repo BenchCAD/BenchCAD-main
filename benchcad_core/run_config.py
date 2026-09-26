@@ -29,6 +29,8 @@ DEFAULT_EXEC_TIMEOUT = 300
 
 # Concurrent model calls. 1 keeps the historical sequential behaviour; raise it
 # to overlap the minutes each reasoning call spends blocked on the network.
+DEFAULT_MAX_ROUNDS = 100
+DEFAULT_AGENTIC = False
 DEFAULT_API_WORKERS = 1
 # Concurrent CadQuery executions. Deliberately small and separate from
 # api_workers: each one is a ~0.5 GB OCP subprocess, so this is the knob that
@@ -67,3 +69,19 @@ def concurrency_params(cfg: dict) -> dict:
         raise SystemExit(
             f"concurrency workers must be >= 1 (got api_workers={api}, score_workers={score})")
     return {"api_workers": api, "score_workers": score}
+
+
+def agentic_params(cfg: dict) -> dict:
+    """Whether to give the model a sandbox, and how many rounds in it.
+
+    Off by default: the sandbox needs a built container image, and a harness that
+    silently degrades to single-shot when it is missing would report the wrong
+    setting's score under the right setting's name.
+    """
+    a = (cfg or {}).get("agentic") or {}
+    if isinstance(a, bool):
+        a = {"enabled": a}
+    return {
+        "enabled": bool(a.get("enabled", DEFAULT_AGENTIC)),
+        "max_rounds": int(a.get("max_rounds", DEFAULT_MAX_ROUNDS)),
+    }

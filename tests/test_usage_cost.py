@@ -9,14 +9,14 @@ from benchcad_core.models.pricing import base_model, cost_usd
 def test_usage_dict_derives_total():
     assert usage_dict(10, 20) == {
         "prompt_tokens": 10, "completion_tokens": 20,
-        "reasoning_tokens": None, "total_tokens": 30,
+        "reasoning_tokens": None, "total_tokens": 30, "cached_tokens": None,
     }
 
 
 def test_usage_dict_all_none():
     assert usage_dict() == {
         "prompt_tokens": None, "completion_tokens": None,
-        "reasoning_tokens": None, "total_tokens": None,
+        "reasoning_tokens": None, "total_tokens": None, "cached_tokens": None,
     }
 
 
@@ -48,7 +48,7 @@ class _Resp:
 def test_usage_from_openai_extracts_reasoning():
     assert usage_from_openai(_Resp()) == {
         "prompt_tokens": 100, "completion_tokens": 40,
-        "reasoning_tokens": 5, "total_tokens": 140,
+        "reasoning_tokens": 5, "total_tokens": 140, "cached_tokens": None,
     }
 
 
@@ -84,3 +84,21 @@ def test_cost_unknown_model_is_none():
 
 def test_cost_none_tokens_is_none():
     assert cost_usd("gpt-4o", None, None) is None
+
+
+def test_cost_bills_cached_prompt_tokens_at_the_cache_rate():
+    """A multi-turn loop resends its transcript every turn, and most of it is a
+    cache hit. Billing that at the input rate overstates the cost of the very
+    setting the benchmark is measuring."""
+    full = cost_usd("xai/grok-4.5", 212, 21)
+    cached = cost_usd("xai/grok-4.5", 212, 21, 128)
+    assert cached < full
+    assert cached == pytest.approx(0.000332, abs=1e-6)   # live xAI call: $0.000330
+
+
+def test_cost_without_cache_info_is_the_upper_bound():
+    assert cost_usd("xai/grok-4.5", 100, 10, None) == cost_usd("xai/grok-4.5", 100, 10, 0)
+
+
+def test_cached_cannot_exceed_prompt():
+    assert cost_usd("xai/grok-4.5", 50, 0, 999) == cost_usd("xai/grok-4.5", 50, 0, 50)

@@ -77,6 +77,39 @@ Output (per config's `out_dir`, relative to `Vision2Code/`):
 `results.jsonl` is **overwrite-keyed** by `(model, record_id)` —
 re-running a tuple replaces the old row, never duplicates.
 
+## Agentic setting (Python sandbox)
+
+`configs/agentic.yaml` runs Vision2Code with tools. The model gets a working
+directory holding the target composite and its four views, plus a `tools.py`
+whose `render()` draws a STEP with the same renderer and framing as the target.
+It works through two native tools. `run_python` executes code in a Docker
+container with no network and returns stdout, stderr and any images the code
+wrote. `submit` ends the episode with the program to score. Scoring is identical
+to single-shot (execute → STEP → voxel IoU), and an episode that never calls
+`submit` scores 0.
+
+```bash
+# once, from the repo root: build the sandbox image for your architecture
+docker build -f docker/sandbox.arm64.Dockerfile -t benchcad-sandbox:arm64 .   # Apple silicon
+docker build -f docker/sandbox.Dockerfile       -t benchcad-sandbox:amd64 .   # x86-64
+
+# from Vision2Code/
+uv run python main.py --config configs/agentic.yaml
+```
+
+`agentic.max_rounds` (default 100) is the round budget. The config lists the
+measured cost per record at each budget, which is far above single-shot. For
+the paired single-shot baseline, run the same records with
+`agentic.enabled: false`. The ablation switches are environment variables, all
+off by default:
+
+| Variable | Effect |
+|---|---|
+| `BENCH_NO_IMAGE_FEEDBACK=1` | the images the model's code writes are not attached to the next turn; everything else is byte-identical |
+| `BENCH_VIEW_HINT=anchor` | the prompt states only the top-right camera direction |
+| `BENCH_VIEW_HINT=perturb` | wording for targets whose other three views were re-rendered off the corner directions |
+| `BENCH_SANDBOX_IMAGE` | sandbox image to use instead of the architecture default |
+
 ## Score: voxel IoU
 
 For each `(model, record)`:
@@ -122,6 +155,7 @@ Vision2Code/
 │   └── download_codegen_bench.py   pulls HF parquet → data/
 ├── pipeline/
 │   ├── runner.py                per-record loop + overwrite store
+│   ├── agentic.py               sandbox episode loop (configs/agentic.yaml)
 │   ├── prompt.py                (system, user_text, image_paths) builder
 │   ├── store.py                 results.jsonl helpers
 │   └── plot.py                  results.jsonl → bar plot (husl palette)

@@ -17,7 +17,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-from . import _img_b64, usage_from_openai
+from . import ToolCall, _img_b64, usage_from_openai
 
 
 def _reasoning_extra_body(real_model: str) -> tuple[str, dict]:
@@ -42,42 +42,131 @@ def _reasoning_extra_body(real_model: str) -> tuple[str, dict]:
     )
 
 
+def _user_content(text: str, image_paths) -> list:
+    """Text plus any images, in the chat-completions content-part form."""
+    out: list = [{"type": "text", "text": text}]
+    for p in image_paths:
+        out.append({"type": "image_url",
+                    "image_url": {"url": f"data:image/png;base64,{_img_b64(Path(p))}"}})
+    return out
+
+
+def _messages(turns) -> list:
+    """Flatten `Turn`s into chat-completions messages.
+
+    Three shapes matter. A user turn may carry images. An assistant turn that
+    asked for tools carries them in `tool_calls`, and its content is null rather
+    than "" when the model said nothing alongside the call. A tool turn answers
+    one call by id -- text only, since no provider accepts an image on a tool
+    result; the harness appends returned renders as a following user turn.
+    """
+    msgs: list = []
+    for t in turns:
+        if t.role == "tool":
+            msgs.append({"role": "tool", "tool_call_id": t.call_id,
+                         "content": t.text})
+        elif t.role == "assistant":
+            m: dict = {"role": "assistant", "content": t.text or None}
+            if t.tool_calls:
+                m["tool_calls"] = [
+                    {"id": c.call_id, "type": "function",
+                     "function": {"name": c.name, "arguments": c.arguments}}
+                    for c in t.tool_calls]
+            msgs.append(m)
+        else:
+            msgs.append({"role": "user",
+                         "content": _user_content(t.text, t.images)
+                         if t.images else t.text})
+    return msgs
+
+
+def _tools_param(tools) -> list:
+    """The harness states tools in the Responses API's flat form; chat
+    completions wants the same fields nested under `function`."""
+    out = []
+    for t in tools:
+        if "function" in t:                       # already nested
+            out.append(t)
+        else:
+            out.append({"type": "function",
+                        "function": {k: v for k, v in t.items()
+                                     if k in ("name", "description", "parameters")}})
+    return out
+
+
 def generate(*, model: str, system: str, user_text: str,
-             image_paths: list[Path], max_tokens: int, timeout: int) -> tuple[str, dict]:
+             image_paths: list[Path], max_tokens: int, timeout: int,
+             turns: list | None = None, tools: list | None = None):
     import openai
 
-    api_key = os.environ.get("OPENROUTER_API_KEY")
-    if not api_key:
-        raise RuntimeError("OPENROUTER_API_KEY not set in env")
+    # OpenCode Zen is a second OpenAI-compatible gateway with its own key and
+    # base url; the request and response shapes are identical, so it rides this
+    # adapter rather than earning a near-duplicate one.
+    if model.startswith("opencode/"):
+        base_url = "https://opencode.ai/zen/v1"
+        api_key = os.environ.get("OPENCODE_API_KEY") or os.environ.get("ZEN_API_KEY")
+        if not api_key:
+            raise RuntimeError("OPENCODE_API_KEY not set in env "
+                               "(run `opencode auth login` and export the key)")
+        slug = model[len("opencode/"):]
+    else:
+        base_url = "https://openrouter.ai/api/v1"
+        api_key = os.environ.get("OPENROUTER_API_KEY")
+        if not api_key:
+            raise RuntimeError("OPENROUTER_API_KEY not set in env")
+        slug = model[len("openrouter/"):]
 
-    real_model, extra_body = _reasoning_extra_body(model[len("openrouter/"):])
+    real_model, extra_body = _reasoning_extra_body(slug)
     if extra_body:
         # A reasoning pass can run long; floor the request timeout so a low
         # configured timeout can't cut a slow reasoning response off (mirrors the
         # anthropic adapter's extended-thinking floor).
         timeout = max(timeout, 600)
 
-    user_content: list = [{"type": "text", "text": user_text}]
-    for p in image_paths:
-        user_content.append({
-            "type": "image_url",
-            "image_url": {"url": f"data:image/png;base64,{_img_b64(p)}"},
-        })
+    messages = [{"role": "system", "content": system}]
+    if turns is None:
+        messages.append({"role": "user",
+                         "content": _user_content(user_text, image_paths)})
+    else:
+        messages.extend(_messages(turns))
+
+    kwargs = dict(model=real_model, messages=messages, max_tokens=max_tokens,
+                  temperature=0.0, extra_body=extra_body or None)
+    if tools is not None:
+        kwargs["tools"] = _tools_param(tools)
+        # Let the model answer in prose when it has nothing to run; forcing a
+        # call would turn "I am finished" into a spurious one.
+        kwargs["tool_choice"] = "auto"
 
     client = openai.OpenAI(
         api_key=api_key,
-        base_url="https://openrouter.ai/api/v1",
+        base_url=base_url,
         timeout=timeout,
     )
-    resp = client.chat.completions.create(
-        model=real_model,
-        messages=[
-            {"role": "system", "content": system},
-            {"role": "user", "content": user_content},
-        ],
-        max_tokens=max_tokens,
-        temperature=0.0,
-        extra_body=extra_body or None,
-    )
-    text = resp.choices[0].message.content or ""
-    return text, usage_from_openai(resp)
+    try:
+        resp = client.chat.completions.create(**kwargs)
+    except openai.BadRequestError as e:
+        # Which models reject `temperature` is not reliably documented, and
+        # getting it wrong would kill a whole run over a determinism nicety.
+        # Drop it and retry once; re-raise anything else untouched.
+        if "temperature" not in kwargs or "temperature" not in str(e).lower():
+            raise
+        kwargs.pop("temperature")
+        resp = client.chat.completions.create(**kwargs)
+
+    choice = resp.choices[0]
+    text = choice.message.content or ""
+    usage = usage_from_openai(resp)
+    if tools is None:
+        return text, usage
+    calls = tuple(
+        ToolCall(c.id, c.function.name, c.function.arguments or "{}")
+        for c in (choice.message.tool_calls or []))
+    # A reply cut off at the token ceiling looks like "the model chose not to
+    # call a tool", which the runner would count as a wasted round rather than
+    # the truncation it is. Say so instead of failing silently.
+    if not calls and getattr(choice, "finish_reason", None) == "length":
+        raise RuntimeError(
+            f"{real_model} hit the {max_tokens}-token output ceiling before "
+            f"emitting a tool call; raise max_tokens for this model")
+    return text, usage, calls

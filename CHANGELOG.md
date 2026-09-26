@@ -20,6 +20,27 @@ harness changes that can move reported numbers are called out explicitly.
   when it exists, so raw-shape outputs are scored instead of failing
   (`benchcad_core/scoring/exec_cq.py`). Aggregate effect on scores is negligible.
 
+### Vision2Code — agentic setting
+- **New, opt-in: Vision2Code with a Python sandbox** (`configs/agentic.yaml`,
+  `Vision2Code/pipeline/agentic.py`, `benchcad_core/sandbox.py`). The model gets
+  the target views as files and a render tool pinned to the target's renderer and
+  framing. It works through native `run_python` / `submit` tools in a container
+  with no network, and is scored exactly like a single-shot run. The default
+  single-shot run is unchanged.
+- **Model code no longer inherits the parent environment.** `execute_cq_to_step`
+  passed `os.environ`, provider API keys included, to the program it executes. It
+  now passes only `PATH`, `HOME`, `TMPDIR` and the locale. Scores are unaffected.
+- **The 4-view renderer releases its render window.** Without this, a long run
+  died after ~121 shapes with no error. Output is unchanged: a re-render of a
+  stored target reproduces it exactly (RGB MAE 0.00).
+- **Known limitation, unchanged on purpose.** The canonical framing
+  (`PARALLEL_SCALE` 0.55) clips blocky parts in the diagonal views. In a
+  399-part sample of `code_gen`, 136 (34%) extend past the frame in at least one
+  view, the worst needing 0.784; none reaches the 0.866 bound that a 0.90 frame
+  clears. Every published Vision2Code number was measured at
+  0.55, so widening it is a new input version, to ship with re-rendered dataset
+  views (#54), not a silent default change.
+
 ### Scoring — QA
 - **Negative `dim` answers are now scoreable.** `qa_score_single` returned 0 for
   any `dim`/`ratio` pair with a non-positive value, so the 18 Code QA rows whose
