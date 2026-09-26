@@ -5,6 +5,15 @@ of a mechanical part and must write a CadQuery program that reproduces the
 geometry. Scoring by **voxel IoU** between the model's STEP output and the
 ground-truth STEP (no edit baseline — generation from scratch).
 
+**Input image (canonical).** A 524×524 px PNG: four diagonal views, each 256×256 px
+in parallel projection, laid out 2×2 with a 4 px white gutter. The camera directions
+are stated in the system prompt (`pipeline/prompt.py`). The runner renders it from the
+ground-truth STEP (`composite_for_step` in `benchcad_core/scoring/views.py`) and caches
+it next to the STEP as `steps/<record_id>.png`. The model is sent that cached file, so
+delete it if you change the renderer. The 128 px `view_*_png` / `composite_png`
+columns on HuggingFace are previews, not this input
+([#54](https://github.com/BenchCAD/BenchCAD-main/issues/54)).
+
 ← Back to [main README](../README.md)
 
 > **All commands below assume `cd Vision2Code` first.**

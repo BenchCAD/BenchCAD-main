@@ -8,13 +8,12 @@
 
 [![Website](https://img.shields.io/badge/🌐%20Website-benchcad.com-2ea44f.svg)](https://benchcad.com)
 [![Leaderboard](https://img.shields.io/badge/🏆%20Leaderboard-view-orange.svg)](LEADERBOARD.md)
-[![Paper](https://img.shields.io/badge/arXiv-2605.10865-b31b1b.svg)](https://arxiv.org/abs/2605.10865)
 [![Dataset](https://img.shields.io/badge/🤗%20HuggingFace-BenchCAD-yellow.svg)](https://huggingface.co/datasets/BenchCAD/BenchCAD)
 [![Code License: MIT](https://img.shields.io/badge/Code-MIT-blue.svg)](LICENSE)
 [![Data License: CC BY 4.0](https://img.shields.io/badge/Data-CC--BY--4.0-blue.svg)](https://creativecommons.org/licenses/by/4.0/)
 [![Python 3.11](https://img.shields.io/badge/python-3.11-blue.svg)](https://www.python.org/)
 
-[Website](https://benchcad.com) · [Leaderboard](LEADERBOARD.md) · [Paper](https://arxiv.org/abs/2605.10865) · [Dataset](https://huggingface.co/datasets/BenchCAD/BenchCAD) · [Contributing](CONTRIBUTING.md)
+[Website](https://benchcad.com) · [Leaderboard](LEADERBOARD.md) · [Dataset](https://huggingface.co/datasets/BenchCAD/BenchCAD) · [Contributing](CONTRIBUTING.md)
 
 </div>
 
@@ -104,6 +103,15 @@ and pulled into the gitignored `data/` folder on first `prod` run. One config pe
 | CodeEdit | `edit-bench` | 748 | instruction-guided edit benchmark |
 | Vision-QA / Code-QA | `QA` | 2,400 | numeric questions over 200 parts (dimensions, counts, ratios); asked from the rendered image (`mode: img`) or the CadQuery code (`mode: code`) |
 
+**Vision2Code input.** The model sees one 524×524 px image: four diagonal views of
+the part, each 256×256 px, in a 2×2 grid with a 4 px white gutter. The runner renders
+it from the ground-truth STEP with `benchcad_core/scoring/views.py`, as it has since
+the first public release. This is the canonical input, and every Vision2Code score this
+repository produces is measured on it. The `view_*_png` / `composite_png` columns of
+`code_gen` are 128 px previews from a different renderer. They are not the evaluation
+input, and scores measured on them are not comparable with scores from this runner
+([#54](https://github.com/BenchCAD/BenchCAD-main/issues/54)).
+
 A tiny `test_data/` (≈4 records) is committed per task for smoke tests without any
 download. Dataset schema and column details are documented on the dataset card.
 
@@ -130,11 +138,10 @@ code / errata fixes.
 ## Citation
 
 ```bibtex
-@article{zhang2026benchcad,
-  title   = {BenchCAD: A Comprehensive, Industry-Standard Benchmark for Programmatic CAD},
-  author  = {Zhang, Haozhe and Liu, Kaichen and Chen, Miaomiao and Li, Lei and Yang, Shaojie and Peng, Cheng and Chen, Hanjie},
-  journal = {arXiv preprint arXiv:2605.10865},
-  year    = {2026}
+@misc{benchcad2026,
+  title  = {BenchCAD: A Comprehensive, Industry-Standard Benchmark for Programmatic CAD},
+  author = {{BenchCAD Authors}},
+  year   = {2026}
 }
 ```
 

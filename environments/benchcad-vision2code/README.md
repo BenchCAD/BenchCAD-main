@@ -8,7 +8,7 @@ and must write a CadQuery program that reproduces the geometry.
 ground-truth STEP. Execution-grounded and deterministic — there is **no judge
 model**. Non-executable outputs score 0.
 
-- Benchmark: [BenchCAD](https://github.com/BenchCAD/BenchCAD-main) · paper [arXiv:2605.10865](https://arxiv.org/abs/2605.10865)
+- Benchmark: [BenchCAD](https://github.com/BenchCAD/BenchCAD-main)
 - Data: [`BenchCAD/BenchCAD`](https://huggingface.co/datasets/BenchCAD/BenchCAD), config `code_gen` (17,900 parts / 106 families / 47 standards)
 
 ## Task
@@ -20,6 +20,16 @@ model**. Non-executable outputs score 0.
 | Reward | voxel IoU on a normalized 64³ grid, `\|A∩B\| / \|A∪B\|` |
 
 ## Usage
+
+**Python 3.11 or 3.12.** The CAD stack is pinned to the numpy 1.26.4 that
+cadquery 2.3.0 requires, and numpy 1.26.4 publishes no 3.13 wheel. `prime env
+install` installs into whatever venv is active, so create one on a supported
+interpreter first:
+
+```bash
+uv venv --python 3.12 && source .venv/bin/activate
+prime env install benchcad/benchcad-vision2code
+```
 
 ```bash
 # install + quick eval on a few parts

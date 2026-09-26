@@ -4,7 +4,7 @@ Given rendered views of a mechanical part, the model writes a CadQuery program.
 Reward = voxel IoU between the model's executed STEP solid and the ground-truth
 STEP. Execution-grounded and deterministic — there is no judge model.
 
-Benchmark: https://github.com/BenchCAD/BenchCAD-main  ·  paper: arXiv:2605.10865
+Benchmark: https://github.com/BenchCAD/BenchCAD-main
 Data:      https://huggingface.co/datasets/BenchCAD/BenchCAD  (config `code_gen`)
 
 The execution + voxel-IoU helpers below are vendored verbatim from the canonical

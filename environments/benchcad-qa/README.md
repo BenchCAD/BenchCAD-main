@@ -9,7 +9,7 @@ dimensions/ratios, exact match for counts/integers/yes-no. Deterministic — **n
 judge model and no CAD execution** (so this environment is lightweight: just
 `verifiers` + `datasets` + `pillow`).
 
-- Benchmark: [BenchCAD](https://github.com/BenchCAD/BenchCAD-main) · paper [arXiv:2605.10865](https://arxiv.org/abs/2605.10865)
+- Benchmark: [BenchCAD](https://github.com/BenchCAD/BenchCAD-main)
 - Data: [`BenchCAD/BenchCAD`](https://huggingface.co/datasets/BenchCAD/BenchCAD), config `QA` (2,400 questions over 200 parts)
 
 ## Usage

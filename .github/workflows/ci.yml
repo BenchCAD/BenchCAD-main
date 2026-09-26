@@ -24,3 +24,36 @@ jobs:
 
       - name: Offline scoring tests (no API keys, no network)
         run: uv run pytest -q
+
+  env-package-installs:
+    # The packages under environments/ are published to the Prime Intellect hub,
+    # where `prime env install` resolves them into a bare venv from their wheel
+    # metadata alone — none of this repo's uv config applies there. Reproduce
+    # that exactly (`--no-config` throughout), because v0.1.0 of
+    # benchcad-vision2code shipped uninstallable that way while everything
+    # passed locally: a `[tool.uv]` override reconciled nlopt's numpy>=2 with
+    # our numpy 1.26.4 pin, and overrides never enter the wheel.
+    # See issue #48 and tests/test_env_packages.py.
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        env: [benchcad-vision2code, benchcad-qa]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+
+      - name: Build the wheel
+        run: uv build --no-config --wheel environments/${{ matrix.env }} -o dist-ci
+
+      - name: Install it into a bare venv, from its own metadata only
+        run: |
+          uv venv --no-config .venv-ci
+          uv pip install --no-config --python .venv-ci/bin/python dist-ci/*.whl
+
+      - name: Smoke the installed package
+        run: .venv-ci/bin/python .github/scripts/env_smoke.py ${{ matrix.env }}
