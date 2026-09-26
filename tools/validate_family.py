@@ -34,7 +34,7 @@ _DIFFS = ("easy", "medium", "hard")
 _FAMILY_KEYS = ("family", "standard", "base_plane", "description", "source", "contributor")
 _CATEGORIES = {"T1", "T2", "T3", "T4", "T5"}
 _QA_PER_PART = 12
-_LEVELS = {"L1", "L2", "L3", "L4", "L5", "L6"}
+_LEVELS = {"L1", "L2", "L3", "L4"}
 
 
 def _import_generator(path: Path):
@@ -118,7 +118,7 @@ def _check_qa(fam_dir: Path, log: list) -> None:
                 log.append((False, f"qa/{f.name}[{i}]: bad type {q['type']!r}"))
                 ok = False
             elif q["level"] not in _LEVELS:
-                log.append((False, f"qa/{f.name}[{i}]: level must be L1..L6"))
+                log.append((False, f"qa/{f.name}[{i}]: level must be L1..L4"))
                 ok = False
             elif not isinstance(q["answer"], (int, float)):
                 log.append((False, f"qa/{f.name}[{i}]: answer must be numeric"))
