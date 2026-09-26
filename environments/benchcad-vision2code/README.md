@@ -21,6 +21,16 @@ model**. Non-executable outputs score 0.
 
 ## Usage
 
+**Python 3.11 or 3.12.** The CAD stack is pinned to the numpy 1.26.4 that
+cadquery 2.3.0 requires, and numpy 1.26.4 publishes no 3.13 wheel. `prime env
+install` installs into whatever venv is active, so create one on a supported
+interpreter first:
+
+```bash
+uv venv --python 3.12 && source .venv/bin/activate
+prime env install benchcad/benchcad-vision2code
+```
+
 ```bash
 # install + quick eval on a few parts
 uv run vf-eval benchcad-vision2code -n 5

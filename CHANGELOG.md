@@ -55,6 +55,28 @@ harness changes that can move reported numbers are called out explicitly.
 - Contribution infrastructure: `CONTRIBUTING.md`, `tools/regrade.py` (re-grade
   submitted predictions), errata process.
 
+### Environments (Prime Intellect hub)
+- **`benchcad-vision2code` 0.1.0 could not be installed from the hub at all**;
+  fixed in 0.1.2. The published wheel declared `nlopt==2.10.0` and
+  `numpy==1.26.4`, which cannot resolve together — nlopt 2.8.0+ declares
+  `numpy>=2,<3`. Locally this was reconciled by `[tool.uv]
+  override-dependencies`, which is workspace config and is never written into
+  wheel metadata, so `prime env install benchcad/benchcad-vision2code` failed for
+  everyone while every local check passed. nlopt is now pinned to 2.7.1 (the last
+  release declaring `numpy>=1.14`) and the package carries no uv overrides.
+  Scoring is unaffected — nlopt backs cadquery's sketch constraint solver, not
+  execution or voxel IoU. (reported in #48)
+- **`requires-python` narrowed to `>=3.11,<3.13`.** It claimed `<3.14`, so
+  installers picked Python 3.13, for which the pinned numpy 1.26.4 has no wheel.
+- **`exec_timeout` is now actually available on the hub.** It was added in 0.1.1
+  and documented in the environment README, but 0.1.1 was never pushed — hub
+  users got 0.1.0, where the argument was silently swallowed by `**kwargs` and
+  the execution timeout stayed at its default.
+- CI now builds each `environments/` package and installs it into a bare venv
+  from its own metadata, then smoke-tests the CAD stack, so a package that only
+  resolves inside this repo fails the build (`.github/workflows/ci.yml`,
+  `tests/test_env_packages.py`).
+
 ## [0.1.0] — 2026-06
 - Initial release: `code_gen` (17,900 samples / 106 part families),
   `QA` (2,400 numeric questions / 200 parts), `edit-bench` (748 instruction-guided edit pairs).
