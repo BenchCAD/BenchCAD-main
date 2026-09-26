@@ -19,8 +19,8 @@ Reads `XAI_API_KEY` (xAI's own convention), falling back to `GROK_API_KEY` —
 both names are in circulation and a key under the wrong one is an unhelpful way
 to lose a run.
 
-**`max_tokens` is not forwarded at all.** On every other provider it is a
-ceiling; here it behaves as a reasoning *target*, and sending one makes runs
+**The run config's `max_tokens` is not forwarded.** On every other provider it
+is a ceiling; here it behaves as a reasoning *target*, and sending one makes runs
 slower rather than safer. Measured on one image→CadQuery record at high effort:
 
     max_output_tokens=16000  ->  32395 output tokens (32158 reasoning), 398 s
@@ -29,11 +29,12 @@ slower rather than safer. Measured on one image→CadQuery record at high effort
 Both returned `status=completed` with a complete program, so the cap is not
 bounding anything — note the first row overshoots its own cap 2x. It only
 bounds the visible answer, which is a few dozen tokens and never approaches it.
-Sending a large value to "remove the limit" is the worst case: it inflates
-reasoning threefold and triples wall-clock for no gain.
+A cap inside the model's working range, like the 16000 above, is the worst
+case: it tripled both reasoning and wall-clock for no gain.
 
-The per-call timeout is therefore the only effective bound, and the floor below
-is the one real safeguard.
+A fixed backstop far above anything observed is sent instead
+(`_MAX_OUTPUT_TOKENS`), so the request is bounded without being shaped. The
+caller's timeout is used as given; see the note on the removed floor below.
 """
 
 from __future__ import annotations

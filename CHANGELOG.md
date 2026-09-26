@@ -61,25 +61,30 @@ harness changes that can move reported numbers are called out explicitly.
   rather than 400-ing mid-run. `grok-*` covers the published line; the `xai/`
   form is the escape hatch for models xAI serves under some other name, and
   passes the slug through verbatim. See `benchcad_core/models/xai_adapter.py`.
-- **`gen.max_tokens` is not sent to xAI, deliberately.** There it behaves as a
-  reasoning *target* rather than a ceiling, so sending one makes runs slower
-  rather than safer: the same image->CadQuery record used 32395 output tokens in
-  398 s with `max_output_tokens=16000`, and 10089 tokens in 134 s with the
-  parameter absent. Both completed with a valid program, and the capped call
-  overshot its own cap 2x — it only ever bounds the visible answer, which is a
-  few dozen tokens. Raising it to "remove the limit" is the worst case.
-  The per-call timeout is the only effective bound, and the
-  adapter floors it to 3000 s. That is sized from a measured distribution rather
-  than a guess: over a 299-record high-effort sweep, successful calls had a
-  median latency of ~1190 s and a maximum of ~2520 s, so a lower floor truncates
-  requests that are working — and since the SDK retries, a call killed early
-  costs 3x the timeout and often still fails. The openai SDK's
-  `max_retries=2` is left alone for that same reason (a re-run may well succeed,
-  and any concurrent run will meet 429s), which is why the floor is 900 s rather
-  than an hour — a hopeless call costs up to 3x it. `:reasoning=low` answers in
-  tens of seconds instead, at a real accuracy cost — in a 4-record Vision2Code
-  smoke it lost most of the score on one part by choosing the wrong base plane,
-  which voxel IoU punishes because it does not normalize rotation.
+- **`gen.max_tokens` is not forwarded to xAI, deliberately.** There a cap near
+  the model's working range acts as a reasoning *target* rather than a ceiling,
+  so sending one makes runs slower rather than safer. The same image->CadQuery
+  record used 32395 output tokens in 398 s with `max_output_tokens=16000`, and
+  10089 tokens in 134 s without it. Both completed with a valid program, and the
+  capped call overshot its own cap 2x: the cap only ever bounds the visible
+  answer, which is a few dozen tokens. The adapter instead sends a fixed
+  `max_output_tokens=512000` backstop, far above anything observed (~33k), so the
+  request stays bounded without shaping the answer.
+- **xAI requests are streamed, and `gen.timeout` is used exactly as configured.**
+  The endpoint buffers its answer either way. A streamed request sends a
+  keepalive frame every ~15 s, while a non-streamed one is silent for the whole
+  generation and does not survive a long reasoning pass: in paired runs on
+  identical requests, 4/4 streamed and 2/4 non-streamed calls returned. Because
+  the SDK's timeout applies per read, it now bounds a stalled connection rather
+  than a long generation. Earlier revisions of this adapter clamped the timeout
+  up to 900 s and then 3000 s. Both values were sized from latencies that silently
+  included the SDK's two retries, so they overrode the run config and made every
+  dead call cost 3x the floor. `:reasoning=low` answers in tens of seconds
+  instead, at a real accuracy cost.
+- **Grok is sampled at temperature 0.7**, the endpoint's own default, pinned
+  explicitly, rather than the 0.0 the other adapters send. Its reasoning length
+  varies from run to run regardless, so 0.0 would not make a run reproducible. A
+  model that rejects `temperature` is retried once without it.
 - **Records can be evaluated concurrently** via an optional `concurrency:` block
   (`api_workers`, `score_workers`); the default `api_workers: 1` leaves existing
   runs sequential and unchanged. The two pools are deliberately separate: a model
