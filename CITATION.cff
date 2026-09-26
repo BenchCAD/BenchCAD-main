@@ -3,20 +3,7 @@ title: "BenchCAD: A Comprehensive, Industry-Standard Benchmark for Programmatic 
 message: "If you use BenchCAD, please cite it using these metadata."
 type: dataset
 authors:
-  - given-names: Haozhe
-    family-names: Zhang
-  - given-names: Kaichen
-    family-names: Liu
-  - given-names: Miaomiao
-    family-names: Chen
-  - given-names: Lei
-    family-names: Li
-  - given-names: Shaojie
-    family-names: Yang
-  - given-names: Cheng
-    family-names: Peng
-  - given-names: Hanjie
-    family-names: Chen
+  - name: "BenchCAD Authors"
 repository-code: "https://github.com/BenchCAD/BenchCAD-main"
 url: "https://huggingface.co/datasets/BenchCAD/BenchCAD"
 abstract: >-
@@ -39,20 +26,5 @@ preferred-citation:
   type: article
   title: "BenchCAD: A Comprehensive, Industry-Standard Benchmark for Programmatic CAD"
   authors:
-    - given-names: Haozhe
-      family-names: Zhang
-    - given-names: Kaichen
-      family-names: Liu
-    - given-names: Miaomiao
-      family-names: Chen
-    - given-names: Lei
-      family-names: Li
-    - given-names: Shaojie
-      family-names: Yang
-    - given-names: Cheng
-      family-names: Peng
-    - given-names: Hanjie
-      family-names: Chen
+    - name: "BenchCAD Authors"
   year: 2026
-  eprint: "2605.10865"
-  repository: "https://arxiv.org/abs/2605.10865"

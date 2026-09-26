@@ -8,7 +8,7 @@ and must write a CadQuery program that reproduces the geometry.
 ground-truth STEP. Execution-grounded and deterministic — there is **no judge
 model**. Non-executable outputs score 0.
 
-- Benchmark: [BenchCAD](https://github.com/BenchCAD/BenchCAD-main) · paper [arXiv:2605.10865](https://arxiv.org/abs/2605.10865)
+- Benchmark: [BenchCAD](https://github.com/BenchCAD/BenchCAD-main)
 - Data: [`BenchCAD/BenchCAD`](https://huggingface.co/datasets/BenchCAD/BenchCAD), config `code_gen` (17,900 parts / 106 families / 47 standards)
 
 ## Task

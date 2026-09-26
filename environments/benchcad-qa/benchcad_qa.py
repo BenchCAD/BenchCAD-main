@@ -5,7 +5,7 @@ count, or ratio), the model answers with a single number. Reward = symmetric
 ratio accuracy `min(pred, gt) / max(pred, gt)` for dimensions/ratios, exact match
 for counts/integers/yes-no. Deterministic — no judge model, no CAD execution.
 
-Benchmark: https://github.com/BenchCAD/BenchCAD-main  ·  paper: arXiv:2605.10865
+Benchmark: https://github.com/BenchCAD/BenchCAD-main
 Data:      https://huggingface.co/datasets/BenchCAD/BenchCAD  (config `QA`)
 
 The scoring below mirrors the canonical scorer (`QA/scoring/qa_score.py`); it

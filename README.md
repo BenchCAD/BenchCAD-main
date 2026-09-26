@@ -8,13 +8,12 @@
 
 [![Website](https://img.shields.io/badge/🌐%20Website-benchcad.com-2ea44f.svg)](https://benchcad.com)
 [![Leaderboard](https://img.shields.io/badge/🏆%20Leaderboard-view-orange.svg)](LEADERBOARD.md)
-[![Paper](https://img.shields.io/badge/arXiv-2605.10865-b31b1b.svg)](https://arxiv.org/abs/2605.10865)
 [![Dataset](https://img.shields.io/badge/🤗%20HuggingFace-BenchCAD-yellow.svg)](https://huggingface.co/datasets/BenchCAD/BenchCAD)
 [![Code License: MIT](https://img.shields.io/badge/Code-MIT-blue.svg)](LICENSE)
 [![Data License: CC BY 4.0](https://img.shields.io/badge/Data-CC--BY--4.0-blue.svg)](https://creativecommons.org/licenses/by/4.0/)
 [![Python 3.11](https://img.shields.io/badge/python-3.11-blue.svg)](https://www.python.org/)
 
-[Website](https://benchcad.com) · [Leaderboard](LEADERBOARD.md) · [Paper](https://arxiv.org/abs/2605.10865) · [Dataset](https://huggingface.co/datasets/BenchCAD/BenchCAD) · [Contributing](CONTRIBUTING.md)
+[Website](https://benchcad.com) · [Leaderboard](LEADERBOARD.md) · [Dataset](https://huggingface.co/datasets/BenchCAD/BenchCAD) · [Contributing](CONTRIBUTING.md)
 
 </div>
 
@@ -130,11 +129,10 @@ code / errata fixes.
 ## Citation
 
 ```bibtex
-@article{zhang2026benchcad,
-  title   = {BenchCAD: A Comprehensive, Industry-Standard Benchmark for Programmatic CAD},
-  author  = {Zhang, Haozhe and Liu, Kaichen and Chen, Miaomiao and Li, Lei and Yang, Shaojie and Peng, Cheng and Chen, Hanjie},
-  journal = {arXiv preprint arXiv:2605.10865},
-  year    = {2026}
+@misc{benchcad2026,
+  title  = {BenchCAD: A Comprehensive, Industry-Standard Benchmark for Programmatic CAD},
+  author = {{BenchCAD Authors}},
+  year   = {2026}
 }
 ```
 
