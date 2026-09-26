@@ -16,7 +16,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-from . import _img_b64, usage_dict
+from . import _img_b64, usage_from_responses
 
 
 def _supports_temperature(model: str) -> bool:
@@ -77,19 +77,4 @@ def generate(*, model: str, system: str, user_text: str,
 
     client = openai.OpenAI(api_key=api_key)
     resp = client.responses.create(**kwargs)
-    return (resp.output_text or ""), _usage_from_responses(resp)
-
-
-def _usage_from_responses(resp) -> dict:
-    """Extract usage from a Responses-API response (input/output_tokens naming)."""
-    u = getattr(resp, "usage", None)
-    if u is None:
-        return usage_dict()
-    details = getattr(u, "output_tokens_details", None)
-    reasoning = getattr(details, "reasoning_tokens", None) if details is not None else None
-    return usage_dict(
-        prompt=getattr(u, "input_tokens", None),
-        completion=getattr(u, "output_tokens", None),
-        reasoning=reasoning,
-        total=getattr(u, "total_tokens", None),
-    )
+    return (resp.output_text or ""), usage_from_responses(resp)

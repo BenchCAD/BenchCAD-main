@@ -29,8 +29,10 @@ def base_model(model: str) -> str:
     `claude-opus-4-7:reasoning=high`      → `claude-opus-4-7`
     """
     m = model
-    if m.startswith("openrouter/"):
-        m = m[len("openrouter/"):]
+    for prefix in ("openrouter/", "xai/"):
+        if m.startswith(prefix):
+            m = m[len(prefix):]
+            break
     for sep in (":reasoning=", ":thinking="):
         m = m.split(sep, 1)[0]
     for suffix in (":free", "-thinking"):

@@ -52,6 +52,52 @@ harness changes that can move reported numbers are called out explicitly.
   of 17,900 records. See `docs/ERRATA.md`. Shipping the tool's pre-built STEPs
   removes the local-execution dependency entirely and makes the full
   17,900-record set score identically on any machine.
+- **xAI (Grok) models can be evaluated directly**, via `grok-*` or `xai/<slug>`
+  model ids and an `XAI_API_KEY` (or `GROK_API_KEY`) — previously they were only
+  reachable through `openrouter/x-ai/*`. Calls go to xAI's own Responses API
+  (`https://api.x.ai/v1`), which takes the same request shape as OpenAI's, so
+  images and the `:reasoning=` suffix work as they do elsewhere; the effort
+  ladder is xAI's (`none|low|medium|high|xhigh`) and is validated before the call
+  rather than 400-ing mid-run. `grok-*` covers the published line; the `xai/`
+  form is the escape hatch for models xAI serves under some other name, and
+  passes the slug through verbatim. See `benchcad_core/models/xai_adapter.py`.
+- **`gen.max_tokens` is not forwarded to xAI, deliberately.** There a cap near
+  the model's working range acts as a reasoning *target* rather than a ceiling,
+  so sending one makes runs slower rather than safer. The same image->CadQuery
+  record used 32395 output tokens in 398 s with `max_output_tokens=16000`, and
+  10089 tokens in 134 s without it. Both completed with a valid program, and the
+  capped call overshot its own cap 2x: the cap only ever bounds the visible
+  answer, which is a few dozen tokens. The adapter instead sends a fixed
+  `max_output_tokens=512000` backstop, far above anything observed (~33k), so the
+  request stays bounded without shaping the answer.
+- **xAI requests are streamed, and `gen.timeout` is used exactly as configured.**
+  The endpoint buffers its answer either way. A streamed request sends a
+  keepalive frame every ~15 s, while a non-streamed one is silent for the whole
+  generation and does not survive a long reasoning pass: in paired runs on
+  identical requests, 4/4 streamed and 2/4 non-streamed calls returned. Because
+  the SDK's timeout applies per read, it now bounds a stalled connection rather
+  than a long generation. Earlier revisions of this adapter clamped the timeout
+  up to 900 s and then 3000 s. Both values were sized from latencies that silently
+  included the SDK's two retries, so they overrode the run config and made every
+  dead call cost 3x the floor. `:reasoning=low` answers in tens of seconds
+  instead, at a real accuracy cost.
+- **Grok is sampled at temperature 0.7**, the endpoint's own default, pinned
+  explicitly, rather than the 0.0 the other adapters send. Its reasoning length
+  varies from run to run regardless, so 0.0 would not make a run reproducible. A
+  model that rejects `temperature` is retried once without it.
+- **Records can be evaluated concurrently** via an optional `concurrency:` block
+  (`api_workers`, `score_workers`); the default `api_workers: 1` leaves existing
+  runs sequential and unchanged. The two pools are deliberately separate: a model
+  call costs a socket and blocks for minutes, while scoring spawns a ~0.5 GB
+  CadQuery/OCP subprocess and finishes in seconds, so a single pool either
+  starves the API or exhausts memory (64 concurrent scorers need ~25 GB). A
+  thread waiting on the API holds no scoring slot, which is what lets a large API
+  pool sit in front of a small scoring pool. `benchcad_core/parallel.py` also
+  handles three things that are only visible under load: ground-truth composites
+  are rendered up front on the main thread (VTK aborts the process if a worker
+  builds a render window, and leaks a graphics context per render), the
+  `results.jsonl` read-modify-write is serialised (it silently loses rows under
+  threads), and a worker exception fails one record instead of the batch.
 - Contribution infrastructure: `CONTRIBUTING.md`, `tools/regrade.py` (re-grade
   submitted predictions), errata process.
 

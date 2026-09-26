@@ -31,3 +31,10 @@ results/
 .DS_Store
 .idea/
 .vscode/
+
+# Held-out lite dataset, materialised from HF like data/
+Vision2Code/lite_data/
+
+# Fetched model responses from a two-phase run (data, regenerable)
+raw_responses*.jsonl
+*/raw_responses*.jsonl

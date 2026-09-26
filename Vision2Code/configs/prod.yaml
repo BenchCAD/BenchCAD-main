@@ -19,3 +19,11 @@ gen:
   max_tokens: 16000    # per-call output budget (OpenAI reasoning models floor to 32000)
   timeout: 3600        # per model-call timeout, seconds — 1 hr, for long reasoning
   exec_timeout: 300    # CadQuery → STEP execution timeout, seconds
+
+# Concurrency (optional; omitted keys use the defaults). The two pools are
+# separate on purpose: a model call is a socket and blocks for minutes, while
+# scoring spawns a ~0.5 GB CadQuery subprocess and finishes in seconds. Sizing
+# them together either starves the API or exhausts memory.
+# concurrency:
+#   api_workers: 8       # concurrent model calls; 1 (default) = sequential
+#   score_workers: 2     # concurrent CadQuery runs -- this bounds peak memory

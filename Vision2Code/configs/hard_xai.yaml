@@ -1,0 +1,12 @@
+# Complex families only — the corpus had no model outputs for any of them.
+data_dir: data
+out_dir:  results_hard_xai
+models:
+  - xai/grok-4.5:reasoning=high
+gen:
+  max_tokens: 16000
+  timeout: 3600
+  exec_timeout: 300
+concurrency:
+  api_workers: 4      # reasoning calls block for minutes; overlap them
+  score_workers: 2
