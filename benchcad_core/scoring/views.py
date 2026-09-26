@@ -30,7 +30,8 @@ CAMERA_DISTANCE = -0.9
 # It is also known to clip. The shape fits a unit cube about the centre, so the
 # farthest a vertex can be from LOOKAT is the half-diagonal sqrt(3)/2 = 0.866,
 # and the diagonal cameras look straight down that bound. Blocky parts therefore
-# overrun the frame: table_000328 needs 0.746 and clevis_000428 0.710. A scale of
+# overrun the frame: 136 of a 399-part code_gen sample (34%) extend past it in
+# at least one view, table_000328 needing 0.746. A scale of
 # 0.90 clears the bound for any shape, and will ship as a new input version
 # together with re-rendered dataset views (#54), not as a silent default change.
 # tests/test_views_framing.py records the clipping as expected failures until then.

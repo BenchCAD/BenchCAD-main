@@ -34,8 +34,10 @@ harness changes that can move reported numbers are called out explicitly.
   died after ~121 shapes with no error. Output is unchanged: a re-render of a
   stored target reproduces it exactly (RGB MAE 0.00).
 - **Known limitation, unchanged on purpose.** The canonical framing
-  (`PARALLEL_SCALE` 0.55) clips blocky parts in the diagonal views;
-  `table_000328` needs 0.746. Every published Vision2Code number was measured at
+  (`PARALLEL_SCALE` 0.55) clips blocky parts in the diagonal views. In a
+  399-part sample of `code_gen`, 136 (34%) extend past the frame in at least one
+  view, the worst needing 0.784; none reaches the 0.866 bound that a 0.90 frame
+  clears. Every published Vision2Code number was measured at
   0.55, so widening it is a new input version, to ship with re-rendered dataset
   views (#54), not a silent default change.
 
