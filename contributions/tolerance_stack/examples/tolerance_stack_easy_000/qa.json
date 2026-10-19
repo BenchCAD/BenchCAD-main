@@ -1,0 +1,79 @@
+[
+  {
+    "question": "How many syntactic .union() call sites appear in the CadQuery source, counting each site once even when inside a loop?",
+    "answer": 0,
+    "type": "integer",
+    "level": "L2"
+  },
+  {
+    "question": "How many syntactic .cut() call sites appear in the CadQuery source, counting each site once even when inside a loop?",
+    "answer": 3,
+    "type": "integer",
+    "level": "L2"
+  },
+  {
+    "question": "In the stated external-alignment rule, if the maximum bolt diameter changes from 5 mm to 6 mm while both modelled minimum bore diameters stay fixed, can both blocks retain a nonnegative positional-tolerance diameter? Return 1 for yes, 0 for no.",
+    "answer": 0,
+    "type": "integer",
+    "level": "L3"
+  },
+  {
+    "question": "How many separate block solids form the axial specimen?",
+    "answer": 2,
+    "type": "integer",
+    "level": "L1"
+  },
+  {
+    "question": "How many distinct coaxial fastening axes pass through both blocks?",
+    "answer": 2,
+    "type": "integer",
+    "level": "L1"
+  },
+  {
+    "question": "How many cylindrical fastening bores are cut in total, counting each block separately?",
+    "answer": 4,
+    "type": "integer",
+    "level": "L3"
+  },
+  {
+    "question": "How many optional relief pockets are cut into block A?",
+    "answer": 0,
+    "type": "integer",
+    "level": "L3"
+  },
+  {
+    "question": "A maximum-diameter 5 mm bolt must pass through block A, whose actual bore equals the allowed minimum. With external alignment, apply tolerance diameter = minimum bore diameter - maximum bolt diameter. What is the positional-tolerance diameter in mm?",
+    "answer": 0.7999999999999998,
+    "type": "dim",
+    "level": "L3",
+    "source_task": "N04-base"
+  },
+  {
+    "question": "Apply the same external-alignment rule to block B: positional-tolerance diameter = its minimum bore diameter - 5 mm. What is the value in mm?",
+    "answer": 0.7000000000000002,
+    "type": "dim",
+    "level": "L3",
+    "source_task": "N04-plate"
+  },
+  {
+    "question": "For the one-dimensional opposed-edge model, the gaps sum to the maximum diameters of the two bores. The allowed diameter ranges extend 0.4 mm above the modelled A bore and 0.6 mm above the modelled B bore. If one gap is 5 mm, what is the other gap in mm?",
+    "answer": 7.5,
+    "type": "dim",
+    "level": "L4",
+    "source_task": "N06"
+  },
+  {
+    "question": "For a maximum-diameter 5 mm bolt, define diametral clearance as modelled bore diameter minus bolt diameter. Return clearance in block A divided by clearance in block B.",
+    "answer": 1.1428571428571423,
+    "type": "ratio",
+    "level": "L3",
+    "source_task": "N05-Cp"
+  },
+  {
+    "question": "What is the ratio of block A axial length to block B axial length along their common fastening-hole direction? Use this CAD geometry.",
+    "answer": 1.0,
+    "type": "ratio",
+    "level": "L3",
+    "source_task": "N05-Cpk"
+  }
+]

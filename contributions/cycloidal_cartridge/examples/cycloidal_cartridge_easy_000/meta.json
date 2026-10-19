@@ -1,0 +1,10 @@
+{
+  "family": "cycloidal_cartridge",
+  "variant": "anchor",
+  "difficulty": "easy",
+  "base_plane": "XY",
+  "standard": null,
+  "source": "https://github.com/geez0x1/2022-cycloidal-drive",
+  "contributor": "Maxwell",
+  "stem": "cycloidal_cartridge_easy_000"
+}

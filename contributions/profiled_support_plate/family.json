@@ -1,0 +1,8 @@
+{
+  "family": "profiled_support_plate",
+  "standard": null,
+  "base_plane": "XY",
+  "description": "Independently authored cubic-Bezier support plate with two enclosed openings and an edge-connected notch; QA covers contour accounting and material-area ratios.",
+  "source": "https://osf.io/fb5vh/",
+  "contributor": "Maxwell"
+}

@@ -1,0 +1,8 @@
+{
+  "family": "tolerance_stack",
+  "standard": null,
+  "base_plane": "XY",
+  "description": "Two-block axial clearance specimen with coaxial fastening bores and optional relief pockets; QA covers clearance and dimensional relationships.",
+  "source": "https://research.unipd.it/handle/11577/3513028",
+  "contributor": "Maxwell"
+}

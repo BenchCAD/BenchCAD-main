@@ -1,0 +1,7 @@
+EduSCARA: An open source RRPR educational SCARA platform
+Alex Clark, Uriel Martinez-Hernandez, Tareq Assaf
+https://data.mendeley.com/datasets/m46jnn2cmb/3
+https://doi.org/10.1016/j.ohx.2026.e00761
+
+Independent two-link planar arm and separate simplified gear envelopes; QA covers reach and ideal transmission ratios.
+Design inspiration and engineering context only. Submitted geometry and QA are independently authored, except for the specifically attributed MIT cycloidal formula.

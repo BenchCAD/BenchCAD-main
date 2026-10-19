@@ -1,0 +1,10 @@
+{
+  "family": "planar_arm_geartrain",
+  "variant": "anchor",
+  "difficulty": "easy",
+  "base_plane": "XY",
+  "standard": null,
+  "source": "https://data.mendeley.com/datasets/m46jnn2cmb/3",
+  "contributor": "Maxwell",
+  "stem": "planar_arm_geartrain_easy_000"
+}

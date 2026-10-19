@@ -1,0 +1,76 @@
+[
+  {
+    "question": "How many syntactic .union() call sites appear in the CadQuery source, counting each site once even when inside a loop?",
+    "answer": 0,
+    "type": "integer",
+    "level": "L2"
+  },
+  {
+    "question": "How many syntactic .cut() call sites appear in the CadQuery source, counting each site once even when inside a loop?",
+    "answer": 3,
+    "type": "integer",
+    "level": "L2"
+  },
+  {
+    "question": "If only the current plate extrusion thickness is doubled, will the resulting thickness exceed 5 mm? Read the current thickness from this CAD. Return 1 for yes, 0 for no.",
+    "answer": 0,
+    "type": "integer",
+    "level": "L3"
+  },
+  {
+    "question": "How many entries in the declared mounting-hole centre list are not used to create mounting holes in this variant?",
+    "answer": 0,
+    "type": "integer",
+    "level": "L3"
+  },
+  {
+    "question": "How many enclosed void loops occur in a planar section parallel to the plate faces, including new mounting holes?",
+    "answer": 5,
+    "type": "integer",
+    "level": "L1"
+  },
+  {
+    "question": "How many new circular mounting holes were added to the base support-plate contour?",
+    "answer": 3,
+    "type": "integer",
+    "level": "L2"
+  },
+  {
+    "question": "How many exterior material-boundary loops occur in the planar profile?",
+    "answer": 1,
+    "type": "integer",
+    "level": "L3"
+  },
+  {
+    "question": "How many cubic Bezier curve segments are used to construct the exterior contour before the enclosed cutouts and mounting holes are subtracted? Count actual segments, not syntactic constructor call sites.",
+    "answer": 6,
+    "type": "integer",
+    "level": "L2"
+  },
+  {
+    "question": "What is the extrusion thickness in mm?",
+    "answer": 2.0,
+    "type": "dim",
+    "level": "L3"
+  },
+  {
+    "question": "What is the diameter in mm of each optional new circular mounting hole? Return 0 if none are present.",
+    "answer": 4,
+    "type": "dim",
+    "level": "L3"
+  },
+  {
+    "question": "Return net planar material area divided by the area enclosed by the actual exterior material-boundary contour of this plate. Preserve curved boundaries, include the edge-connected recess in the exterior contour, and subtract enclosed cutouts exactly once. Use one planar section, not both face areas; do not use volume integration.",
+    "answer": 0.9140214720161484,
+    "type": "ratio",
+    "level": "L4",
+    "source_task": "N08",
+    "derivation": "independent Green integral * scale_x * scale_y - added circular areas"
+  },
+  {
+    "question": "Do the applied X and Y scale factors have equal numerical values in this part? Return 1 for yes, 0 for no.",
+    "answer": 1,
+    "type": "integer",
+    "level": "L3"
+  }
+]

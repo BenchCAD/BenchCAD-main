@@ -1,0 +1,8 @@
+{
+  "family": "dual_drive_metering_head",
+  "standard": null,
+  "base_plane": "XY",
+  "description": "Independent barrel/plunger frame with simplified screw and separate pulley drive; QA covers geometry and explicitly stated ideal transmission assumptions.",
+  "source": "https://data.mendeley.com/datasets/3m3t4f9ft3/4",
+  "contributor": "Maxwell"
+}

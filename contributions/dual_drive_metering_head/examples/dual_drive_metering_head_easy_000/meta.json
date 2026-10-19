@@ -1,0 +1,10 @@
+{
+  "family": "dual_drive_metering_head",
+  "variant": "anchor",
+  "difficulty": "easy",
+  "base_plane": "XY",
+  "standard": null,
+  "source": "https://data.mendeley.com/datasets/3m3t4f9ft3/4",
+  "contributor": "Maxwell",
+  "stem": "dual_drive_metering_head_easy_000"
+}

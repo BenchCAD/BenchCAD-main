@@ -1,0 +1,8 @@
+{
+  "family": "cycloidal_cartridge",
+  "standard": null,
+  "base_plane": "XY",
+  "description": "Exploded dual-disk cycloidal cartridge with eccentric journals, outer roller stations and output bearings; nominal ideal kinematics only.",
+  "source": "https://github.com/geez0x1/2022-cycloidal-drive",
+  "contributor": "Maxwell"
+}

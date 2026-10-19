@@ -1,0 +1,8 @@
+{
+  "family": "bearing_plunger",
+  "standard": null,
+  "base_plane": "XY",
+  "description": "Stepped bearing-contact plunger with optional annular relief grooves; QA covers its geometry and nominal projected-pressure ratios.",
+  "source": "https://essay.utwente.nl/fileshare/file/108607/Master%20thesis%20M.%20Verheijen%20s1680900%20v3.pdf",
+  "contributor": "Maxwell"
+}

@@ -1,0 +1,80 @@
+[
+  {
+    "question": "How many syntactic .union() call sites appear in the CadQuery source, counting each site once even when inside a loop?",
+    "answer": 2,
+    "type": "integer",
+    "level": "L2"
+  },
+  {
+    "question": "How many syntactic .cut() call sites appear in the CadQuery source, counting each site once even when inside a loop?",
+    "answer": 2,
+    "type": "integer",
+    "level": "L2"
+  },
+  {
+    "question": "With fixed outer rollers, eccentric-shaft input and output following disk rotation, is the ideal input/output speed magnitude ratio greater than 12? Infer roller and lobe counts from this CAD; disks share load in parallel. Return 1 for yes, 0 for no.",
+    "answer": 0,
+    "type": "integer",
+    "level": "L3"
+  },
+  {
+    "question": "In the exploded output-bearing row, suppose exactly one bearing is removed while all others remain. How many output bearings would remain? Do not count outer roller stations or guide rings.",
+    "answer": 5,
+    "type": "integer",
+    "level": "L3"
+  },
+  {
+    "question": "How many independent circumferential outer roller stations are present?",
+    "answer": 12,
+    "type": "integer",
+    "level": "L1"
+  },
+  {
+    "question": "How many load-sharing cycloidal disks are present?",
+    "answer": 2,
+    "type": "integer",
+    "level": "L1"
+  },
+  {
+    "question": "How many output bearings are shown in the exploded output row?",
+    "answer": 6,
+    "type": "integer",
+    "level": "L3"
+  },
+  {
+    "question": "How many distinct Z-coordinate levels contain the centres of the bearings in the exploded output-bearing row? Exclude the outer roller stations and eccentric journals.",
+    "answer": 1,
+    "type": "integer",
+    "level": "L3"
+  },
+  {
+    "question": "What is the distance in mm from the central input axis to either eccentric-journal axis?",
+    "answer": 2.025,
+    "type": "dim",
+    "level": "L3"
+  },
+  {
+    "question": "For the output bearing shown, find the minimum theoretical circular disk-hole radius containing it through a full orbit of the eccentric shaft. Assume nominal rigid geometry and zero added running clearance. Return mm.",
+    "answer": 6.525,
+    "type": "dim",
+    "level": "L4",
+    "source_task": "N07",
+    "derivation": "bearing radius + eccentricity"
+  },
+  {
+    "question": "With the outer roller stations fixed, eccentric shaft as input and carrier following disk rotation through the output pins, what is |input speed/output speed|? Use the single-disk lobe count and roller count; the disks are parallel load-sharing elements.",
+    "answer": 11,
+    "type": "ratio",
+    "level": "L3",
+    "source_task": "N02",
+    "derivation": "(Nr - 1) / (Nr - (Nr - 1))"
+  },
+  {
+    "question": "Project the two journal eccentricity vectors onto the plane perpendicular to the central shaft. Return their smaller phase angle divided by 180 degrees (a dimensionless ratio).",
+    "answer": 1,
+    "type": "ratio",
+    "level": "L4",
+    "source_task": "N03",
+    "derivation": "acos(v1 dot v2 / (|v1||v2|)) / pi"
+  }
+]

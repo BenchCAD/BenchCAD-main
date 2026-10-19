@@ -1,0 +1,77 @@
+[
+  {
+    "question": "How many syntactic .union() call sites appear in the CadQuery source, counting each site once even when inside a loop?",
+    "answer": 4,
+    "type": "integer",
+    "level": "L2"
+  },
+  {
+    "question": "How many syntactic .cut() call sites appear in the CadQuery source, counting each site once even when inside a loop?",
+    "answer": 4,
+    "type": "integer",
+    "level": "L2"
+  },
+  {
+    "question": "Using this CAD barrel bore and declared screw lead, does ideal dispensed volume per commanded microstep exceed 0.05 microlitre? Assume 200 full steps/revolution, 16 microsteps/full step and direct rigid screw-to-plunger drive; 1 microlitre=1 mm^3. Return 1 for yes, 0 for no.",
+    "answer": 0,
+    "type": "integer",
+    "level": "L3"
+  },
+  {
+    "question": "For drive B, does the commanded microstep count per mm exceed 242? Read all pulley tooth counts from this CAD. The motor drives the large pulley, whose shaft also carries the linear-output pulley; use 2 mm belt pitch and 3200 microsteps/motor revolution, with no slip. Return 1 for yes, 0 for no.",
+    "answer": 0,
+    "type": "integer",
+    "level": "L3"
+  },
+  {
+    "question": "How many teeth does the large driven pulley have?",
+    "answer": 60,
+    "type": "integer",
+    "level": "L1"
+  },
+  {
+    "question": "How many teeth does the motor pulley have?",
+    "answer": 20,
+    "type": "integer",
+    "level": "L1"
+  },
+  {
+    "question": "How many teeth does the separate linear-output pulley have?",
+    "answer": 20,
+    "type": "integer",
+    "level": "L3"
+  },
+  {
+    "question": "Considering only the large, motor and linear-output pulleys, how many distinct parallel rotation axes do their modelled centres define? Count coaxial pulleys as one axis.",
+    "answer": 2,
+    "type": "integer",
+    "level": "L4",
+    "source_task": "N09-drive"
+  },
+  {
+    "question": "What is the internal barrel diameter in mm?",
+    "answer": 4.61,
+    "type": "dim",
+    "level": "L3"
+  },
+  {
+    "question": "The simplified purchased screw has lead given by the design parameter lead. What is that nominal lead in mm per revolution?",
+    "answer": 8.0,
+    "type": "dim",
+    "level": "L3"
+  },
+  {
+    "question": "Under ideal direct screw-to-plunger drive, compare dispensed volume per microstep for this CAD barrel and declared lead with a reference head having 5 mm barrel bore and 8 mm/revolution lead. Both use 3200 microsteps/revolution. Return volume(this head)/volume(reference head). Ignore backlash and fluid losses.",
+    "answer": 0.8500840000000001,
+    "type": "ratio",
+    "level": "L3",
+    "source_task": "N09",
+    "derivation": "pi*(bore/2)^2*lead/(200*16)"
+  },
+  {
+    "question": "Under ideal no-slip transmission, does the large driven pulley rotate more slowly than the modelled motor pulley? Return 1 for yes, 0 for no.",
+    "answer": 1,
+    "type": "integer",
+    "level": "L3"
+  }
+]

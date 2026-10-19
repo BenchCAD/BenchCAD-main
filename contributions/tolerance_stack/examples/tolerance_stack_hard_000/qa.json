@@ -1,0 +1,76 @@
+[
+  {
+    "question": "How many syntactic .union() call sites appear in the CadQuery source, counting each site once even when inside a loop?",
+    "answer": 0,
+    "type": "integer",
+    "level": "L2"
+  },
+  {
+    "question": "How many syntactic .cut() call sites appear in the CadQuery source, counting each site once even when inside a loop?",
+    "answer": 3,
+    "type": "integer",
+    "level": "L2"
+  },
+  {
+    "question": "In the stated external-alignment rule, if the maximum bolt diameter changes from 5 mm to 6 mm while both modelled minimum bore diameters stay fixed, can both blocks retain a nonnegative positional-tolerance diameter? Return 1 for yes, 0 for no.",
+    "answer": 0,
+    "type": "integer",
+    "level": "L3"
+  },
+  {
+    "question": "How many separate block solids form the axial specimen?",
+    "answer": 2,
+    "type": "integer",
+    "level": "L1"
+  },
+  {
+    "question": "How many distinct coaxial fastening axes pass through both blocks?",
+    "answer": 2,
+    "type": "integer",
+    "level": "L1"
+  },
+  {
+    "question": "How many cylindrical fastening bores are cut in total, counting each block separately?",
+    "answer": 4,
+    "type": "integer",
+    "level": "L3"
+  },
+  {
+    "question": "How many optional relief pockets are cut into block A?",
+    "answer": 3,
+    "type": "integer",
+    "level": "L3"
+  },
+  {
+    "question": "A maximum-diameter 5 mm bolt must pass through block A, whose actual bore equals the allowed minimum. With external alignment, apply tolerance diameter = minimum bore diameter - maximum bolt diameter. What is the positional-tolerance diameter in mm?",
+    "answer": 0.7999999999999998,
+    "type": "dim",
+    "level": "L3",
+    "source_task": "N04-base"
+  },
+  {
+    "question": "How many distinct fastening-bore diameter classes occur across the two blocks?",
+    "answer": 2,
+    "type": "integer",
+    "level": "L3"
+  },
+  {
+    "question": "Are the added relief pockets blind rather than through the entire block? Return 1 for yes, 0 for no.",
+    "answer": 1,
+    "type": "integer",
+    "level": "L4"
+  },
+  {
+    "question": "Do blocks A and B have equal axial lengths along the common fastening-hole direction? Determine this from the CAD. Return 1 for yes, 0 for no.",
+    "answer": 1,
+    "type": "integer",
+    "level": "L3"
+  },
+  {
+    "question": "What is the ratio of block A axial length to block B axial length along their common fastening-hole direction? Use this CAD geometry.",
+    "answer": 1.0,
+    "type": "ratio",
+    "level": "L3",
+    "source_task": "N05-Cpk"
+  }
+]

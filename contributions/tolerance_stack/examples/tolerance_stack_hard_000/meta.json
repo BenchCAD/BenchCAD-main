@@ -1,0 +1,10 @@
+{
+  "family": "tolerance_stack",
+  "variant": "machined",
+  "difficulty": "hard",
+  "base_plane": "XY",
+  "standard": null,
+  "source": "https://research.unipd.it/handle/11577/3513028",
+  "contributor": "Maxwell",
+  "stem": "tolerance_stack_hard_000"
+}

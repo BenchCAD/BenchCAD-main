@@ -1,0 +1,7 @@
+The Redesign of an Adjustable Offloading Ankle Orthosis for Ankle Joint Rehabilitation
+Maxime Verheijen
+https://essay.utwente.nl/fileshare/file/108607/Master%20thesis%20M.%20Verheijen%20s1680900%20v3.pdf
+https://essay.utwente.nl/fileshare/file/108607/Master%20thesis%20M.%20Verheijen%20s1680900%20v3.pdf
+
+Stepped bearing-contact plunger with optional annular relief grooves; QA covers its geometry and nominal projected-pressure ratios.
+Design inspiration and engineering context only. Submitted geometry and QA are independently authored, except for the specifically attributed MIT cycloidal formula.

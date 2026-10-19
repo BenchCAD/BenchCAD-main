@@ -1,0 +1,8 @@
+{
+  "family": "planar_arm_geartrain",
+  "standard": null,
+  "base_plane": "XY",
+  "description": "Independent two-link planar arm and separate simplified gear envelopes; QA covers reach and ideal transmission ratios.",
+  "source": "https://data.mendeley.com/datasets/m46jnn2cmb/3",
+  "contributor": "Maxwell"
+}

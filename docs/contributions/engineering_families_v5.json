@@ -1,0 +1,322 @@
+{
+  "version": "v5-wording-01",
+  "full_context_requests": 70,
+  "post_hoc_single_question_diagnostics": 2,
+  "total_new_model_requests": 72,
+  "automatic_retries": 0,
+  "changed_question_positions": 12,
+  "affected_banks": 7,
+  "modified_question_model_cells": 24,
+  "cells_with_valid_grouped_success": 23,
+  "cells_verified_in_separate_diagnostic": 1,
+  "all_changed_targets_verified": true,
+  "original_grouped_scores_preserved": true,
+  "main_strict_successful_answers": 66,
+  "main_format_failures_after_service_completion": 4,
+  "checks": [
+    {
+      "record_id": "v5-qa-cycloidal_cartridge_easy_000",
+      "question_index": 11,
+      "model": "deepseek-flash",
+      "grouped_successes": [],
+      "separate_single_question_diagnostics": [
+        "v5-diagnostic-cycloidal_cartridge_easy_000-q11--deepseek-flash--r1",
+        "v5-diagnostic-cycloidal_cartridge_easy_000-q11--deepseek-flash--r2"
+      ],
+      "passed": true
+    },
+    {
+      "record_id": "v5-qa-cycloidal_cartridge_easy_000",
+      "question_index": 11,
+      "model": "[\u6b21]gemini-4-argon",
+      "grouped_successes": [
+        "v5-qa-cycloidal_cartridge_easy_000--[\u6b21]gemini-4-argon--r1",
+        "v5-qa-cycloidal_cartridge_easy_000--[\u6b21]gemini-4-argon--r2"
+      ],
+      "separate_single_question_diagnostics": [],
+      "passed": true
+    },
+    {
+      "record_id": "v5-qa-cycloidal_cartridge_hard_000",
+      "question_index": 11,
+      "model": "deepseek-flash",
+      "grouped_successes": [
+        "v5-qa-cycloidal_cartridge_hard_000--deepseek-flash--r2"
+      ],
+      "separate_single_question_diagnostics": [],
+      "passed": true
+    },
+    {
+      "record_id": "v5-qa-cycloidal_cartridge_hard_000",
+      "question_index": 11,
+      "model": "[\u6b21]gemini-4-argon",
+      "grouped_successes": [
+        "v5-qa-cycloidal_cartridge_hard_000--[\u6b21]gemini-4-argon--r2",
+        "v5-qa-cycloidal_cartridge_hard_000--[\u6b21]gemini-4-argon--r1"
+      ],
+      "separate_single_question_diagnostics": [],
+      "passed": true
+    },
+    {
+      "record_id": "v5-qa-dual_drive_metering_head_hard_000",
+      "question_index": 12,
+      "model": "deepseek-flash",
+      "grouped_successes": [
+        "v5-qa-dual_drive_metering_head_hard_000--deepseek-flash--r1",
+        "v5-qa-dual_drive_metering_head_hard_000--deepseek-flash--r2"
+      ],
+      "separate_single_question_diagnostics": [],
+      "passed": true
+    },
+    {
+      "record_id": "v5-qa-dual_drive_metering_head_hard_000",
+      "question_index": 12,
+      "model": "[\u6b21]gemini-4-argon",
+      "grouped_successes": [
+        "v5-qa-dual_drive_metering_head_hard_000--[\u6b21]gemini-4-argon--r2",
+        "v5-qa-dual_drive_metering_head_hard_000--[\u6b21]gemini-4-argon--r1"
+      ],
+      "separate_single_question_diagnostics": [],
+      "passed": true
+    },
+    {
+      "record_id": "v5-qa-planar_arm_geartrain_easy_000",
+      "question_index": 3,
+      "model": "deepseek-flash",
+      "grouped_successes": [
+        "v5-qa-planar_arm_geartrain_easy_000--deepseek-flash--r1",
+        "v5-qa-planar_arm_geartrain_easy_000--deepseek-flash--r2"
+      ],
+      "separate_single_question_diagnostics": [],
+      "passed": true
+    },
+    {
+      "record_id": "v5-qa-planar_arm_geartrain_easy_000",
+      "question_index": 3,
+      "model": "[\u6b21]gemini-4-argon",
+      "grouped_successes": [
+        "v5-qa-planar_arm_geartrain_easy_000--[\u6b21]gemini-4-argon--r1",
+        "v5-qa-planar_arm_geartrain_easy_000--[\u6b21]gemini-4-argon--r2"
+      ],
+      "separate_single_question_diagnostics": [],
+      "passed": true
+    },
+    {
+      "record_id": "v5-qa-planar_arm_geartrain_easy_000",
+      "question_index": 5,
+      "model": "deepseek-flash",
+      "grouped_successes": [
+        "v5-qa-planar_arm_geartrain_easy_000--deepseek-flash--r1",
+        "v5-qa-planar_arm_geartrain_easy_000--deepseek-flash--r2"
+      ],
+      "separate_single_question_diagnostics": [],
+      "passed": true
+    },
+    {
+      "record_id": "v5-qa-planar_arm_geartrain_easy_000",
+      "question_index": 5,
+      "model": "[\u6b21]gemini-4-argon",
+      "grouped_successes": [
+        "v5-qa-planar_arm_geartrain_easy_000--[\u6b21]gemini-4-argon--r1",
+        "v5-qa-planar_arm_geartrain_easy_000--[\u6b21]gemini-4-argon--r2"
+      ],
+      "separate_single_question_diagnostics": [],
+      "passed": true
+    },
+    {
+      "record_id": "v5-qa-planar_arm_geartrain_easy_000",
+      "question_index": 8,
+      "model": "deepseek-flash",
+      "grouped_successes": [
+        "v5-qa-planar_arm_geartrain_easy_000--deepseek-flash--r1",
+        "v5-qa-planar_arm_geartrain_easy_000--deepseek-flash--r2"
+      ],
+      "separate_single_question_diagnostics": [],
+      "passed": true
+    },
+    {
+      "record_id": "v5-qa-planar_arm_geartrain_easy_000",
+      "question_index": 8,
+      "model": "[\u6b21]gemini-4-argon",
+      "grouped_successes": [
+        "v5-qa-planar_arm_geartrain_easy_000--[\u6b21]gemini-4-argon--r1",
+        "v5-qa-planar_arm_geartrain_easy_000--[\u6b21]gemini-4-argon--r2"
+      ],
+      "separate_single_question_diagnostics": [],
+      "passed": true
+    },
+    {
+      "record_id": "v5-qa-planar_arm_geartrain_hard_000",
+      "question_index": 3,
+      "model": "deepseek-flash",
+      "grouped_successes": [
+        "v5-qa-planar_arm_geartrain_hard_000--deepseek-flash--r1",
+        "v5-qa-planar_arm_geartrain_hard_000--deepseek-flash--r2"
+      ],
+      "separate_single_question_diagnostics": [],
+      "passed": true
+    },
+    {
+      "record_id": "v5-qa-planar_arm_geartrain_hard_000",
+      "question_index": 3,
+      "model": "[\u6b21]gemini-4-argon",
+      "grouped_successes": [
+        "v5-qa-planar_arm_geartrain_hard_000--[\u6b21]gemini-4-argon--r2",
+        "v5-qa-planar_arm_geartrain_hard_000--[\u6b21]gemini-4-argon--r1"
+      ],
+      "separate_single_question_diagnostics": [],
+      "passed": true
+    },
+    {
+      "record_id": "v5-qa-planar_arm_geartrain_hard_000",
+      "question_index": 5,
+      "model": "deepseek-flash",
+      "grouped_successes": [
+        "v5-qa-planar_arm_geartrain_hard_000--deepseek-flash--r1",
+        "v5-qa-planar_arm_geartrain_hard_000--deepseek-flash--r2"
+      ],
+      "separate_single_question_diagnostics": [],
+      "passed": true
+    },
+    {
+      "record_id": "v5-qa-planar_arm_geartrain_hard_000",
+      "question_index": 5,
+      "model": "[\u6b21]gemini-4-argon",
+      "grouped_successes": [
+        "v5-qa-planar_arm_geartrain_hard_000--[\u6b21]gemini-4-argon--r2",
+        "v5-qa-planar_arm_geartrain_hard_000--[\u6b21]gemini-4-argon--r1"
+      ],
+      "separate_single_question_diagnostics": [],
+      "passed": true
+    },
+    {
+      "record_id": "v5-qa-planar_arm_geartrain_hard_000",
+      "question_index": 8,
+      "model": "deepseek-flash",
+      "grouped_successes": [
+        "v5-qa-planar_arm_geartrain_hard_000--deepseek-flash--r1",
+        "v5-qa-planar_arm_geartrain_hard_000--deepseek-flash--r2"
+      ],
+      "separate_single_question_diagnostics": [],
+      "passed": true
+    },
+    {
+      "record_id": "v5-qa-planar_arm_geartrain_hard_000",
+      "question_index": 8,
+      "model": "[\u6b21]gemini-4-argon",
+      "grouped_successes": [
+        "v5-qa-planar_arm_geartrain_hard_000--[\u6b21]gemini-4-argon--r2",
+        "v5-qa-planar_arm_geartrain_hard_000--[\u6b21]gemini-4-argon--r1"
+      ],
+      "separate_single_question_diagnostics": [],
+      "passed": true
+    },
+    {
+      "record_id": "v5-qa-planar_arm_geartrain_hard_000",
+      "question_index": 12,
+      "model": "deepseek-flash",
+      "grouped_successes": [
+        "v5-qa-planar_arm_geartrain_hard_000--deepseek-flash--r1",
+        "v5-qa-planar_arm_geartrain_hard_000--deepseek-flash--r2"
+      ],
+      "separate_single_question_diagnostics": [],
+      "passed": true
+    },
+    {
+      "record_id": "v5-qa-planar_arm_geartrain_hard_000",
+      "question_index": 12,
+      "model": "[\u6b21]gemini-4-argon",
+      "grouped_successes": [
+        "v5-qa-planar_arm_geartrain_hard_000--[\u6b21]gemini-4-argon--r2",
+        "v5-qa-planar_arm_geartrain_hard_000--[\u6b21]gemini-4-argon--r1"
+      ],
+      "separate_single_question_diagnostics": [],
+      "passed": true
+    },
+    {
+      "record_id": "v5-qa-tolerance_stack_easy_000",
+      "question_index": 7,
+      "model": "deepseek-flash",
+      "grouped_successes": [
+        "v5-qa-tolerance_stack_easy_000--deepseek-flash--r2"
+      ],
+      "separate_single_question_diagnostics": [],
+      "passed": true
+    },
+    {
+      "record_id": "v5-qa-tolerance_stack_easy_000",
+      "question_index": 7,
+      "model": "[\u6b21]gemini-4-argon",
+      "grouped_successes": [
+        "v5-qa-tolerance_stack_easy_000--[\u6b21]gemini-4-argon--r2",
+        "v5-qa-tolerance_stack_easy_000--[\u6b21]gemini-4-argon--r1"
+      ],
+      "separate_single_question_diagnostics": [],
+      "passed": true
+    },
+    {
+      "record_id": "v5-qa-tolerance_stack_hard_000",
+      "question_index": 7,
+      "model": "deepseek-flash",
+      "grouped_successes": [
+        "v5-qa-tolerance_stack_hard_000--deepseek-flash--r1",
+        "v5-qa-tolerance_stack_hard_000--deepseek-flash--r2"
+      ],
+      "separate_single_question_diagnostics": [],
+      "passed": true
+    },
+    {
+      "record_id": "v5-qa-tolerance_stack_hard_000",
+      "question_index": 7,
+      "model": "[\u6b21]gemini-4-argon",
+      "grouped_successes": [
+        "v5-qa-tolerance_stack_hard_000--[\u6b21]gemini-4-argon--r1",
+        "v5-qa-tolerance_stack_hard_000--[\u6b21]gemini-4-argon--r2"
+      ],
+      "separate_single_question_diagnostics": [],
+      "passed": true
+    }
+  ],
+  "models": {
+    "deepseek-flash": {
+      "qa_code": {
+        "n": 14,
+        "strict_mean": 0.7083333333333333,
+        "service_completed": 14,
+        "format_valid": 10
+      },
+      "qa_no_cad": {
+        "n": 14,
+        "strict_mean": 0.5189107142857142,
+        "service_completed": 12,
+        "format_valid": 12
+      },
+      "qa_perturb": {
+        "n": 7,
+        "strict_mean": 1.0,
+        "service_completed": 7,
+        "format_valid": 7
+      }
+    },
+    "[\u6b21]gemini-4-argon": {
+      "qa_code": {
+        "n": 14,
+        "strict_mean": 1.0,
+        "service_completed": 14,
+        "format_valid": 14
+      },
+      "qa_no_cad": {
+        "n": 14,
+        "strict_mean": 0.5383880952380953,
+        "service_completed": 12,
+        "format_valid": 12
+      },
+      "qa_perturb": {
+        "n": 7,
+        "strict_mean": 0.999997619047619,
+        "service_completed": 7,
+        "format_valid": 7
+      }
+    }
+  }
+}

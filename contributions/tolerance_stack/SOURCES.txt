@@ -1,0 +1,7 @@
+Geometric Specification Management in Industrial Product Life Cycle
+Mattia Maltauro
+https://research.unipd.it/handle/11577/3513028
+https://research.unipd.it/handle/11577/3513028
+
+Two-block axial clearance specimen with coaxial fastening bores and optional relief pockets; QA covers clearance and dimensional relationships.
+Design inspiration and engineering context only. Submitted geometry and QA are independently authored, except for the specifically attributed MIT cycloidal formula.

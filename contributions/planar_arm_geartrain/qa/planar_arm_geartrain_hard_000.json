@@ -1,0 +1,79 @@
+[
+  {
+    "question": "How many syntactic .union() call sites appear in the CadQuery source, counting each site once even when inside a loop?",
+    "answer": 2,
+    "type": "integer",
+    "level": "L2"
+  },
+  {
+    "question": "How many syntactic .cut() call sites appear in the CadQuery source, counting each site once even when inside a loop?",
+    "answer": 3,
+    "type": "integer",
+    "level": "L2"
+  },
+  {
+    "question": "Does the ideal planar arm have maximum radial reach greater than 235 mm? Use this CAD joint-centre distances; ignore collisions, stops and tool offsets. Return 1 for yes, 0 for no.",
+    "answer": 0,
+    "type": "integer",
+    "level": "L3"
+  },
+  {
+    "question": "The shown gear envelopes represent an ideal externally meshing pair with A driving B. For 90 degrees of input travel magnitude, does output travel magnitude exceed 175 degrees? Use this CAD tooth counts and ignore backlash. Return 1 for yes, 0 for no.",
+    "answer": 1,
+    "type": "integer",
+    "level": "L3"
+  },
+  {
+    "question": "How many separate arm-link solids are modelled in this CAD, excluding the gear solids?",
+    "answer": 2,
+    "type": "integer",
+    "level": "L1"
+  },
+  {
+    "question": "How many teeth are on input gear A?",
+    "answer": 16,
+    "type": "integer",
+    "level": "L1"
+  },
+  {
+    "question": "How many teeth are on output gear B?",
+    "answer": 8,
+    "type": "integer",
+    "level": "L3"
+  },
+  {
+    "question": "Is a target at radial distance 230 mm from the base joint reachable by the ideal planar arm with this CAD joint-centre distances? Ignore collisions, joint stops and tool offsets. Return 1 for yes, 0 for no.",
+    "answer": 0,
+    "type": "integer",
+    "level": "L3",
+    "source_task": "N10-reachability"
+  },
+  {
+    "question": "What is the base-to-elbow joint-axis distance in mm?",
+    "answer": 125.0,
+    "type": "dim",
+    "level": "L3"
+  },
+  {
+    "question": "What is the ideal maximum horizontal distance in mm from the base joint to the tip joint over all planar joint angles? Ignore joint stops, collisions and tool offsets.",
+    "answer": 225.0,
+    "type": "dim",
+    "level": "L4",
+    "source_task": "N10",
+    "derivation": "triangle inequality; equality at collinear extended pose"
+  },
+  {
+    "question": "The shown gear envelopes represent an ideal externally meshing pair, with A the input and B the output. Return output angular travel magnitude/input angular travel magnitude using this CAD tooth counts. Ignore tooth-contact details, backlash and elastic deformation.",
+    "answer": 2.0,
+    "type": "ratio",
+    "level": "L3",
+    "source_task": "N12",
+    "derivation": "180 * teeth_A / teeth_B"
+  },
+  {
+    "question": "Are the joint-centre distances of all modelled arm links equal? Return 1 for yes, 0 for no.",
+    "answer": 0,
+    "type": "integer",
+    "level": "L3"
+  }
+]

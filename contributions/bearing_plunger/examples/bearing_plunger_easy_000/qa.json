@@ -1,0 +1,76 @@
+[
+  {
+    "question": "How many syntactic .union() call sites appear in the CadQuery source, counting each site once even when inside a loop?",
+    "answer": 2,
+    "type": "integer",
+    "level": "L2"
+  },
+  {
+    "question": "How many syntactic .cut() call sites appear in the CadQuery source, counting each site once even when inside a loop?",
+    "answer": 1,
+    "type": "integer",
+    "level": "L2"
+  },
+  {
+    "question": "For transverse force 1700 N and effective contact length 5 mm, is nominal projected bearing pressure greater than 27 MPa? Use the main-shaft diameter from this CAD and p=F/(D L). Ignore local groove pressure. Return 1 for yes, 0 for no.",
+    "answer": 1,
+    "type": "integer",
+    "level": "L3"
+  },
+  {
+    "question": "Is the head nominal diameter greater than 22 mm? Determine it from this CAD. Return 1 for yes, 0 for no.",
+    "answer": 0,
+    "type": "integer",
+    "level": "L3"
+  },
+  {
+    "question": "How many coaxial solid sections are added before the annular relief grooves are cut?",
+    "answer": 3,
+    "type": "integer",
+    "level": "L1"
+  },
+  {
+    "question": "How many annular relief grooves are cut into the main shaft?",
+    "answer": 0,
+    "type": "integer",
+    "level": "L1"
+  },
+  {
+    "question": "How many through-bores are present?",
+    "answer": 0,
+    "type": "integer",
+    "level": "L3"
+  },
+  {
+    "question": "Does the smaller tip share the main shaft axis? Return 1 for yes and 0 for no.",
+    "answer": 1,
+    "type": "integer",
+    "level": "L4"
+  },
+  {
+    "question": "What is the nominal diameter of the main shaft in mm, ignoring the relief grooves?",
+    "answer": 12.0,
+    "type": "dim",
+    "level": "L3"
+  },
+  {
+    "question": "What is the axial length of the main shaft section in mm, excluding the head and smaller tip?",
+    "answer": 45.0,
+    "type": "dim",
+    "level": "L3"
+  },
+  {
+    "question": "Compare nominal projected bearing pressure for this main shaft with a reference shaft of diameter 12 mm. Both carry the same transverse force over the same contact length. Using p=F/(D L), return pressure(this shaft)/pressure(reference shaft). Ignore local groove pressure.",
+    "answer": 1.0,
+    "type": "ratio",
+    "level": "L3",
+    "source_task": "N01",
+    "derivation": "1700 / (D * 5)"
+  },
+  {
+    "question": "What is the ratio of the head diameter to the nominal main-shaft diameter?",
+    "answer": 1.7,
+    "type": "ratio",
+    "level": "L3"
+  }
+]

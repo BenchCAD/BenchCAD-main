@@ -1,0 +1,7 @@
+3D-printable low-reduction cycloidal gearing for robotics
+Wesley Roozing; Glenn Roozing
+https://github.com/geez0x1/2022-cycloidal-drive
+https://doi.org/10.1109/IROS47612.2022.9982006
+
+Exploded dual-disk cycloidal cartridge with eccentric journals, outer roller stations and output bearings; nominal ideal kinematics only.
+Design inspiration and engineering context only. Submitted geometry and QA are independently authored, except for the specifically attributed MIT cycloidal formula.

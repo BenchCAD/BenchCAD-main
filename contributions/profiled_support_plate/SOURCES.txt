@@ -1,0 +1,7 @@
+OpenFish: Biomimetic design of a soft robotic fish for high speed locomotion
+S. C. van den Berg; R. B. N. Scharff; Z. Rusák; J. Wu
+https://osf.io/fb5vh/
+https://doi.org/10.1016/j.ohx.2022.e00320
+
+Independently authored cubic-Bezier support plate with two enclosed openings and an edge-connected notch; QA covers contour accounting and material-area ratios.
+Design inspiration and engineering context only. Submitted geometry and QA are independently authored, except for the specifically attributed MIT cycloidal formula.
