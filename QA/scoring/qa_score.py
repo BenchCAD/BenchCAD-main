@@ -1,14 +1,22 @@
-"""Numeric QA scoring — type-aware.
+"""Numeric QA scoring — rule iclrNov15.
 
-Per-pair score depends on `type`:
-    integer / count / boolean / bool   → exact match  (1.0 if pred == gt else 0.0)
-    dim / ratio / anything else        → sign-checked symmetric ratio accuracy
-                                         min(|pred|, |gt|) / max(|pred|, |gt|),
-                                         0.0 if the signs differ (a 0 answer
-                                         scores 1.0 only when pred == gt)
+Per question (pred = parsed model answer, None/NaN if unanswered). Both values
+are compared by magnitude: p = |pred|, g = |gt|.
+    no answer (None / NaN)   → 0
+    g == 0 (e.g. "no")       → 1 if p == 0 else 0
+    g > 0, p == 0            → 0
+    g > 0, p > 0             → min(p, g) / max(p, g), rounded to 4 dp
+        yes/no (gt 1): pred 1 → 1, pred 0 → 0
+        count gt 4, pred 3 → 0.75;  ratio gt 3.75, pred 5 → 0.75
+        signed sum gt -31.8, pred -31.8 → 1;  pred 31.8 → 1 (the sign is not scored)
 
-Exact match suits the natural semantics of booleans, counts, and line
-numbers — an off-by-one is wrong, not "92% right".
+The absolute value matters for the 18 bank questions whose gold is a negative
+signed sum of extrude/cutBlind depths: without it a correct answer would score 0
+and a positive answer would score below 0.
+
+The rule is type-agnostic: `type` is accepted for API compatibility but
+ignored. It is the rule behind the paper's qa_img vs qa_code gap table
+(named iclrNov15, 2026-11-15).
 
 Also includes a JSON-array parser robust to leading prose / fenced blocks.
 """
@@ -16,13 +24,14 @@ Also includes a JSON-array parser robust to leading prose / fenced blocks.
 from __future__ import annotations
 
 import json
+import math
 import re
 
 _FENCE_OPEN = re.compile(r"^```(?:json)?\s*", flags=re.M)
 _FENCE_CLOSE = re.compile(r"```\s*$", flags=re.M)
 _ARRAY = re.compile(r"\[[^\[\]]*\]", re.S)
 
-_EXACT_TYPES = {"integer", "count", "boolean", "bool"}
+_EPS = 1e-6
 
 
 def parse_json_numbers(raw: str, n_expected: int) -> list[float] | None:
@@ -48,19 +57,19 @@ def parse_json_numbers(raw: str, n_expected: int) -> list[float] | None:
     return out
 
 
-def qa_score_single(pred: float, gt: float, type_: str = "dim") -> float:
-    """Score one (pred, gt) given its question `type_`."""
-    pred = float(pred)
-    gt = float(gt)
-    if (type_ or "").lower() in _EXACT_TYPES:
-        return 1.0 if pred == gt else 0.0
-    # dim/ratio answers may be negative (e.g. a signed sum of extrude/cutBlind
-    # depths) or zero — an exactly-correct one must score 1.0.
-    if gt == 0 or pred == 0:
-        return 1.0 if pred == gt else 0.0
-    if (pred < 0) != (gt < 0):
+def qa_score_single(pred: float | None, gt: float, type_: str = "dim") -> float:
+    """Score one (pred, gt) under iclrNov15. `type_` is ignored."""
+    if pred is None:
         return 0.0
-    return round(min(abs(pred), abs(gt)) / max(abs(pred), abs(gt)), 4)
+    pred = abs(float(pred))
+    gt = abs(float(gt))
+    if math.isnan(pred):
+        return 0.0
+    if gt == 0:
+        return 1.0 if pred < _EPS else 0.0
+    if pred == 0:
+        return 0.0
+    return round(min(pred, gt) / max(pred, gt), 4)
 
 
 def qa_score(pred_answers: list[float], qa_pairs: list[dict]) -> float:

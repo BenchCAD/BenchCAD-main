@@ -16,13 +16,20 @@ qa_score_single = _mod.qa_score_single
 
 # --- qa_score_single -------------------------------------------------------
 
-def test_exact_match_types():
-    # integer/count/boolean require exact equality
+def test_counts_and_booleans_use_ratio_rule():
+    # iclrNov15 is type-agnostic: a wrong count earns the min/max ratio, not 0
     assert qa_score_single(3, 3, "integer") == 1.0
-    assert qa_score_single(3, 4, "count") == 0.0
-    # boolean 0 == 0 must score 1.0 (ratio accuracy would wrongly give 0)
+    assert qa_score_single(3, 4, "count") == 0.75
+    # yes/no: 0 == 0 scores 1.0, and a wrong answer scores 0 either way round
     assert qa_score_single(0, 0, "boolean") == 1.0
     assert qa_score_single(1, 0, "bool") == 0.0
+    assert qa_score_single(0, 1, "bool") == 0.0
+    assert qa_score_single(1, 1, "bool") == 1.0
+
+
+def test_unanswered_scores_zero():
+    assert qa_score_single(None, 4, "count") == 0.0
+    assert qa_score_single(float("nan"), 4, "count") == 0.0
 
 
 def test_ratio_accuracy_symmetric():
@@ -34,12 +41,16 @@ def test_ratio_accuracy_symmetric():
 
 def test_dim_signed_and_zero():
     # dim answers may be negative (e.g. a signed sum of extrude/cutBlind depths) or
-    # zero; an exactly-correct answer must score 1.0, and the sign must match.
+    # zero. Both sides are compared by magnitude, so an exactly-correct negative
+    # answer scores 1.0 and no pair can score below 0.
     assert qa_score_single(-1.3, -1.3, "dim") == 1.0   # correct negative (regression)
-    assert qa_score_single(-8, -10, "dim") == 0.8      # magnitude ratio, matched signs
+    assert qa_score_single(-8, -10, "dim") == 0.8      # magnitude ratio
+    assert qa_score_single(8, -10, "dim") == 0.8       # the sign is not scored
+    assert qa_score_single(-5, 5, "dim") == 1.0
     assert qa_score_single(0, 0, "dim") == 1.0         # correct zero
-    assert qa_score_single(-5, 5, "dim") == 0.0        # opposite signs -> wrong
     assert qa_score_single(10, 0, "dim") == 0.0        # only one side zero
+    assert qa_score_single(0, -10, "dim") == 0.0
+    assert qa_score_single(2, -1.3, "dim") == 0.65     # never negative
 
 
 def test_qa_score_mean_and_empty():
