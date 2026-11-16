@@ -1,22 +1,20 @@
 """Numeric QA scoring — rule iclrNov15.
 
-Per question (pred = parsed model answer, None/NaN if unanswered). Both values
-are compared by magnitude: p = |pred|, g = |gt|.
+Per question (pred = parsed model answer, None/NaN if unanswered):
     no answer (None / NaN)   → 0
-    g == 0 (e.g. "no")       → 1 if p == 0 else 0
-    g > 0, p == 0            → 0
-    g > 0, p > 0             → min(p, g) / max(p, g), rounded to 4 dp
+    gt == 0 (e.g. "no")      → 1 if pred == 0 else 0
+    gt > 0:  pred <= 0 → 0, else min(pred, gt) / max(pred, gt)
+    gt < 0:  pred >= 0 → 0, else min(|pred|, |gt|) / max(|pred|, |gt|)
+    Ratios are rounded to 4 dp, and a score is always in [0, 1].
+    Examples:
         yes/no (gt 1): pred 1 → 1, pred 0 → 0
-        count gt 4, pred 3 → 0.75;  ratio gt 3.75, pred 5 → 0.75
-        signed sum gt -31.8, pred -31.8 → 1;  pred 31.8 → 1 (the sign is not scored)
-
-The absolute value matters for the 18 bank questions whose gold is a negative
-signed sum of extrude/cutBlind depths: without it a correct answer would score 0
-and a positive answer would score below 0.
+        count gt 4, pred 3 → 0.75
+        ratio gt 3.75, pred 5 → 0.75
+        gt -4, pred -3 → 0.75
 
 The rule is type-agnostic: `type` is accepted for API compatibility but
 ignored. It is the rule behind the paper's qa_img vs qa_code gap table
-(named iclrNov15, 2026-11-15).
+(named iclrNov15 2026-11-15; negative-gt sign symmetry added 2026-11-16).
 
 Also includes a JSON-array parser robust to leading prose / fenced blocks.
 """
@@ -59,17 +57,23 @@ def parse_json_numbers(raw: str, n_expected: int) -> list[float] | None:
 
 def qa_score_single(pred: float | None, gt: float, type_: str = "dim") -> float:
     """Score one (pred, gt) under iclrNov15. `type_` is ignored."""
+    if gt is None or math.isnan(float(gt)):
+        raise ValueError(f"iclrNov15 needs a ground-truth value, got gt={gt!r}")
+    gt = float(gt)
     if pred is None:
         return 0.0
-    pred = abs(float(pred))
-    gt = abs(float(gt))
+    pred = float(pred)
     if math.isnan(pred):
         return 0.0
     if gt == 0:
-        return 1.0 if pred < _EPS else 0.0
-    if pred == 0:
+        return 1.0 if abs(pred) < _EPS else 0.0
+    if pred == 0 or (pred > 0) != (gt > 0):
         return 0.0
-    return round(min(pred, gt) / max(pred, gt), 4)
+    a, b = abs(pred), abs(gt)
+    s = round(min(a, b) / max(a, b), 4)
+    if not 0.0 <= s <= 1.0:  # guard: a score must never leave [0, 1]
+        raise ValueError(f"iclrNov15 score {s} out of [0, 1]: gt={gt} pred={pred}")
+    return s
 
 
 def qa_score(pred_answers: list[float], qa_pairs: list[dict]) -> float:

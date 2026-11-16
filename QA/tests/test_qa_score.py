@@ -41,16 +41,24 @@ def test_ratio_accuracy_symmetric():
 
 def test_dim_signed_and_zero():
     # dim answers may be negative (e.g. a signed sum of extrude/cutBlind depths) or
-    # zero. Both sides are compared by magnitude, so an exactly-correct negative
-    # answer scores 1.0 and no pair can score below 0.
+    # zero. A negative gold is scored by sign symmetry: a same-sign answer earns the
+    # magnitude ratio, a wrong-sign answer scores 0, and no pair can score below 0.
     assert qa_score_single(-1.3, -1.3, "dim") == 1.0   # correct negative (regression)
     assert qa_score_single(-8, -10, "dim") == 0.8      # magnitude ratio
-    assert qa_score_single(8, -10, "dim") == 0.8       # the sign is not scored
-    assert qa_score_single(-5, 5, "dim") == 1.0
+    assert qa_score_single(8, -10, "dim") == 0.0       # wrong sign scores 0
+    assert qa_score_single(-5, 5, "dim") == 0.0
     assert qa_score_single(0, 0, "dim") == 1.0         # correct zero
     assert qa_score_single(10, 0, "dim") == 0.0        # only one side zero
     assert qa_score_single(0, -10, "dim") == 0.0
-    assert qa_score_single(2, -1.3, "dim") == 0.65     # never negative
+    assert qa_score_single(2, -1.3, "dim") == 0.0      # never negative
+
+
+def test_missing_gold_raises():
+    import pytest
+    with pytest.raises(ValueError):
+        qa_score_single(1, None, "dim")
+    with pytest.raises(ValueError):
+        qa_score_single(1, float("nan"), "dim")
 
 
 def test_qa_score_mean_and_empty():
