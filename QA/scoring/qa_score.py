@@ -1,12 +1,18 @@
 """Numeric QA scoring — rule iclrNov15.
 
-Per question (pred = parsed model answer, None/NaN if unanswered):
+Per question (pred = parsed model answer, None/NaN if unanswered). Both values
+are compared by magnitude: p = |pred|, g = |gt|.
     no answer (None / NaN)   → 0
-    gt == 0 (e.g. "no")      → 1 if pred == 0 else 0
-    gt > 0, pred <= 0        → 0
-    gt > 0, pred > 0         → min(pred, gt) / max(pred, gt), rounded to 4 dp
+    g == 0 (e.g. "no")       → 1 if p == 0 else 0
+    g > 0, p == 0            → 0
+    g > 0, p > 0             → min(p, g) / max(p, g), rounded to 4 dp
         yes/no (gt 1): pred 1 → 1, pred 0 → 0
         count gt 4, pred 3 → 0.75;  ratio gt 3.75, pred 5 → 0.75
+        signed sum gt -31.8, pred -31.8 → 1;  pred 31.8 → 1 (the sign is not scored)
+
+The absolute value matters for the 18 bank questions whose gold is a negative
+signed sum of extrude/cutBlind depths: without it a correct answer would score 0
+and a positive answer would score below 0.
 
 The rule is type-agnostic: `type` is accepted for API compatibility but
 ignored. It is the rule behind the paper's qa_img vs qa_code gap table
@@ -55,13 +61,13 @@ def qa_score_single(pred: float | None, gt: float, type_: str = "dim") -> float:
     """Score one (pred, gt) under iclrNov15. `type_` is ignored."""
     if pred is None:
         return 0.0
-    pred = float(pred)
-    gt = float(gt)
+    pred = abs(float(pred))
+    gt = abs(float(gt))
     if math.isnan(pred):
         return 0.0
     if gt == 0:
-        return 1.0 if abs(pred) < _EPS else 0.0
-    if pred <= 0:
+        return 1.0 if pred < _EPS else 0.0
+    if pred == 0:
         return 0.0
     return round(min(pred, gt) / max(pred, gt), 4)
 
